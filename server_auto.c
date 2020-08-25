@@ -26,9 +26,8 @@ int main(int argc , char *argv[])
     //Create socket
     socket_desc = socket(AF_INET , SOCK_STREAM , 0);
     if (socket_desc == -1)
-    {
         printf("Could not create socket");
-    }
+
     puts("Socket created");
 
     //Prepare the sockaddr_in structure
@@ -38,13 +37,17 @@ int main(int argc , char *argv[])
 
     // Timeout
     struct timeval tv;
-    tv.tv_sec = 5;
+    tv.tv_sec = 60;
     tv.tv_usec = 0;
-    if(setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) < 0) {
-        printf("Could not create socket");
+    if (setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) < 0) {
+        printf("Could not set SO_RCVTIMEO socket");
         return -1;
     }
 
+    if (setsockopt(socket_desc, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof tv) < 0) {
+        printf("Could not set SO_SNDTIMEO socket");
+        return -1;
+    }
 
     //Bind
     if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
@@ -64,10 +67,15 @@ int main(int argc , char *argv[])
 
     while (client_sock = accept(socket_desc,(struct sockaddr*)&client,(socklen_t*)&c))
     {
+        if (client_sock == -1) {
+             perror("Accept failed");
+             continue;
+        }
+
         inet_ntop(AF_INET, &(client.sin_addr), ip, INET_ADDRSTRLEN);
         port = (int) ntohs(client.sin_port);
 
-        printf("Connection accepted: %s:%d\n", ip, port);
+        printf("Connection accepted: %s:%d %d\n", ip, port, client_sock);
 
         pthread_t sniffer_thread;
         new_sock = malloc(1);
@@ -84,7 +92,7 @@ int main(int argc , char *argv[])
 
     if (client_sock < 0)
     {
-        perror("accept failed");
+        perror("Accept failed (end)");
         return 1;
     }
 
@@ -101,7 +109,7 @@ void *connection_handler(void *socket_desc)
 
     char sendBuff[100], client_message[2000];
 
-    while ((n=recv(sock,client_message,2000,0)) > 0)
+    while ((n = recv(sock,client_message,2000,0)) > 0)
     {
         printf("> %s", client_message);
 

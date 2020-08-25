@@ -19,8 +19,9 @@ int main(int argc, char *argv[])
 
     int sock_desc;
     struct sockaddr_in serv_addr;
-    char sbuff[MAX_SIZE],rbuff[MAX_SIZE];
+    char sbuff[MAX_SIZE], rbuff[MAX_SIZE];
     long int ttime;
+    int n;
 
     if((sock_desc = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         printf("Failed creating socket\n");
@@ -41,6 +42,11 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    if(setsockopt(sock_desc, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof tv) < 0) {
+        printf("Failed to set SO_SNDTIMEO\n");
+        return -1;
+    }
+
     if (connect(sock_desc, (struct sockaddr *) &serv_addr, sizeof (serv_addr)) < 0) {
         printf("Failed to connect to server\n");
         return -1;
@@ -54,29 +60,31 @@ int main(int argc, char *argv[])
     else
         printf("Local port number %d\n", ntohs(sin.sin_port));
 
-
-    int n;
-
-    printf("Connected successfully - Please enter string\n");
-    while(1 == 1)
+    printf("Connected successfully\n");
+    while(1)
     {
-      ttime = time (NULL);
-      sprintf(sbuff, "%s:%d %.24s\n", argv[1], ntohs(sin.sin_port), ctime (&ttime));
+        ttime = time (NULL);
+        sprintf(sbuff, "%s:%d %.24s\n", argv[1], ntohs(sin.sin_port), ctime (&ttime));
 
-      send(sock_desc,sbuff,strlen(sbuff),0);
-      printf("< %s", sbuff);
+        if (send(sock_desc,sbuff,strlen(sbuff),0) == -1) {
+            perror("Send error");
+            break;
+        }
+        printf("< %s", sbuff);
 
-          if((n = recv(sock_desc,rbuff,MAX_SIZE,0)) <= 0){
-             printf("Error %d\n", n);
-             break;
-          }
-          else
-           printf("> %s", rbuff);
+            if((n = recv(sock_desc,rbuff,MAX_SIZE,0)) <= 0){
+                printf("Error %d\n", n);
+                break;
+            }
+            else
+                printf("> %s", rbuff);
 
-       bzero(rbuff,MAX_SIZE);//to clean buffer-->IMP otherwise previous word characters also came
-       sleep(10);
+        bzero(rbuff,MAX_SIZE); //to clean buffer-->IMP otherwise previous word characters also came
+        sleep(10);
     }
-        close(sock_desc);
+
+    close(sock_desc);
+
     return 0;
 
 }
