@@ -51,10 +51,10 @@ int main(int argc, char *argv[]) {
 
     // Bind
     if (bind(socket_desc, (struct sockaddr *) &server, sizeof(server)) < 0) {
-        perror("bind failed. Error");
+        perror("Bind failed");
         return 1;
     }
-    puts("bind done");
+    puts("Bind done");
 
     // Listen
     listen(socket_desc, 3);
@@ -95,17 +95,54 @@ int main(int argc, char *argv[]) {
 }
 
 /**
+ * @param char* pre
+ * @param char* str
+ * @return _Bool Строка str начинается на pre
+ */
+_Bool startsWith(const char *pre, const char *str) {
+    size_t lenpre = strlen(pre),
+            lenstr = strlen(str);
+    return lenstr < lenpre ? 0 : memcmp(pre, str, lenpre) == 0;
+}
+
+/**
  * This will handle connection for each client
+ * @param socket_desc
+ * @return
  */
 void *connection_handler(void *socket_desc) {
     // Get the socket descriptor
     int sock = *(int *) socket_desc;
     int n;
+    _Bool isHttp = 0;
+    char message[2000] = {0};
+    char client_message[2000], resultMessage[2000];
 
-    char client_message[2000];
-
-    while ((n = recv(sock, client_message, 2000, 0)) > 0) {
+    while (memset(client_message, 0, sizeof(client_message))
+           && (n = recv(sock, client_message, 2000, 0)) > 0) {
         printf("> %s", client_message);
+
+        if (!isHttp && startsWith("GET ", client_message)) {
+            isHttp = 1;
+            printf("isHttp = 1\n");
+        }
+
+        if (isHttp) {
+            strcat(message, client_message);
+            printf("message = %s", message);
+
+            if (strstr(message, "\r\n\r\n") != NULL) {
+                printf("Message complete\n");
+
+                sprintf(resultMessage, "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=UTF-8\r\n\r\nOK\r\n");
+                send(sock, resultMessage, strlen(resultMessage), 0);
+                // strcpy(message, {0});
+                memset(message, 0, sizeof(message));
+            }
+
+            continue;
+        }
+
 
         send(sock, client_message, n, 0);
         printf("< %s", client_message);
