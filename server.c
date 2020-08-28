@@ -8,6 +8,11 @@
 #include<unistd.h>    //write
 #include<pthread.h> //for threading , link with lpthread
 
+struct args {
+    int *sock;
+    int number;
+};
+
 // The thread function
 void *connection_handler(void *);
 
@@ -23,6 +28,7 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in server, client;
     char ip[100];
     int port;
+    int number = 0;
 
     // Create socket
     socket_desc = socket(AF_INET, SOCK_STREAM, 0);
@@ -72,13 +78,18 @@ int main(int argc, char *argv[]) {
         inet_ntop(AF_INET, &(client.sin_addr), ip, INET_ADDRSTRLEN);
         port = (int) ntohs(client.sin_port);
 
-        printf("Connection accepted: %s:%d %d\n", ip, port, client_sock);
-
         pthread_t sniffer_thread;
-        new_sock = malloc(1);
-        *new_sock = client_sock;
+        //new_sock = malloc(1);
+        //*new_sock = client_sock;
 
-        if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) new_sock) < 0) {
+        struct args *_args = (struct args *)malloc(sizeof(struct args));
+        _args->sock = malloc(1);
+        *_args->sock = client_sock;
+        _args->number = ++number;
+
+        printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, client_sock, number);
+
+        if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) _args) < 0) {
             perror("could not create thread");
             return 1;
         }
@@ -110,9 +121,14 @@ _Bool startsWith(const char *pre, const char *str) {
  * @param socket_desc
  * @return
  */
-void *connection_handler(void *socket_desc) {
+void *connection_handler(void *_args) {
     // Get the socket descriptor
-    int sock = *(int *) socket_desc;
+
+    int sock = *((struct args*)_args)->sock;
+    int number = ((struct args*)_args)->number;
+
+    printf("Handler: sock:%d number:%d\n", sock, number);
+
     int n;
     _Bool isHttp = 0;
     char message[2000] = {0};
