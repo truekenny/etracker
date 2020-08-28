@@ -68,12 +68,19 @@ struct queue {
 
 struct queue *first = NULL;
 
+int maxQueueLength = 0,
+    currentQueueLength = 0;
+
+
 /**
  * Добавляет элемент в очередь
  * @param n
  */
 void addToQueue(int n) {
     rk_sema_wait(sem);
+
+    if(maxQueueLength < ++currentQueueLength)
+        maxQueueLength = currentQueueLength;
 
     printf("Start to add n = %d\n", n);
     if (first == NULL) {
@@ -126,6 +133,9 @@ char *printQueue() {
         next = next->q;
     }
 
+    sprintf(line, "Max concurrency connection: %d\n", maxQueueLength);
+    strcat(result, line);
+
     puts("End of print");
 
     rk_sema_post(sem);
@@ -139,6 +149,8 @@ char *printQueue() {
  */
 void deleteFromQueue(int n) {
     rk_sema_wait(sem);
+
+    currentQueueLength--;
 
     printf("Delete: n = %d\n", n);
 
@@ -245,7 +257,7 @@ int main(int argc, char *argv[]) {
     puts("Bind done");
 
     // Listen
-    listen(socket_desc, 50);
+    listen(socket_desc, 150);
 
     // Accept and incoming connection
     puts("Waiting for incoming connections...");
