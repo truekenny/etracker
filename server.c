@@ -7,7 +7,7 @@
 #include <pthread.h>
 
 struct args {
-    int *sock;
+    int sock;
     int number;
 };
 
@@ -186,8 +186,7 @@ int main(int argc, char *argv[]) {
         //*new_sock = client_sock;
 
         struct args *_args = (struct args *) malloc(sizeof(struct args));
-        _args->sock = malloc(1);
-        *_args->sock = client_sock;
+        _args->sock = client_sock;
         _args->number = ++number;
 
         printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, client_sock, number);
@@ -227,7 +226,7 @@ _Bool startsWith(const char *pre, const char *str) {
 void *connection_handler(void *_args) {
     // Get the socket descriptor
 
-    int sock = *((struct args *) _args)->sock;
+    int sock = ((struct args *) _args)->sock;
     int number = ((struct args *) _args)->number;
 
     printf("Handler: sock:%d number:%d\n", sock, number);
