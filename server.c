@@ -25,6 +25,7 @@ struct queue *first = NULL;
  * @param n
  */
 void addToQueue(int n) {
+    printf("Start to add n = %d\n", n);
     if (first == NULL) {
         printf("First is null\n");
         first = calloc(1, sizeof(struct queue));
@@ -45,21 +46,21 @@ void addToQueue(int n) {
         last->t_time = time(NULL);
         next->q = last;
     }
+    printf("End of add n = %d\n", n);
 }
 
 /**
  * Распечатка очереди
  */
 char *printQueue() {
+    puts("Start printing…");
+
     char *result, line[2000];
     long int t_time = time(NULL);
 
     result = calloc(sizeof(char), 5000);
     sprintf(line, "%.24s - now\n", ctime(&t_time));
     strcat(result, line);
-
-    puts("Start printing…");
-
 
     struct queue *next = first;
     while (next != NULL) {
