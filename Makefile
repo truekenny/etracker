@@ -1,7 +1,9 @@
 all:
-	gcc -pthread server_auto.c -o server_auto.o
-	gcc client_auto.c -o client_auto.o
+	gcc -pthread server.c -o server.o
+	gcc client.c -o client.o
 server:
-	gcc -pthread server_auto.c -o server_auto.o
+	gcc -pthread server.c -o server.o
 client:
-	gcc client_auto.c -o client_auto.o
+	gcc client.c -o client.o
+clear:
+	rm *.o
