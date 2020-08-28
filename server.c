@@ -1,12 +1,12 @@
 // socket server example, handles multiple clients using threads
 
-#include<stdio.h>
-#include<string.h>    //strlen
-#include<stdlib.h>    //strlen
-#include<sys/socket.h>
-#include<arpa/inet.h> //inet_addr
-#include<unistd.h>    //write
-#include<pthread.h> //for threading , link with lpthread
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <pthread.h>
 
 struct args {
     int *sock;
@@ -257,7 +257,6 @@ void *connection_handler(void *_args) {
 
                 sprintf(resultMessage, "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=UTF-8\r\n\r\nOK\r\n");
                 send(sock, resultMessage, strlen(resultMessage), 0);
-                // strcpy(message, {0});
                 memset(message, 0, sizeof(message));
             }
 
