@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 
 struct args {
     int sock;
@@ -13,6 +14,7 @@ struct args {
 
 struct queue {
     int n;
+    long int t_time;
     struct queue *q;
 };
 
@@ -28,34 +30,50 @@ void addToQueue(int n) {
         first = calloc(1, sizeof(struct queue));
 
         first->n = n;
+        first->t_time = time(NULL);
 
-        return;
+    } else {
+
+        struct queue *next = first;
+        while (next->q != NULL) {
+            next = next->q;
+            printf("Next.n %d\n", next->n);
+        }
+
+        struct queue *last = calloc(1, sizeof(struct queue));
+        last->n = n;
+        last->t_time = time(NULL);
+        next->q = last;
     }
-
-    struct queue *next = first;
-    while (next->q != NULL) {
-        next = next->q;
-        printf("Next.n %d\n", next->n);
-    }
-
-    struct queue *last = calloc(1, sizeof(struct queue));
-    last->n = n;
-    next->q = last;
 }
 
 /**
  * Распечатка очереди
  */
-void printQueue() {
+char *printQueue() {
+    char *result, line[2000];
+    long int t_time = time(NULL);
+
+    result = calloc(sizeof(char), 5000);
+    sprintf(line, "%.24s - now\n", ctime(&t_time));
+    strcat(result, line);
+
     puts("Start printing…");
+
 
     struct queue *next = first;
     while (next != NULL) {
         printf("n = %d\n", next->n);
+
+        sprintf(line, "%.24s - %d\n", ctime(&next->t_time), next->n);
+        strcat(result, line);
+
         next = next->q;
     }
 
     puts("End of print");
+
+    return result;
 }
 
 /**
@@ -166,7 +184,7 @@ int main(int argc, char *argv[]) {
     puts("Bind done");
 
     // Listen
-    listen(socket_desc, 3);
+    listen(socket_desc, 15);
 
     // Accept and incoming connection
     puts("Waiting for incoming connections...");
@@ -229,6 +247,8 @@ void *connection_handler(void *_args) {
     int sock = ((struct args *) _args)->sock;
     int number = ((struct args *) _args)->number;
 
+    addToQueue(number);
+
     free(_args);
 
     printf("Handler: sock:%d number:%d\n", sock, number);
@@ -236,7 +256,7 @@ void *connection_handler(void *_args) {
     int n;
     _Bool isHttp = 0;
     char message[2000] = {0};
-    char client_message[2000], resultMessage[2000];
+    char client_message[2000], resultMessage[20000];
 
     while (memset(client_message, 0, sizeof(client_message))
            && (n = recv(sock, client_message, 2000, 0)) > 0) {
@@ -259,9 +279,16 @@ void *connection_handler(void *_args) {
             if (strstr(message, "\r\n\r\n") != NULL) {
                 printf("Message complete\n");
 
-                sprintf(resultMessage, "HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=UTF-8\r\n\r\nOK\r\n");
+                char *data = printQueue();
+                int lenData = strlen(data);
+
+                sprintf(resultMessage, "HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:%d\r\n\r\n%s",
+                        lenData, data);
                 send(sock, resultMessage, strlen(resultMessage), 0);
                 memset(message, 0, sizeof(message));
+                free(data);
+
+                break;
             }
 
             continue;
@@ -272,6 +299,8 @@ void *connection_handler(void *_args) {
         printf("< %s", client_message);
     }
     close(sock);
+
+    deleteFromQueue(number);
 
     printf("Recv bytes: %d\n", n);
 
