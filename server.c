@@ -7,6 +7,54 @@
 #include <pthread.h>
 #include <time.h>
 
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+#else
+
+#include <semaphore.h>
+
+#endif
+
+struct rk_sema {
+#ifdef __APPLE__
+    dispatch_semaphore_t    sem;
+#else
+    sem_t sem;
+#endif
+};
+
+static inline void rk_sema_init(struct rk_sema *s, uint32_t value) {
+#ifdef __APPLE__
+    dispatch_semaphore_t *sem = &s->sem;
+
+    *sem = dispatch_semaphore_create(value);
+#else
+    sem_init(&s->sem, 0, value);
+#endif
+}
+
+static inline void rk_sema_wait(struct rk_sema *s) {
+#ifdef __APPLE__
+    dispatch_semaphore_wait(s->sem, DISPATCH_TIME_FOREVER);
+#else
+    int r;
+
+    do {
+        r = sem_wait(&s->sem);
+    } while (r == -1 && errno == EINTR);
+#endif
+}
+
+static inline void rk_sema_post(struct rk_sema *s) {
+#ifdef __APPLE__
+    dispatch_semaphore_signal(s->sem);
+#else
+    sem_post(&s->sem);
+#endif
+}
+
+struct rk_sema *sem;
+
 struct args {
     int sock;
     int number;
@@ -25,6 +73,8 @@ struct queue *first = NULL;
  * @param n
  */
 void addToQueue(int n) {
+    rk_sema_wait(sem);
+
     printf("Start to add n = %d\n", n);
     if (first == NULL) {
         printf("  Add %d: First is null\n", n);
@@ -47,12 +97,16 @@ void addToQueue(int n) {
         next->q = last;
     }
     printf("End of add n = %d\n", n);
+
+    rk_sema_post(sem);
 }
 
 /**
  * Распечатка очереди
  */
 char *printQueue() {
+    rk_sema_wait(sem);
+
     puts("Start printing…");
 
     char *result, line[20000];
@@ -74,6 +128,8 @@ char *printQueue() {
 
     puts("End of print");
 
+    rk_sema_post(sem);
+
     return result;
 }
 
@@ -82,6 +138,8 @@ char *printQueue() {
  * @param n
  */
 void deleteFromQueue(int n) {
+    rk_sema_wait(sem);
+
     printf("Delete: n = %d\n", n);
 
     struct queue *next = first;
@@ -113,7 +171,9 @@ void deleteFromQueue(int n) {
         next = next->q;
     }
 
-    printf("End of delete %d", n);
+    printf("End of delete %d\n", n);
+
+    rk_sema_post(sem);
 }
 
 // The thread function
@@ -185,11 +245,14 @@ int main(int argc, char *argv[]) {
     puts("Bind done");
 
     // Listen
-    listen(socket_desc, 15);
+    listen(socket_desc, 50);
 
     // Accept and incoming connection
     puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
+
+    sem = calloc(1, sizeof(struct rk_sema));
+    rk_sema_init(sem, 1);
 
     while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t * ) & c))) {
         if (client_sock == -1) {
@@ -248,9 +311,9 @@ void *connection_handler(void *_args) {
     int sock = ((struct args *) _args)->sock;
     int number = ((struct args *) _args)->number;
 
-    addToQueue(number);
-
     free(_args);
+
+    addToQueue(number);
 
     printf("Handler: sock:%d number:%d\n", sock, number);
 
@@ -283,7 +346,8 @@ void *connection_handler(void *_args) {
                 char *data = printQueue();
                 int lenData = strlen(data);
 
-                sprintf(resultMessage, "HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:%d\r\n\r\n%s",
+                sprintf(resultMessage,
+                        "HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:%d\r\n\r\n%s",
                         lenData, data);
                 send(sock, resultMessage, strlen(resultMessage), 0);
                 memset(message, 0, sizeof(message));
@@ -307,8 +371,10 @@ void *connection_handler(void *_args) {
 
     if (n == 0)
         puts("Client Disconnected");
+    else if(n < 0)
+        perror("Recv failed");
     else
-        perror("recv failed");
+        puts("Client Disconnected after first data");
 
     return 0;
 }
