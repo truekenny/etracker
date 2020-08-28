@@ -10,9 +10,7 @@
 #ifdef __APPLE__
 #include <dispatch/dispatch.h>
 #else
-
 #include <semaphore.h>
-
 #endif
 
 struct rk_sema {
@@ -53,24 +51,38 @@ static inline void rk_sema_post(struct rk_sema *s) {
 #endif
 }
 
+/**
+ * Семафор для работы с очередью
+ */
 struct rk_sema *sem;
 
+/**
+ * Аргументы переданные в поток
+ */
 struct args {
     int sock;
     int number;
 };
 
+/**
+ * Очередь
+ */
 struct queue {
     int n;
     long int t_time;
     struct queue *q;
 };
 
+/**
+ * Первый элемент очереди
+ */
 struct queue *first = NULL;
 
+/**
+ * Максимальное и текущее кол-во одновременных подключений
+ */
 int maxQueueLength = 0,
     currentQueueLength = 0;
-
 
 /**
  * Добавляет элемент в очередь
@@ -268,7 +280,7 @@ int main(int argc, char *argv[]) {
 
     while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t * ) & c))) {
         if (client_sock == -1) {
-            perror("Accept failed");
+            perror("Accept failed"); // Timeout
             continue;
         }
 
@@ -276,8 +288,6 @@ int main(int argc, char *argv[]) {
         port = (int) ntohs(client.sin_port);
 
         pthread_t sniffer_thread;
-        //new_sock = malloc(1);
-        //*new_sock = client_sock;
 
         struct args *_args = (struct args *) malloc(sizeof(struct args));
         _args->sock = client_sock;
@@ -287,6 +297,7 @@ int main(int argc, char *argv[]) {
 
         if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) _args) < 0) {
             perror("could not create thread");
+
             return 1;
         }
 
@@ -295,6 +306,7 @@ int main(int argc, char *argv[]) {
 
     if (client_sock < 0) {
         perror("Accept failed (end)");
+
         return 1;
     }
 
@@ -318,8 +330,6 @@ _Bool startsWith(const char *pre, const char *str) {
  * @return
  */
 void *connection_handler(void *_args) {
-    // Get the socket descriptor
-
     int sock = ((struct args *) _args)->sock;
     int number = ((struct args *) _args)->number;
 
@@ -386,7 +396,7 @@ void *connection_handler(void *_args) {
     else if(n < 0)
         perror("Recv failed");
     else
-        puts("Client Disconnected after first data");
+        puts("I Disconnect Client");
 
     return 0;
 }
