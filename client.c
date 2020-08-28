@@ -8,7 +8,8 @@
 #include <unistd.h>
 #include <time.h>
 
-#define MAX_SIZE 50
+#define MAX_SIZE 100
+#define PAUSE_TIME 10
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
@@ -77,7 +78,7 @@ int main(int argc, char *argv[]) {
             printf("> %s", rbuff);
 
         bzero(rbuff, MAX_SIZE); //to clean buffer-->IMP otherwise previous word characters also came
-        sleep(10);
+        sleep(PAUSE_TIME);
     }
 
     close(sock_desc);
