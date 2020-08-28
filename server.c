@@ -1,5 +1,3 @@
-// socket server example, handles multiple clients using threads
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -242,6 +240,11 @@ void *connection_handler(void *_args) {
     while (memset(client_message, 0, sizeof(client_message))
            && (n = recv(sock, client_message, 2000, 0)) > 0) {
         printf("> %s", client_message);
+
+        if (startsWith("stop", client_message)) {
+            printf("STOP\n");
+            exit(0);
+        }
 
         if (!isHttp && startsWith("GET ", client_message)) {
             isHttp = 1;
