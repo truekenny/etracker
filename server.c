@@ -229,6 +229,8 @@ void *connection_handler(void *_args) {
     int sock = ((struct args *) _args)->sock;
     int number = ((struct args *) _args)->number;
 
+    free(_args);
+
     printf("Handler: sock:%d number:%d\n", sock, number);
 
     int n;
