@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
     struct sockaddr_in sin;
     int len = sizeof(sin);
-    if (getsockname(sock_desc, (struct sockaddr *) &sin, &len) == -1)
+    if (getsockname(sock_desc, (struct sockaddr *) &sin, (socklen_t * ) & len) == -1)
         printf("Port number failed\n");
     else
         printf("Local port number %d\n", ntohs(sin.sin_port));
