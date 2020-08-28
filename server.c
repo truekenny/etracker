@@ -13,6 +13,92 @@ struct args {
     int number;
 };
 
+struct queue {
+    int n;
+    struct queue *q;
+};
+
+struct queue *first = NULL;
+
+/**
+ * Добавляет элемент в очередь
+ * @param n
+ */
+void addToQueue(int n) {
+    if (first == NULL) {
+        printf("First is null\n");
+        first = calloc(1, sizeof(struct queue));
+
+        first->n = n;
+
+        return;
+    }
+
+    struct queue *next = first;
+    while (next->q != NULL) {
+        next = next->q;
+        printf("Next.n %d\n", next->n);
+    }
+
+    struct queue *last = calloc(1, sizeof(struct queue));
+    last->n = n;
+    next->q = last;
+}
+
+/**
+ * Распечатка очереди
+ */
+void printQueue() {
+    puts("Start printing…");
+
+    struct queue *next = first;
+    while (next != NULL) {
+        printf("n = %d\n", next->n);
+        next = next->q;
+    }
+
+    puts("End of print");
+}
+
+/**
+ * Удаление элемента из очереди
+ * @param n
+ */
+void deleteFromQueue(int n) {
+    printf("Delete: n = %d\n", n);
+
+    struct queue *next = first;
+    struct queue *previous = NULL;
+
+    while (next != NULL) {
+        printf("n = %d\n", next->n);
+
+        if (next->n == n) {
+            printf("next->n == n\n");
+            if (previous == NULL) {
+                printf("Previous is null\n");
+
+                first = next->q;
+                free(next);
+
+                break;
+            } else {
+                printf("Previous n = %d\n", previous->n);
+
+                previous->q = next->q;
+                free(next);
+
+                break;
+            }
+        }
+
+        previous = next;
+        next = next->q;
+    }
+
+    puts("End of delete");
+}
+
 // The thread function
 void *connection_handler(void *);
 
@@ -23,8 +109,27 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+/*
+    addToQueue(1);
+    addToQueue(2);
+    addToQueue(3);
+    addToQueue(4);
+    printQueue();
+    deleteFromQueue(2);
+    printQueue();
+    deleteFromQueue(1);
+    printQueue();
+    deleteFromQueue(4);
+    printQueue();
+    deleteFromQueue(3);
+    printQueue();
+    addToQueue(5);
+    printQueue();
+
+    return 0;
+*/
     // Vars
-    int socket_desc, client_sock, c, *new_sock;
+    int socket_desc, client_sock, c;
     struct sockaddr_in server, client;
     char ip[100];
     int port;
@@ -82,7 +187,7 @@ int main(int argc, char *argv[]) {
         //new_sock = malloc(1);
         //*new_sock = client_sock;
 
-        struct args *_args = (struct args *)malloc(sizeof(struct args));
+        struct args *_args = (struct args *) malloc(sizeof(struct args));
         _args->sock = malloc(1);
         *_args->sock = client_sock;
         _args->number = ++number;
@@ -124,8 +229,8 @@ _Bool startsWith(const char *pre, const char *str) {
 void *connection_handler(void *_args) {
     // Get the socket descriptor
 
-    int sock = *((struct args*)_args)->sock;
-    int number = ((struct args*)_args)->number;
+    int sock = *((struct args *) _args)->sock;
+    int number = ((struct args *) _args)->number;
 
     printf("Handler: sock:%d number:%d\n", sock, number);
 
