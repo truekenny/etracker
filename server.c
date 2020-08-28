@@ -27,7 +27,7 @@ struct queue *first = NULL;
 void addToQueue(int n) {
     printf("Start to add n = %d\n", n);
     if (first == NULL) {
-        printf("First is null\n");
+        printf("  Add %d: First is null\n", n);
         first = calloc(1, sizeof(struct queue));
 
         first->n = n;
@@ -38,7 +38,7 @@ void addToQueue(int n) {
         struct queue *next = first;
         while (next->q != NULL) {
             next = next->q;
-            printf("Next.n %d\n", next->n);
+            printf("  Add %d: Next->n = %d\n", n, next->n);
         }
 
         struct queue *last = calloc(1, sizeof(struct queue));
@@ -55,16 +55,16 @@ void addToQueue(int n) {
 char *printQueue() {
     puts("Start printing…");
 
-    char *result, line[2000];
+    char *result, line[20000];
     long int t_time = time(NULL);
 
-    result = calloc(sizeof(char), 5000);
+    result = calloc(sizeof(char), 20000);
     sprintf(line, "%.24s - now\n", ctime(&t_time));
     strcat(result, line);
 
     struct queue *next = first;
     while (next != NULL) {
-        printf("n = %d\n", next->n);
+        printf("  Print: n = %d\n", next->n);
 
         sprintf(line, "%.24s - %d\n", ctime(&next->t_time), next->n);
         strcat(result, line);
@@ -88,19 +88,19 @@ void deleteFromQueue(int n) {
     struct queue *previous = NULL;
 
     while (next != NULL) {
-        printf("n = %d\n", next->n);
+        printf("  Delete %d: n = %d\n", n, next->n);
 
         if (next->n == n) {
-            printf("next->n == n\n");
+            printf("  Delete %d: next->n == n\n", n);
             if (previous == NULL) {
-                printf("Previous is null\n");
+                printf("  Delete %d: Previous is null\n", n);
 
                 first = next->q;
                 free(next);
 
                 break;
             } else {
-                printf("Previous n = %d\n", previous->n);
+                printf("  Delete %d: Previous n = %d\n", n, previous->n);
 
                 previous->q = next->q;
                 free(next);
@@ -113,7 +113,7 @@ void deleteFromQueue(int n) {
         next = next->q;
     }
 
-    puts("End of delete");
+    printf("End of delete %d", n);
 }
 
 // The thread function
