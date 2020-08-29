@@ -10,6 +10,13 @@
 #include "sem.h"
 #include "alloc.h"
 
+#define PATH 0
+#define PARAM 1
+#define VALUE 2
+#define PARAM_VALUE_SIZE 20
+#define TIMEOUT_SOCKET 60
+#define SOCKET_QUEUE_LENGTH 150
+
 /**
  * Семафор для работы с очередью
  */
@@ -30,6 +37,10 @@ struct args {
 
 // The thread function
 void *connection_handler(void *);
+
+void setTimeout(int socket);
+
+void parseUri(char *message);
 
 // Test queue
 void testQueue();
@@ -65,17 +76,7 @@ int main(int argc, char *argv[]) {
     server.sin_port = htons(atoi(argv[1]));
 
     // Timeout
-    struct timeval tv;
-    tv.tv_sec = 60;
-    tv.tv_usec = 0;
-    if (setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, (const char *) &tv, sizeof tv) < 0) {
-        printf("Could not set SO_RCVTIMEO socket");
-        return -1;
-    }
-    if (setsockopt(socket_desc, SOL_SOCKET, SO_SNDTIMEO, (const char *) &tv, sizeof tv) < 0) {
-        printf("Could not set SO_SNDTIMEO socket");
-        return -1;
-    }
+    setTimeout(socket_desc);
 
     // Bind
     if (bind(socket_desc, (struct sockaddr *) &server, sizeof(server)) < 0) {
@@ -85,7 +86,7 @@ int main(int argc, char *argv[]) {
     puts("Bind done");
 
     // Listen
-    listen(socket_desc, 150);
+    listen(socket_desc, SOCKET_QUEUE_LENGTH);
 
     // Accept and incoming connection
     puts("Waiting for incoming connections...");
@@ -96,6 +97,8 @@ int main(int argc, char *argv[]) {
             perror("Accept failed"); // Timeout
             continue;
         }
+
+        setTimeout(client_sock);
 
         inet_ntop(AF_INET, &(client.sin_addr), ip, INET_ADDRSTRLEN);
         port = (int) ntohs(client.sin_port);
@@ -109,7 +112,7 @@ int main(int argc, char *argv[]) {
         printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, client_sock, number);
 
         if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) _args) < 0) {
-            perror("could not create thread");
+            perror("Could not create thread");
 
             return 1;
         }
@@ -180,6 +183,8 @@ void *connection_handler(void *_args) {
             if (strstr(message, "\r\n\r\n") != NULL) {
                 printf("Message complete\n");
 
+                parseUri(message);
+
                 rk_sema_wait(&sem);
                 char *data = printQueue(first);
                 rk_sema_post(&sem);
@@ -222,7 +227,73 @@ void *connection_handler(void *_args) {
     else
         puts("I Disconnect Client");
 
+    if (pthread_detach(pthread_self()) != 0) {
+        perror("could not detach thread");
+    }
+
     return 0;
+}
+
+/**
+ * Установка Timeout
+ * @param socket
+ */
+void setTimeout(int socket) {
+    struct timeval tv;
+    tv.tv_sec = TIMEOUT_SOCKET;
+    tv.tv_usec = 0;
+    if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *) &tv, sizeof tv) < 0) {
+        printf("Could not set SO_RCVTIMEO socket\n");
+
+        exit(1);
+    }
+    if (setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (const char *) &tv, sizeof tv) < 0) {
+        printf("Could not set SO_SNDTIMEO socket\n");
+
+        exit(1);
+    }
+}
+
+void parseUri(char *message) {
+    printf("Uri:\n");
+    char param[20] = {0}, value[20] = {0};
+    int status = PATH;
+    for (int i = 5; i < strlen(message); i++) {
+        char current = message[i];
+        if (current == ' ') {
+            printf("Param:%s=Value:%s.\n", param, value);
+            break;
+        }
+        printf("%d=%c\n", i, current);
+        if (status == PATH) {
+            if (current == '?') {
+                status = PARAM;
+                printf("Status=PARAM\n");
+            }
+            continue;
+        }
+        if (current == '=') {
+            memset(&value, 0, PARAM_VALUE_SIZE);
+            status = VALUE;
+            continue;
+        }
+        if (current == '&') {
+            printf("Param:%s=Value:%s.\n", param, value);
+
+            memset(&param, 0, PARAM_VALUE_SIZE);
+            status = PARAM;
+
+            continue;
+        }
+        if (status == PARAM) {
+            param[strlen(param)] = current;
+        }
+        if (status == VALUE) {
+            value[strlen(value)] = current;
+        }
+    }
+    printf(".\n");
+
 }
 
 /**
