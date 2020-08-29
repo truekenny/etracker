@@ -7,55 +7,7 @@
 #include <pthread.h>
 #include <time.h>
 #include "queue.h"
-
-#ifdef __APPLE__
-#include <dispatch/dispatch.h>
-#else
-#include <semaphore.h>
-#endif
-
-struct rk_sema {
-#ifdef __APPLE__
-    dispatch_semaphore_t    sem;
-#else
-    sem_t sem;
-#endif
-};
-
-static inline void rk_sema_init(struct rk_sema *s, uint32_t value) {
-#ifdef __APPLE__
-    dispatch_semaphore_t *sem = &s->sem;
-
-    *sem = dispatch_semaphore_create(value);
-#else
-    sem_init(&s->sem, 0, value);
-#endif
-}
-
-static inline void rk_sema_wait(struct rk_sema *s) {
-#ifdef __APPLE__
-    dispatch_semaphore_wait(s->sem, DISPATCH_TIME_FOREVER);
-#else
-    int r;
-
-    do {
-        r = sem_wait(&s->sem);
-    } while (r == -1 && errno == EINTR);
-#endif
-}
-
-static inline void rk_sema_post(struct rk_sema *s) {
-#ifdef __APPLE__
-    dispatch_semaphore_signal(s->sem);
-#else
-    sem_post(&s->sem);
-#endif
-}
-
-/**
- * Семафор для работы с очередью
- */
-struct rk_sema *sem;
+#include "sem.h"
 
 /**
  * Аргументы переданные в поток
@@ -140,7 +92,10 @@ int main(int argc, char *argv[]) {
     puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
 
-    sem = calloc(1, sizeof(struct rk_sema));
+    // sem = calloc(1, sizeof(struct rk_sema));
+    printf("Size of sizeof(sem) = %lu", sizeof(sem));
+    // printf("Size of sizeof(*sem) = %lu", sizeof(*sem));
+    sem = calloc(1, sizeof(sem));
     rk_sema_init(sem, 1);
 
     while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t * ) & c))) {
@@ -258,7 +213,7 @@ void *connection_handler(void *_args) {
 
     if (n == 0)
         puts("Client Disconnected");
-    else if(n < 0)
+    else if (n < 0)
         perror("Recv failed");
     else
         puts("I Disconnect Client");
