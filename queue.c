@@ -24,11 +24,6 @@ struct queue {
 };
 
 /**
- * Первый элемент очереди
- */
-struct queue *first = NULL;
-
-/**
  * Максимальное и текущее кол-во одновременных подключений
  */
 int maxQueueLength = 0,
@@ -36,9 +31,10 @@ int maxQueueLength = 0,
 
 /**
  * Добавляет элемент в очередь
+ * @param first
  * @param n
  */
-void addToQueue(int n) {
+void addToQueue(struct queue *first, int n) {
     rk_sema_wait(sem);
 
     if (maxQueueLength < ++currentQueueLength)
@@ -72,8 +68,9 @@ void addToQueue(int n) {
 
 /**
  * Распечатка очереди
+ * @param first
  */
-char *printQueue() {
+char *printQueue(struct queue *first) {
     rk_sema_wait(sem);
 
     puts("Start printing…");
@@ -107,9 +104,10 @@ char *printQueue() {
 
 /**
  * Удаление элемента из очереди
+ * @param first
  * @param n
  */
-void deleteFromQueue(int n) {
+void deleteFromQueue(struct queue *first, int n) {
     rk_sema_wait(sem);
 
     currentQueueLength--;

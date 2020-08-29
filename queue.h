@@ -11,20 +11,28 @@
 struct rk_sema *sem;
 
 /**
+ * Структура элемента очереди
+ */
+struct queue;
+
+/**
  * Добавляет элемент в очередь
+ * @param first
  * @param n
  */
-void addToQueue(int n);
+void addToQueue(struct queue *first, int n);
 
 /**
  * Распечатка очереди
+ * @param first
  */
-char *printQueue();
+char *printQueue(struct queue *first);
 
 /**
  * Удаление элемента из очереди
+ * @param first
  * @param n
  */
-void deleteFromQueue(int n);
+void deleteFromQueue(struct queue *first, int n);
 
 #endif //SC6_QUEUE_H

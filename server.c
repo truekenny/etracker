@@ -10,6 +10,11 @@
 #include "sem.h"
 
 /**
+ * Первый элемент очереди
+ */
+struct queue *first = NULL;
+
+/**
  * Аргументы переданные в поток
  */
 struct args {
@@ -43,9 +48,9 @@ int main(int argc, char *argv[]) {
     printQueue();
     addToQueue(5);
     printQueue();
-
     return 0;
 */
+
     // Vars
     int socket_desc, client_sock, c;
     struct sockaddr_in server, client;
@@ -92,9 +97,6 @@ int main(int argc, char *argv[]) {
     puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
 
-    // sem = calloc(1, sizeof(struct rk_sema));
-    // printf("Size of sizeof(sem) = %lu\n", sizeof(sem));
-    // printf("rk_sema_size = %d\n", rk_sema_size());
     sem = calloc(1, rk_sema_size());
     rk_sema_init(sem, 1);
 
@@ -155,7 +157,7 @@ void *connection_handler(void *_args) {
 
     free(_args);
 
-    addToQueue(number);
+    addToQueue(first, number);
 
     printf("Handler: sock:%d number:%d\n", sock, number);
 
@@ -185,7 +187,7 @@ void *connection_handler(void *_args) {
             if (strstr(message, "\r\n\r\n") != NULL) {
                 printf("Message complete\n");
 
-                char *data = printQueue();
+                char *data = printQueue(first);
                 int lenData = strlen(data);
 
                 sprintf(resultMessage,
@@ -205,9 +207,10 @@ void *connection_handler(void *_args) {
         send(sock, client_message, n, 0);
         printf("< %s", client_message);
     }
+
     close(sock);
 
-    deleteFromQueue(number);
+    deleteFromQueue(first, number);
 
     printf("Recv bytes: %d\n", n);
 

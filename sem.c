@@ -12,24 +12,31 @@
 #include <semaphore.h>
 #endif
 
+/**
+ * Структура семафора
+ */
 struct rk_sema {
 #ifdef __APPLE__
     dispatch_semaphore_t    sem;
 #else
     sem_t sem;
 #endif
-    int none;
-    char str[200];
 };
 
+/**
+ * Размер структуры семафора
+ * @return
+ */
 int rk_sema_size() {
     return sizeof(struct rk_sema);
 }
 
+/**
+ * Инициализация семафора
+ * @param s
+ * @param value
+ */
 void rk_sema_init(struct rk_sema *s, uint32_t value) {
-    // printf("sizeof struck = %lu\n", sizeof(struct rk_sema));
-    // printf("sizeof s = %lu\n", sizeof(s));
-    // printf("sizeof *s = %lu\n", sizeof(*s));
 #ifdef __APPLE__
     dispatch_semaphore_t *sem = &s->sem;
 
@@ -39,6 +46,10 @@ void rk_sema_init(struct rk_sema *s, uint32_t value) {
 #endif
 }
 
+/**
+ * Блокирование семафора
+ * @param s
+ */
 void rk_sema_wait(struct rk_sema *s) {
 #ifdef __APPLE__
     dispatch_semaphore_wait(s->sem, DISPATCH_TIME_FOREVER);
@@ -51,6 +62,10 @@ void rk_sema_wait(struct rk_sema *s) {
 #endif
 }
 
+/**
+ * Освобождение семафора
+ * @param s
+ */
 void rk_sema_post(struct rk_sema *s) {
 #ifdef __APPLE__
     dispatch_semaphore_signal(s->sem);
