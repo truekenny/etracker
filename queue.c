@@ -33,8 +33,6 @@ int maxQueueLength = 0,
  * @return Ссылка на первый элемент
  */
 struct queue *addToQueue(struct queue *first, int n) {
-    rk_sema_wait(sem);
-
     if (maxQueueLength < ++currentQueueLength)
         maxQueueLength = currentQueueLength;
 
@@ -69,8 +67,6 @@ struct queue *addToQueue(struct queue *first, int n) {
  * @param first
  */
 char *printQueue(struct queue *first) {
-    rk_sema_wait(sem);
-
     puts("Start printing…");
 
     char *result, line[20000];
@@ -96,15 +92,15 @@ char *printQueue(struct queue *first) {
     struct c_countChanges *countChanges = c_result();
     sprintf(line, "Total malloc: %d\n"
                   "Total calloc: %d\n"
+                  "Total *alloc: %d\n"
                   "Total free: %d\n",
-                  countChanges->countMalloc,
-                  countChanges->countCalloc,
-                  countChanges->countFree);
+            countChanges->countMalloc,
+            countChanges->countCalloc,
+            countChanges->countMalloc + countChanges->countCalloc,
+            countChanges->countFree);
     strcat(result, line);
 
     puts("End of print");
-
-    rk_sema_post(sem);
 
     return result;
 }
@@ -116,8 +112,6 @@ char *printQueue(struct queue *first) {
  * @return Ссылка на первывй элемент
  */
 struct queue *deleteFromQueue(struct queue *first, int n) {
-    rk_sema_wait(sem);
-
     currentQueueLength--;
 
     printf("Delete: n = %d\n", n);

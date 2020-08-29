@@ -37,34 +37,23 @@ int main(int argc, char *argv[]) {
     rk_sema_init(sem, 1);
 
 /*
-
     first = addToQueue(first, 1);
-    rk_sema_post(sem);
     first = addToQueue(first, 2);
-    rk_sema_post(sem);
     first = addToQueue(first, 3);
-    rk_sema_post(sem);
     first = addToQueue(first, 4);
-    rk_sema_post(sem);
     printQueue(first);
     first = deleteFromQueue(first, 2);
-    rk_sema_post(sem);
     printQueue(first);
     first = deleteFromQueue(first, 1);
-    rk_sema_post(sem);
     printQueue(first);
     first = deleteFromQueue(first, 4);
-    rk_sema_post(sem);
     printQueue(first);
     first = deleteFromQueue(first, 3);
-    rk_sema_post(sem);
     printQueue(first);
     first = addToQueue(first, 5);
-    rk_sema_post(sem);
     printQueue(first);
     return 0;
-
- */
+*/
 
     // Vars
     int socket_desc, client_sock, c;
@@ -169,6 +158,7 @@ void *connection_handler(void *_args) {
 
     c_free(_args);
 
+    rk_sema_wait(sem);
     first = addToQueue(first, number);
     rk_sema_post(sem);
 
@@ -200,7 +190,9 @@ void *connection_handler(void *_args) {
             if (strstr(message, "\r\n\r\n") != NULL) {
                 printf("Message complete\n");
 
+                rk_sema_wait(sem);
                 char *data = printQueue(first);
+                rk_sema_post(sem);
                 int lenData = strlen(data);
 
                 sprintf(resultMessage,
@@ -227,6 +219,7 @@ void *connection_handler(void *_args) {
 
     close(sock);
 
+    rk_sema_wait(sem);
     first = deleteFromQueue(first, number);
     rk_sema_post(sem);
 
