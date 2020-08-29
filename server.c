@@ -11,6 +11,11 @@
 #include "alloc.h"
 
 /**
+ * Семафор для работы с очередью
+ */
+struct rk_sema *sem;
+
+/**
  * Первый элемент очереди
  */
 struct queue *first = NULL;
@@ -26,6 +31,9 @@ struct args {
 // The thread function
 void *connection_handler(void *);
 
+// Test queue
+void testQueue();
+
 int main(int argc, char *argv[]) {
     // Check program's arguments
     if (argc < 2) {
@@ -36,24 +44,7 @@ int main(int argc, char *argv[]) {
     sem = c_calloc(1, rk_sema_size());
     rk_sema_init(sem, 1);
 
-/*
-    first = addToQueue(first, 1);
-    first = addToQueue(first, 2);
-    first = addToQueue(first, 3);
-    first = addToQueue(first, 4);
-    printQueue(first);
-    first = deleteFromQueue(first, 2);
-    printQueue(first);
-    first = deleteFromQueue(first, 1);
-    printQueue(first);
-    first = deleteFromQueue(first, 4);
-    printQueue(first);
-    first = deleteFromQueue(first, 3);
-    printQueue(first);
-    first = addToQueue(first, 5);
-    printQueue(first);
-    return 0;
-*/
+    // testQueue();
 
     // Vars
     int socket_desc, client_sock, c;
@@ -233,4 +224,32 @@ void *connection_handler(void *_args) {
         puts("I Disconnect Client");
 
     return 0;
+}
+
+/**
+ * Тестирует очередь
+ */
+void testQueue() {
+    first = addToQueue(first, 1);
+    first = addToQueue(first, 2);
+    first = addToQueue(first, 3);
+    first = addToQueue(first, 4);
+    printQueue(first);
+
+    first = deleteFromQueue(first, 2);
+    printQueue(first);
+
+    first = deleteFromQueue(first, 1);
+    printQueue(first);
+
+    first = deleteFromQueue(first, 4);
+    printQueue(first);
+
+    first = deleteFromQueue(first, 3);
+    printQueue(first);
+
+    first = addToQueue(first, 5);
+    printQueue(first);
+
+    exit(0);
 }

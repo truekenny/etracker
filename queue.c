@@ -3,13 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include "queue.h"
-#include "sem.h"
 #include "alloc.h"
-
-/**
- * Семафор для работы с очередью
- */
-struct rk_sema *sem;
 
 /**
  * Очередь
@@ -93,11 +87,13 @@ char *printQueue(struct queue *first) {
     sprintf(line, "Total malloc: %d\n"
                   "Total calloc: %d\n"
                   "Total *alloc: %d\n"
-                  "Total free: %d\n",
+                  "Total free: %d\n"
+                  "Total *alloc - free: %d\n",
             countChanges->countMalloc,
             countChanges->countCalloc,
             countChanges->countMalloc + countChanges->countCalloc,
-            countChanges->countFree);
+            countChanges->countFree,
+            countChanges->countMalloc + countChanges->countCalloc - countChanges->countFree);
     strcat(result, line);
 
     puts("End of print");
@@ -119,10 +115,14 @@ struct queue *deleteFromQueue(struct queue *first, int n) {
     struct queue *next = first;
     struct queue *previous = NULL;
 
+    _Bool hasDelete = 0;
+
     while (next != NULL) {
         printf("  Delete %d: n = %d\n", n, next->n);
 
         if (next->n == n) {
+            hasDelete = 1;
+
             printf("  Delete %d: next->n == n\n", n);
             if (previous == NULL) {
                 printf("  Delete %d: Previous is null\n", n);
@@ -146,6 +146,12 @@ struct queue *deleteFromQueue(struct queue *first, int n) {
     }
 
     printf("End of delete %d\n", n);
+
+    if(!hasDelete) {
+        printf("ERROR: Can not delete n = %d\n", n);
+
+        exit(1);
+    }
 
     return first;
 }
