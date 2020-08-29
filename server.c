@@ -254,10 +254,16 @@ void setTimeout(int socket) {
     }
 }
 
+/**
+ * Разбор URI строки
+ * @param message
+ */
 void parseUri(char *message) {
     printf("Uri:\n");
-    char param[20] = {0}, value[20] = {0};
+    char param[PARAM_VALUE_SIZE + 1] = {0}, value[PARAM_VALUE_SIZE + 1] = {0};
     int status = PATH;
+    int len;
+
     for (int i = 5; i < strlen(message); i++) {
         char current = message[i];
         if (current == ' ') {
@@ -285,11 +291,11 @@ void parseUri(char *message) {
 
             continue;
         }
-        if (status == PARAM) {
-            param[strlen(param)] = current;
+        if (status == PARAM && (len = strlen(param)) < PARAM_VALUE_SIZE) {
+            param[len] = current;
         }
-        if (status == VALUE) {
-            value[strlen(value)] = current;
+        if (status == VALUE && (len = strlen(value)) < PARAM_VALUE_SIZE) {
+            value[len] = current;
         }
     }
     printf(".\n");
