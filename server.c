@@ -13,7 +13,7 @@
 /**
  * Семафор для работы с очередью
  */
-struct rk_sema *sem;
+struct rk_sema sem;
 
 /**
  * Первый элемент очереди
@@ -41,8 +41,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    sem = c_calloc(1, rk_sema_size());
-    rk_sema_init(sem, 1);
+    rk_sema_init(&sem, 1);
 
     // testQueue();
 
@@ -149,9 +148,9 @@ void *connection_handler(void *_args) {
 
     c_free(_args);
 
-    rk_sema_wait(sem);
+    rk_sema_wait(&sem);
     first = addToQueue(first, number);
-    rk_sema_post(sem);
+    rk_sema_post(&sem);
 
     printf("Handler: sock:%d number:%d\n", sock, number);
 
@@ -181,9 +180,9 @@ void *connection_handler(void *_args) {
             if (strstr(message, "\r\n\r\n") != NULL) {
                 printf("Message complete\n");
 
-                rk_sema_wait(sem);
+                rk_sema_wait(&sem);
                 char *data = printQueue(first);
-                rk_sema_post(sem);
+                rk_sema_post(&sem);
                 int lenData = strlen(data);
 
                 sprintf(resultMessage,
@@ -210,9 +209,9 @@ void *connection_handler(void *_args) {
 
     close(sock);
 
-    rk_sema_wait(sem);
+    rk_sema_wait(&sem);
     first = deleteFromQueue(first, number);
-    rk_sema_post(sem);
+    rk_sema_post(&sem);
 
     printf("Recv bytes: %d\n", n);
 

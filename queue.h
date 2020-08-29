@@ -2,11 +2,6 @@
 #define SC6_QUEUE_H
 
 /**
- * Семафор для работы с очередью
- */
-struct rk_sema *sem;
-
-/**
  * Структура элемента очереди
  */
 struct queue;

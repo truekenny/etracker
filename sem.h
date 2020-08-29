@@ -1,10 +1,22 @@
 #ifndef SC6_SEM_H
 #define SC6_SEM_H
 
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+#else
+#include <semaphore.h>
+#endif
+
 /**
  * Структура семафора
  */
-struct rk_sema;
+struct rk_sema {
+#ifdef __APPLE__
+    dispatch_semaphore_t    sem;
+#else
+    sem_t sem;
+#endif
+};
 
 /**
  * Размер структуры
