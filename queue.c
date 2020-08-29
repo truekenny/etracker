@@ -1,13 +1,10 @@
-//
-// Created by Kenny on 29.08.20.
-//
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "queue.h"
 #include "sem.h"
+#include "alloc.h"
 
 /**
  * Семафор для работы с очередью
@@ -43,7 +40,7 @@ void addToQueue(struct queue *first, int n) {
     printf("Start to add n = %d\n", n);
     if (first == NULL) {
         printf("  Add %d: First is null\n", n);
-        first = calloc(1, sizeof(struct queue));
+        first = c_calloc(1, sizeof(struct queue));
 
         first->n = n;
         first->t_time = time(NULL);
@@ -56,7 +53,7 @@ void addToQueue(struct queue *first, int n) {
             printf("  Add %d: Next->n = %d\n", n, next->n);
         }
 
-        struct queue *last = calloc(1, sizeof(struct queue));
+        struct queue *last = c_calloc(1, sizeof(struct queue));
         last->n = n;
         last->t_time = time(NULL);
         next->q = last;
@@ -78,7 +75,7 @@ char *printQueue(struct queue *first) {
     char *result, line[20000];
     long int t_time = time(NULL);
 
-    result = calloc(sizeof(char), 20000);
+    result = c_calloc(sizeof(char), 20000);
     sprintf(line, "%.24s - now\n", ctime(&t_time));
     strcat(result, line);
 
@@ -93,6 +90,15 @@ char *printQueue(struct queue *first) {
     }
 
     sprintf(line, "Max concurrency connection: %d\n", maxQueueLength);
+    strcat(result, line);
+
+    struct c_countChanges *countChanges = c_result();
+    sprintf(line, "Total malloc: %d\n"
+                  "Total calloc: %d\n"
+                  "Total free: %d\n",
+                  countChanges->countMalloc,
+                  countChanges->countCalloc,
+                  countChanges->countFree);
     strcat(result, line);
 
     puts("End of print");
@@ -126,14 +132,14 @@ void deleteFromQueue(struct queue *first, int n) {
                 printf("  Delete %d: Previous is null\n", n);
 
                 first = next->q;
-                free(next);
+                c_free(next);
 
                 break;
             } else {
                 printf("  Delete %d: Previous n = %d\n", n, previous->n);
 
                 previous->q = next->q;
-                free(next);
+                c_free(next);
 
                 break;
             }

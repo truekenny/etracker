@@ -8,6 +8,7 @@
 #include <time.h>
 #include "queue.h"
 #include "sem.h"
+#include "alloc.h"
 
 /**
  * Первый элемент очереди
@@ -97,7 +98,7 @@ int main(int argc, char *argv[]) {
     puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
 
-    sem = calloc(1, rk_sema_size());
+    sem = c_calloc(1, rk_sema_size());
     rk_sema_init(sem, 1);
 
     while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t * ) & c))) {
@@ -111,7 +112,7 @@ int main(int argc, char *argv[]) {
 
         pthread_t sniffer_thread;
 
-        struct args *_args = (struct args *) malloc(sizeof(struct args));
+        struct args *_args = (struct args *) c_malloc(sizeof(struct args));
         _args->sock = client_sock;
         _args->number = ++number;
 
@@ -155,7 +156,7 @@ void *connection_handler(void *_args) {
     int sock = ((struct args *) _args)->sock;
     int number = ((struct args *) _args)->number;
 
-    free(_args);
+    c_free(_args);
 
     addToQueue(first, number);
 
@@ -199,7 +200,7 @@ void *connection_handler(void *_args) {
                         lenData, data);
                 send(sock, resultMessage, strlen(resultMessage), 0);
                 memset(message, 0, sizeof(message));
-                free(data);
+                c_free(data);
 
                 break;
             }

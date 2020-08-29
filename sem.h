@@ -1,7 +1,3 @@
-//
-// Created by Kenny on 29.08.20.
-//
-
 #ifndef SC6_SEM_H
 #define SC6_SEM_H
 

@@ -1,7 +1,3 @@
-//
-// Created by Kenny on 29.08.20.
-//
-
 #ifndef SC6_QUEUE_H
 #define SC6_QUEUE_H
 

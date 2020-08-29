@@ -1,7 +1,3 @@
-//
-// Created by Kenny on 29.08.20.
-//
-
 #include <stdint.h>
 #include <stdio.h>
 #include "sem.h"
