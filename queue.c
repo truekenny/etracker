@@ -5,6 +5,10 @@
 #include "queue.h"
 #include "alloc.h"
 
+#define MAX_LINE_LENGTH 1000
+#define MAX_RESULT_LENGTH 19000
+#define MAX_END_RESULT_LENGTH 1000
+
 /**
  * Очередь
  */
@@ -63,10 +67,10 @@ struct queue *addToQueue(struct queue *first, int n) {
 char *printQueue(struct queue *first) {
     puts("Start printing…");
 
-    char *result, line[20000];
+    char *result, line[MAX_LINE_LENGTH];
     long int t_time = time(NULL);
 
-    result = c_calloc(sizeof(char), 20000);
+    result = c_calloc(sizeof(char), MAX_RESULT_LENGTH);
     sprintf(line, "%.24s - now\n", ctime(&t_time));
     strcat(result, line);
 
@@ -75,20 +79,26 @@ char *printQueue(struct queue *first) {
         printf("  Print: n = %d\n", next->n);
 
         sprintf(line, "%.24s - %d\n", ctime(&next->t_time), next->n);
+        if (strlen(result) + strlen(line) > MAX_RESULT_LENGTH - MAX_END_RESULT_LENGTH) {
+            printf("Error: Result too long: n = %d\n", next->n);
+
+            exit(1);
+            // return result;
+        }
         strcat(result, line);
 
         next = next->q;
     }
 
-    sprintf(line, "Max concurrency connection: %d\n", maxQueueLength);
-    strcat(result, line);
-
+    // End of result
     struct c_countChanges *countChanges = c_result();
-    sprintf(line, "Total malloc: %d\n"
+    sprintf(line, "Max concurrency connection: %d\n"
+                  "Total malloc: %d\n"
                   "Total calloc: %d\n"
                   "Total *alloc: %d\n"
                   "Total free: %d\n"
                   "Total *alloc - free: %d\n",
+            maxQueueLength,
             countChanges->countMalloc,
             countChanges->countCalloc,
             countChanges->countMalloc + countChanges->countCalloc,
@@ -147,7 +157,7 @@ struct queue *deleteFromQueue(struct queue *first, int n) {
 
     printf("End of delete %d\n", n);
 
-    if(!hasDelete) {
+    if (!hasDelete) {
         printf("ERROR: Can not delete n = %d\n", n);
 
         exit(1);

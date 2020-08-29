@@ -16,6 +16,9 @@
 #define PARAM_VALUE_SIZE 20
 #define TIMEOUT_SOCKET 60
 #define SOCKET_QUEUE_LENGTH 150
+#define READ_ONE_LENGTH 2000
+#define MAX_MESSAGE_LENGTH 20000
+#define MAX_RESULT_LENGTH 20000
 
 /**
  * Семафор для работы с очередью
@@ -159,11 +162,12 @@ void *connection_handler(void *_args) {
 
     int n;
     _Bool isHttp = 0;
-    char message[2000] = {0};
-    char client_message[2000], resultMessage[20000];
+    char message[MAX_MESSAGE_LENGTH] = {0};
+    char client_message[READ_ONE_LENGTH + 1] = {0};
+    char resultMessage[MAX_RESULT_LENGTH] = {0};
 
     while (memset(client_message, 0, sizeof(client_message))
-           && (n = recv(sock, client_message, 2000, 0)) > 0) {
+           && (n = recv(sock, client_message, READ_ONE_LENGTH, 0)) > 0) {
         printf("> %s", client_message);
 
         if (startsWith("stop", client_message)) {
@@ -177,6 +181,11 @@ void *connection_handler(void *_args) {
         }
 
         if (isHttp) {
+            if (strlen(message) + strlen(client_message) > MAX_MESSAGE_LENGTH) {
+                printf("Message too long\n");
+                break;
+            }
+
             strcat(message, client_message);
             printf("message = %s", message);
 
