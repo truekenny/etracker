@@ -7,6 +7,8 @@
 
 struct rk_sema;
 
+int rk_sema_size();
+
 void rk_sema_init(struct rk_sema *s, uint32_t value);
 
 void rk_sema_wait(struct rk_sema *s);

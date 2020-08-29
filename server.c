@@ -93,9 +93,9 @@ int main(int argc, char *argv[]) {
     c = sizeof(struct sockaddr_in);
 
     // sem = calloc(1, sizeof(struct rk_sema));
-    printf("Size of sizeof(sem) = %lu", sizeof(sem));
-    // printf("Size of sizeof(*sem) = %lu", sizeof(*sem));
-    sem = calloc(1, sizeof(sem));
+    // printf("Size of sizeof(sem) = %lu\n", sizeof(sem));
+    // printf("rk_sema_size = %d\n", rk_sema_size());
+    sem = calloc(1, rk_sema_size());
     rk_sema_init(sem, 1);
 
     while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t * ) & c))) {

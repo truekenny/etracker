@@ -22,12 +22,14 @@ struct rk_sema {
     char str[200];
 };
 
+int rk_sema_size() {
+    return sizeof(struct rk_sema);
+}
 
 void rk_sema_init(struct rk_sema *s, uint32_t value) {
-    printf("123\n");
-    printf("sizeof struck = %lu\n", sizeof(struct rk_sema));
-    printf("sizeof s = %lu\n", sizeof(s));
-    printf("sizeof *s = %lu\n", sizeof(*s));
+    // printf("sizeof struck = %lu\n", sizeof(struct rk_sema));
+    // printf("sizeof s = %lu\n", sizeof(s));
+    // printf("sizeof *s = %lu\n", sizeof(*s));
 #ifdef __APPLE__
     dispatch_semaphore_t *sem = &s->sem;
 
