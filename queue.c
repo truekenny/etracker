@@ -3,6 +3,9 @@
 //
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include "queue.h"
 
 /**
@@ -30,7 +33,7 @@ int maxQueueLength = 0,
  * @param n
  */
 void addToQueue(int n) {
-    rk_sema_wait(sem);
+    // rk_sema_wait(sem);
 
     if(maxQueueLength < ++currentQueueLength)
         maxQueueLength = currentQueueLength;
@@ -58,14 +61,14 @@ void addToQueue(int n) {
     }
     printf("End of add n = %d\n", n);
 
-    rk_sema_post(sem);
+    // rk_sema_post(sem);
 }
 
 /**
  * Распечатка очереди
  */
 char *printQueue() {
-    rk_sema_wait(sem);
+    // rk_sema_wait(sem);
 
     puts("Start printing…");
 
@@ -91,7 +94,7 @@ char *printQueue() {
 
     puts("End of print");
 
-    rk_sema_post(sem);
+    // rk_sema_post(sem);
 
     return result;
 }
@@ -101,7 +104,7 @@ char *printQueue() {
  * @param n
  */
 void deleteFromQueue(int n) {
-    rk_sema_wait(sem);
+    // rk_sema_wait(sem);
 
     currentQueueLength--;
 
@@ -138,5 +141,5 @@ void deleteFromQueue(int n) {
 
     printf("End of delete %d\n", n);
 
-    rk_sema_post(sem);
+    // rk_sema_post(sem);
 }
