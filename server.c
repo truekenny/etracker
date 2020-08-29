@@ -191,7 +191,11 @@ void *connection_handler(void *_args) {
                 int lenData = strlen(data);
 
                 sprintf(resultMessage,
-                        "HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:%d\r\n\r\n%s",
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Type: text/plain; charset=UTF-8\r\n"
+                        "Content-Length:%d\r\n"
+                        "\r\n"
+                        "%s",
                         lenData, data);
                 send(sock, resultMessage, strlen(resultMessage), 0);
                 memset(message, 0, sizeof(message));
