@@ -5,7 +5,7 @@ all:
 	gcc client.c -o client.o
 server:
 	rm -rf server.o.dSYM
-	gcc -pthread server.c -o server.o
+	gcc -pthread server.c queue.c -o server.o
 client:
 	rm -rf client.o.dSYM
 	gcc client.c -o client.o
