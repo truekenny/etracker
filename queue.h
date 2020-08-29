@@ -15,8 +15,9 @@ struct queue;
  * Добавляет элемент в очередь
  * @param first
  * @param n
+ * @return Ссылка на первый элемент
  */
-void addToQueue(struct queue *first, int n);
+struct queue * addToQueue(struct queue *first, int n);
 
 /**
  * Распечатка очереди
@@ -28,7 +29,8 @@ char *printQueue(struct queue *first);
  * Удаление элемента из очереди
  * @param first
  * @param n
+ * @return Ссылка на первый элемент
  */
-void deleteFromQueue(struct queue *first, int n);
+struct queue * deleteFromQueue(struct queue *first, int n);
 
 #endif //SC6_QUEUE_H

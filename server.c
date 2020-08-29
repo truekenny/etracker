@@ -33,24 +33,38 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    sem = c_calloc(1, rk_sema_size());
+    rk_sema_init(sem, 1);
+
 /*
-    addToQueue(1);
-    addToQueue(2);
-    addToQueue(3);
-    addToQueue(4);
-    printQueue();
-    deleteFromQueue(2);
-    printQueue();
-    deleteFromQueue(1);
-    printQueue();
-    deleteFromQueue(4);
-    printQueue();
-    deleteFromQueue(3);
-    printQueue();
-    addToQueue(5);
-    printQueue();
+
+    first = addToQueue(first, 1);
+    rk_sema_post(sem);
+    first = addToQueue(first, 2);
+    rk_sema_post(sem);
+    first = addToQueue(first, 3);
+    rk_sema_post(sem);
+    first = addToQueue(first, 4);
+    rk_sema_post(sem);
+    printQueue(first);
+    first = deleteFromQueue(first, 2);
+    rk_sema_post(sem);
+    printQueue(first);
+    first = deleteFromQueue(first, 1);
+    rk_sema_post(sem);
+    printQueue(first);
+    first = deleteFromQueue(first, 4);
+    rk_sema_post(sem);
+    printQueue(first);
+    first = deleteFromQueue(first, 3);
+    rk_sema_post(sem);
+    printQueue(first);
+    first = addToQueue(first, 5);
+    rk_sema_post(sem);
+    printQueue(first);
     return 0;
-*/
+
+ */
 
     // Vars
     int socket_desc, client_sock, c;
@@ -97,9 +111,6 @@ int main(int argc, char *argv[]) {
     // Accept and incoming connection
     puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
-
-    sem = c_calloc(1, rk_sema_size());
-    rk_sema_init(sem, 1);
 
     while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t * ) & c))) {
         if (client_sock == -1) {
@@ -158,7 +169,8 @@ void *connection_handler(void *_args) {
 
     c_free(_args);
 
-    addToQueue(first, number);
+    first = addToQueue(first, number);
+    rk_sema_post(sem);
 
     printf("Handler: sock:%d number:%d\n", sock, number);
 
@@ -215,7 +227,8 @@ void *connection_handler(void *_args) {
 
     close(sock);
 
-    deleteFromQueue(first, number);
+    first = deleteFromQueue(first, number);
+    rk_sema_post(sem);
 
     printf("Recv bytes: %d\n", n);
 

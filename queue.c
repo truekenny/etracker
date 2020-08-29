@@ -30,8 +30,9 @@ int maxQueueLength = 0,
  * Добавляет элемент в очередь
  * @param first
  * @param n
+ * @return Ссылка на первый элемент
  */
-void addToQueue(struct queue *first, int n) {
+struct queue *addToQueue(struct queue *first, int n) {
     rk_sema_wait(sem);
 
     if (maxQueueLength < ++currentQueueLength)
@@ -60,7 +61,7 @@ void addToQueue(struct queue *first, int n) {
     }
     printf("End of add n = %d\n", n);
 
-    rk_sema_post(sem);
+    return first;
 }
 
 /**
@@ -112,8 +113,9 @@ char *printQueue(struct queue *first) {
  * Удаление элемента из очереди
  * @param first
  * @param n
+ * @return Ссылка на первывй элемент
  */
-void deleteFromQueue(struct queue *first, int n) {
+struct queue *deleteFromQueue(struct queue *first, int n) {
     rk_sema_wait(sem);
 
     currentQueueLength--;
@@ -151,5 +153,5 @@ void deleteFromQueue(struct queue *first, int n) {
 
     printf("End of delete %d\n", n);
 
-    rk_sema_post(sem);
+    return first;
 }
