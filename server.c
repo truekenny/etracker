@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <time.h>
-#include <signal.h>
 #include "queue.h"
 #include "sem.h"
 #include "alloc.h"
@@ -53,10 +52,6 @@ void setTimeout(int socket);
 
 void parseUri(char *message);
 
-void intHandler(int dummy);
-
-void closeSocket();
-
 // Test queue
 __unused void testQueue();
 
@@ -66,8 +61,6 @@ int main(int argc, char *argv[]) {
         printf("./server port\n");
         return 1;
     }
-
-    signal(SIGINT, intHandler);
 
     rk_sema_init(&sem, 1);
 
@@ -91,6 +84,10 @@ int main(int argc, char *argv[]) {
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
     server.sin_port = htons(atoi(argv[1]));
+
+    // Reuse
+    int option = 1;
+    setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 
     // Timeout
     setTimeout(socket_desc);
@@ -364,14 +361,4 @@ __unused void testQueue() {
     printQueue(first);
 
     exit(0);
-}
-
-void intHandler(int dummy) {
-    printf("Ctrl-C\n");
-    closeSocket();
-}
-
-void closeSocket(){
-    close(socket_desc);
-    socket_desc = 0;
 }
