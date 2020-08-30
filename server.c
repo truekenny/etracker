@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <time.h>
+#include <signal.h>
 #include "queue.h"
 #include "sem.h"
 #include "alloc.h"
@@ -20,6 +21,12 @@
 #define READ_ONE_LENGTH 2000
 #define MAX_MESSAGE_LENGTH 20000
 #define MAX_RESULT_LENGTH 20000
+
+
+/**
+ * Сокет сервера
+ */
+int socket_desc;
 
 /**
  * Семафор для работы с очередью
@@ -46,6 +53,10 @@ void setTimeout(int socket);
 
 void parseUri(char *message);
 
+void intHandler(int dummy);
+
+void closeSocket();
+
 // Test queue
 __unused void testQueue();
 
@@ -56,12 +67,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    signal(SIGINT, intHandler);
+
     rk_sema_init(&sem, 1);
 
     // testQueue();
 
     // Vars
-    int socket_desc, client_sock, c;
+    int client_sock, c;
     struct sockaddr_in server, client;
     char ip[100];
     uint16_t port;
@@ -99,7 +112,11 @@ int main(int argc, char *argv[]) {
     while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t *) &c))) {
         if (client_sock == -1) {
             perror("Accept failed"); // Timeout
-            continue;
+
+            if (socket_desc)
+                continue;
+            else
+                break;
         }
 
         setTimeout(client_sock);
@@ -134,14 +151,14 @@ int main(int argc, char *argv[]) {
 }
 
 /**
- * @param char* pre
- * @param char* str
+ * @param char* start
+ * @param char* string
  * @return _Bool Строка str начинается на pre
  */
-_Bool startsWith(const char *pre, const char *str) {
-    size_t lenpre = strlen(pre),
-            lenstr = strlen(str);
-    return lenstr < lenpre ? 0 : memcmp(pre, str, lenpre) == 0;
+_Bool startsWith(const char *start, const char *string) {
+    size_t lenPre = strlen(start),
+            lenStr = strlen(string);
+    return lenStr < lenPre ? 0 : memcmp(start, string, lenPre) == 0;
 }
 
 /**
@@ -347,4 +364,14 @@ __unused void testQueue() {
     printQueue(first);
 
     exit(0);
+}
+
+void intHandler(int dummy) {
+    printf("Ctrl-C\n");
+    closeSocket();
+}
+
+void closeSocket(){
+    close(socket_desc);
+    socket_desc = 0;
 }
