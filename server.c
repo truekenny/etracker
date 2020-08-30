@@ -13,6 +13,7 @@
 #define PATH 0
 #define PARAM 1
 #define VALUE 2
+#define PATH_SIZE 50
 #define PARAM_VALUE_SIZE 20
 #define TIMEOUT_SOCKET 60
 #define SOCKET_QUEUE_LENGTH 150
@@ -269,21 +270,28 @@ void setTimeout(int socket) {
  */
 void parseUri(char *message) {
     printf("Uri:\n");
-    char param[PARAM_VALUE_SIZE + 1] = {0}, value[PARAM_VALUE_SIZE + 1] = {0};
+    char path[PATH_SIZE + 1] = {0},
+            param[PARAM_VALUE_SIZE + 1] = {0},
+            value[PARAM_VALUE_SIZE + 1] = {0};
     int status = PATH;
     int len;
 
-    for (int i = 5; i < strlen(message); i++) {
+    for (int i = strlen("GET "); i < strlen(message); i++) {
         char current = message[i];
         if (current == ' ') {
-            printf("Param:%s=Value:%s.\n", param, value);
+            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value), strcmp(param, "123456"));
             break;
         }
         printf("%d=%c\n", i, current);
         if (status == PATH) {
             if (current == '?') {
                 status = PARAM;
+                printf("Path:%s, %lu\n", path, strlen(path));
                 printf("Status=PARAM\n");
+                continue;
+            }
+            if ((len = strlen(path)) < PATH_SIZE) {
+                path[len] = current;
             }
             continue;
         }
@@ -293,7 +301,7 @@ void parseUri(char *message) {
             continue;
         }
         if (current == '&') {
-            printf("Param:%s=Value:%s.\n", param, value);
+            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value), strcmp(param, "123456"));
 
             memset(&param, 0, PARAM_VALUE_SIZE);
             status = PARAM;
