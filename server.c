@@ -87,7 +87,8 @@ int main(int argc, char *argv[]) {
     setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 
     // Timeout
-    setTimeout(socket_desc);
+    // ? Возможно здесь это не надо
+    // setTimeout(socket_desc);
 
     // Bind
     if (bind(socket_desc, (struct sockaddr *) &server, sizeof(server)) < 0) {
@@ -223,6 +224,7 @@ void *connection_handler(void *_args) {
                 c_free(data);
 
                 break;
+                // continue; // Connection: Keep-Alive
             }
 
             continue;
