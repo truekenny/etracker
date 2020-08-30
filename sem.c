@@ -1,14 +1,5 @@
 #include <stdint.h>
-#include <stdio.h>
 #include "sem.h"
-
-/**
- * Размер структуры семафора
- * @return
- */
-int rk_sema_size() {
-    return sizeof(struct rk_sema);
-}
 
 /**
  * Инициализация семафора

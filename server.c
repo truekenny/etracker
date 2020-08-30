@@ -47,7 +47,7 @@ void setTimeout(int socket);
 void parseUri(char *message);
 
 // Test queue
-void testQueue();
+__unused void testQueue();
 
 int main(int argc, char *argv[]) {
     // Check program's arguments
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     int socket_desc, client_sock, c;
     struct sockaddr_in server, client;
     char ip[100];
-    int port;
+    uint16_t port;
     int number = 0;
 
     // Create socket
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
 
-    while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t * ) & c))) {
+    while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t *) &c))) {
         if (client_sock == -1) {
             perror("Accept failed"); // Timeout
             continue;
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
         setTimeout(client_sock);
 
         inet_ntop(AF_INET, &(client.sin_addr), ip, INET_ADDRSTRLEN);
-        port = (int) ntohs(client.sin_port);
+        port = ntohs(client.sin_port);
 
         pthread_t sniffer_thread;
 
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 
         printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, client_sock, number);
 
-        if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) _args) < 0) {
+        if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) _args) != 0) {
             perror("Could not create thread");
 
             return 1;
@@ -198,12 +198,12 @@ void *connection_handler(void *_args) {
                 rk_sema_wait(&sem);
                 char *data = printQueue(first);
                 rk_sema_post(&sem);
-                int lenData = strlen(data);
+                size_t lenData = strlen(data);
 
                 sprintf(resultMessage,
                         "HTTP/1.1 200 OK\r\n"
                         "Content-Type: text/plain; charset=UTF-8\r\n"
-                        "Content-Length:%d\r\n"
+                        "Content-Length: %zu\r\n"
                         "\r\n"
                         "%s",
                         lenData, data);
@@ -274,12 +274,13 @@ void parseUri(char *message) {
             param[PARAM_VALUE_SIZE + 1] = {0},
             value[PARAM_VALUE_SIZE + 1] = {0};
     int status = PATH;
-    int len;
+    size_t len;
 
     for (int i = strlen("GET "); i < strlen(message); i++) {
         char current = message[i];
         if (current == ' ') {
-            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value), strcmp(param, "123456"));
+            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
+                   strcmp(param, "123456"));
             break;
         }
         printf("%d=%c\n", i, current);
@@ -301,7 +302,8 @@ void parseUri(char *message) {
             continue;
         }
         if (current == '&') {
-            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value), strcmp(param, "123456"));
+            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
+                   strcmp(param, "123456"));
 
             memset(&param, 0, PARAM_VALUE_SIZE);
             status = PARAM;
@@ -322,7 +324,7 @@ void parseUri(char *message) {
 /**
  * Тестирует очередь
  */
-void testQueue() {
+__unused void testQueue() {
     first = addToQueue(first, 1);
     first = addToQueue(first, 2);
     first = addToQueue(first, 3);

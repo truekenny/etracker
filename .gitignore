@@ -1,3 +1,5 @@
 *.o
 .idea
 cmake-build-debug
+client.o.dSYM
+server.o.dSYM

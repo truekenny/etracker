@@ -19,12 +19,6 @@ struct rk_sema {
 };
 
 /**
- * Размер структуры
- * @return
- */
-int rk_sema_size();
-
-/**
  * Инициализация семафора
  * @param s
  * @param value
