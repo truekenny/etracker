@@ -22,7 +22,7 @@
 /**
  * Сокет сервера
  */
-int socket_desc;
+int serverSocket;
 
 /**
  * Семафор для работы с очередью
@@ -64,70 +64,70 @@ int main(int argc, char *argv[]) {
     // testQueue();
 
     // Vars
-    int client_sock, c;
-    struct sockaddr_in server, client;
+    int clientSocket, sockAddrSize;
+    struct sockaddr_in serverAddr, clientAddr;
     char ip[100];
     uint16_t port;
-    int number = 0;
+    int threadCounter = 0;
 
     // Create socket
-    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_desc == -1)
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket == -1)
         printf("Could not create socket");
 
     puts("Socket created");
 
     //Prepare the sockaddr_in structure
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(atoi(argv[1]));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_port = htons(atoi(argv[1]));
 
     // Reuse
     int option = 1;
-    setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 
     // Timeout
     // ? Возможно здесь это не надо
     // setTimeout(socket_desc);
 
     // Bind
-    if (bind(socket_desc, (struct sockaddr *) &server, sizeof(server)) < 0) {
+    if (bind(serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
         perror("Bind failed");
         return 1;
     }
     puts("Bind done");
 
     // Listen
-    listen(socket_desc, SOCKET_QUEUE_LENGTH);
+    listen(serverSocket, SOCKET_QUEUE_LENGTH);
 
     // Accept and incoming connection
     puts("Waiting for incoming connections...");
-    c = sizeof(struct sockaddr_in);
+    sockAddrSize = sizeof(struct sockaddr_in);
 
-    while ((client_sock = accept(socket_desc, (struct sockaddr *) &client, (socklen_t *) &c))) {
-        if (client_sock == -1) {
+    while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, (socklen_t *) &sockAddrSize))) {
+        if (clientSocket == -1) {
             perror("Accept failed"); // Timeout
 
-            if (socket_desc)
+            if (serverSocket)
                 continue;
             else
                 break;
         }
 
-        setTimeout(client_sock);
+        setTimeout(clientSocket);
 
-        inet_ntop(AF_INET, &(client.sin_addr), ip, INET_ADDRSTRLEN);
-        port = ntohs(client.sin_port);
+        inet_ntop(AF_INET, &(clientAddr.sin_addr), ip, INET_ADDRSTRLEN);
+        port = ntohs(clientAddr.sin_port);
 
         pthread_t sniffer_thread;
 
-        struct args *_args = (struct args *) c_malloc(sizeof(struct args));
-        _args->sock = client_sock;
-        _args->number = ++number;
+        struct args *threadArguments = (struct args *) c_malloc(sizeof(struct args));
+        threadArguments->sock = clientSocket;
+        threadArguments->number = ++threadCounter;
 
-        printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, client_sock, number);
+        printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
 
-        if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) _args) != 0) {
+        if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) threadArguments) != 0) {
             perror("Could not create thread");
 
             return 1;
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
         puts("Handler assigned");
     }
 
-    if (client_sock < 0) {
+    if (clientSocket < 0) {
         perror("Accept failed (end)");
 
         return 1;
@@ -158,54 +158,54 @@ _Bool startsWith(const char *start, const char *string) {
 
 /**
  * This will handle connection for each client
- * @param socket_desc
+ * @param _args
  * @return
  */
 void *connection_handler(void *_args) {
-    int sock = ((struct args *) _args)->sock;
-    int number = ((struct args *) _args)->number;
+    int threadSocket = ((struct args *) _args)->sock;
+    int threadNumber = ((struct args *) _args)->number;
 
     c_free(_args);
 
     rk_sema_wait(&sem);
-    first = addToQueue(first, number);
+    first = addToQueue(first, threadNumber);
     rk_sema_post(&sem);
 
-    printf("Handler: sock:%d number:%d\n", sock, number);
+    printf("Handler: sock:%d number:%d\n", threadSocket, threadNumber);
 
-    int n;
+    int receiveBytesCount;
     _Bool isHttp = 0;
-    char message[MAX_MESSAGE_LENGTH] = {0};
-    char client_message[READ_ONE_LENGTH + 1] = {0};
+    char fullMessage[MAX_MESSAGE_LENGTH] = {0};
+    char readOneMessage[READ_ONE_LENGTH + 1] = {0};
     char resultMessage[MAX_RESULT_LENGTH] = {0};
 
-    while (memset(client_message, 0, sizeof(client_message))
-           && (n = recv(sock, client_message, READ_ONE_LENGTH, 0)) > 0) {
-        printf("> %s", client_message);
+    while (memset(readOneMessage, 0, sizeof(readOneMessage))
+           && (receiveBytesCount = recv(threadSocket, readOneMessage, READ_ONE_LENGTH, 0)) > 0) {
+        printf("> %s", readOneMessage);
 
-        if (startsWith("stop", client_message)) {
+        if (startsWith("stop", readOneMessage)) {
             printf("STOP\n");
             exit(0);
         }
 
-        if (!isHttp && startsWith("GET ", client_message)) {
+        if (!isHttp && startsWith("GET ", readOneMessage)) {
             isHttp = 1;
             printf("isHttp = 1\n");
         }
 
         if (isHttp) {
-            if (strlen(message) + strlen(client_message) > MAX_MESSAGE_LENGTH) {
+            if (strlen(fullMessage) + strlen(readOneMessage) > MAX_MESSAGE_LENGTH) {
                 printf("Message too long\n");
                 break;
             }
 
-            strcat(message, client_message);
-            printf("message = %s", message);
+            strcat(fullMessage, readOneMessage);
+            printf("message = %s", fullMessage);
 
-            if (strstr(message, "\r\n\r\n") != NULL) {
+            if (strstr(fullMessage, "\r\n\r\n") != NULL) {
                 printf("Message complete\n");
 
-                parseUri(message);
+                parseUri(fullMessage);
 
                 rk_sema_wait(&sem);
                 char *data = printQueue(first);
@@ -219,8 +219,8 @@ void *connection_handler(void *_args) {
                         "\r\n"
                         "%s",
                         lenData, data);
-                send(sock, resultMessage, strlen(resultMessage), 0);
-                memset(message, 0, sizeof(message));
+                send(threadSocket, resultMessage, strlen(resultMessage), 0);
+                memset(fullMessage, 0, sizeof(fullMessage));
                 c_free(data);
 
                 break;
@@ -231,21 +231,21 @@ void *connection_handler(void *_args) {
         }
 
 
-        send(sock, client_message, n, 0);
-        printf("< %s", client_message);
+        send(threadSocket, readOneMessage, receiveBytesCount, 0);
+        printf("< %s", readOneMessage);
     }
 
-    close(sock);
+    close(threadSocket);
 
     rk_sema_wait(&sem);
-    first = deleteFromQueue(first, number);
+    first = deleteFromQueue(first, threadNumber);
     rk_sema_post(&sem);
 
-    printf("Recv bytes: %d\n", n);
+    printf("Recv bytes: %d\n", receiveBytesCount);
 
-    if (n == 0)
+    if (receiveBytesCount == 0)
         puts("Client Disconnected");
-    else if (n < 0)
+    else if (receiveBytesCount < 0)
         perror("Recv failed");
     else
         puts("I Disconnect Client");
