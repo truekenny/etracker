@@ -35,27 +35,12 @@ struct queue *addToQueue(struct queue *first, int n) {
         maxQueueLength = currentQueueLength;
 
     printf("Start to add n = %d\n", n);
-    if (first == NULL) {
-        printf("  Add %d: First is null\n", n);
-        first = c_calloc(1, sizeof(struct queue));
+    struct queue *newFirst = c_calloc(1, sizeof(struct queue));
+    newFirst->n = n;
+    newFirst->t_time = time(NULL);
+    newFirst->q = first;
 
-        first->n = n;
-        first->t_time = time(NULL);
-
-    } else {
-
-        struct queue *next = first;
-        printf("  Add %d: Next->n = %d\n", n, next->n);
-        while (next->q != NULL) {
-            next = next->q;
-            printf("  Add %d: Next->n = %d\n", n, next->n);
-        }
-
-        struct queue *last = c_calloc(1, sizeof(struct queue));
-        last->n = n;
-        last->t_time = time(NULL);
-        next->q = last;
-    }
+    first = newFirst;
     printf("End of add n = %d\n", n);
 
     return first;
