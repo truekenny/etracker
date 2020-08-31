@@ -35,7 +35,8 @@ void parseUri(struct query *query, char *message) {
             value[PARAM_VALUE_LENGTH + 1] = {0};
     int status = URI_PATH;
     size_t len;
-
+    short percent = 0;
+    char percentChars[3] = {0};
 
     for (int i = strlen("GET "); i < strlen(message); i++) {
         char current = message[i];
@@ -77,6 +78,23 @@ void parseUri(struct query *query, char *message) {
             param[len] = current;
         }
         if (status == QUERY_VALUE && (len = strlen(value)) < PARAM_VALUE_LENGTH) {
+            if (current == '%') {
+                percent = 1;
+                continue;
+            }
+            if (percent == 1) {
+                percentChars[0] = current; // '4';
+                percent = 2;
+                continue;
+            }
+            if (percent == 2) {
+                percent = 0;
+                percentChars[1] = current; // '1';
+
+                // 0x41 => 'A'
+                current = (char) strtol(percentChars, NULL, 16);
+            }
+
             value[len] = current;
         }
     }
@@ -99,6 +117,8 @@ void getParam(struct query *query, char *param, char *value) {
             query->event = EVENT_ID_STARTED;
         } else if (!strcmp(value, EVENT_STRING_STOPPED)) {
             query->event = EVENT_ID_STOPPED;
+        } else if (!strcmp(value, EVENT_STRING_PAUSED)) {
+            query->event = EVENT_ID_PAUSED;
         }
     } else if (!strcmp(param, "port")) {
         query->port = atoi(value);
