@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include "uri.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #define URI_PATH 0
 #define QUERY_PARAM 1
 #define QUERY_VALUE 2
 #define PATH_LENGTH 50
-#define PARAM_VALUE_LENGTH 20
+#define FIRST_LINE_LENGTH 1000
 
 void getParam(struct query *query, char *param, char *value);
 
@@ -16,13 +16,18 @@ void getParam(struct query *query, char *param, char *value);
  * Разбор URI строки
  * @param message
  */
-void parseUri(struct query*query, char *message) {
+void parseUri(struct query *query, char *message) {
     DEBUG && printf("Uri:\n");
 
     if (DEBUG) {
-        char firstLine[200] = {0};
-        memcpy(firstLine, message, strchr(message, '\r') - message);
-        printf("%s\n", firstLine);
+        char firstLine[FIRST_LINE_LENGTH] = {0};
+
+        int len = strchr(message, '\r') - message;
+        if (len < FIRST_LINE_LENGTH) {
+            memcpy(firstLine, message, len);
+            printf("%s\n", firstLine);
+        } else
+            printf("Len of first line = %d\n", len);
     }
 
     char path[PATH_LENGTH + 1] = {0},
@@ -86,7 +91,7 @@ void parseUri(struct query*query, char *message) {
  */
 void getParam(struct query *query, char *param, char *value) {
     if (!strcmp(param, "info_hash")) {
-        memcpy(query->info_hash, value, 20);
+        memcpy(query->info_hash, value, PARAM_VALUE_LENGTH);
     } else if (!strcmp(param, "event")) {
         if (!strcmp(value, EVENT_STRING_COMPLETED)) {
             query->event = EVENT_ID_COMPLETED;
@@ -95,13 +100,13 @@ void getParam(struct query *query, char *param, char *value) {
         } else if (!strcmp(value, EVENT_STRING_STOPPED)) {
             query->event = EVENT_ID_STOPPED;
         }
-    } else if(!strcmp(param, "port")) {
+    } else if (!strcmp(param, "port")) {
         query->port = atoi(value);
-    }else if (!strcmp(param, "peer_id")) {
-        memcpy(query->peer_id, value, 20);
-    }else if (!strcmp(param, "compact")) {
+    } else if (!strcmp(param, "peer_id")) {
+        memcpy(query->peer_id, value, PARAM_VALUE_LENGTH);
+    } else if (!strcmp(param, "compact")) {
         query->compact = 1;
-    }else if (!strcmp(param, "no_peer_id")) {
+    } else if (!strcmp(param, "no_peer_id")) {
         query->no_peer_id = 1;
     }
 }

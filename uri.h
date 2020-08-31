@@ -7,13 +7,14 @@
 #define EVENT_STRING_STARTED   "started"
 #define EVENT_STRING_COMPLETED "completed"
 #define EVENT_STRING_STOPPED   "stopped"
+#define PARAM_VALUE_LENGTH 20
 
 struct query {
-    char info_hash[20];
+    char info_hash[PARAM_VALUE_LENGTH];
     unsigned char event;
     unsigned short port;
     unsigned int ip;
-    char peer_id[20];
+    char peer_id[PARAM_VALUE_LENGTH];
     _Bool compact;
     _Bool no_peer_id;
 };
