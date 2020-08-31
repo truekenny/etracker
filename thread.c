@@ -26,6 +26,7 @@ void *connection_handler(void *_args) {
     int threadNumber = ((struct args *) _args)->number;
     struct rk_sema sem = *((struct args *) _args)->sem;
     struct queue **first = ((struct args *) _args)->first;
+    in_addr_t ip = ((struct args *) _args)->ip;
     DEBUG && printf("first = %p\n", first);
     DEBUG && printf("*first = %p\n", *first);
 
@@ -69,7 +70,10 @@ void *connection_handler(void *_args) {
             if (strstr(fullMessage, "\r\n\r\n") != NULL) {
                 DEBUG && printf("Message complete\n");
 
-                parseUri(fullMessage);
+                struct query query = {0};
+                query.ip = ntohl(ip);
+
+                parseUri(&query, fullMessage);
 
                 rk_sema_wait(&sem);
                 char *data = printQueue(*first);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "uri.h"
 
 #define DEBUG 0
@@ -9,11 +10,13 @@
 #define PATH_LENGTH 50
 #define PARAM_VALUE_LENGTH 20
 
+void getParam(struct query *query, char *param, char *value);
+
 /**
  * Разбор URI строки
  * @param message
  */
-void parseUri(char *message) {
+void parseUri(struct query*query, char *message) {
     DEBUG && printf("Uri:\n");
 
     if (DEBUG) {
@@ -28,11 +31,13 @@ void parseUri(char *message) {
     int status = URI_PATH;
     size_t len;
 
+
     for (int i = strlen("GET "); i < strlen(message); i++) {
         char current = message[i];
         if (current == ' ') {
             DEBUG && printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
                             strcmp(param, "123456"));
+            getParam(query, &param[0], &value[0]);
             break;
         }
         DEBUG && printf("%d=%c\n", i, current);
@@ -56,6 +61,7 @@ void parseUri(char *message) {
         if (current == '&') {
             DEBUG && printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
                             strcmp(param, "123456"));
+            getParam(query, &param[0], &value[0]);
 
             memset(&param, 0, PARAM_VALUE_LENGTH);
             status = QUERY_PARAM;
@@ -70,4 +76,32 @@ void parseUri(char *message) {
         }
     }
     DEBUG && printf(".\n");
+}
+
+/**
+ * Заполняет структуру параметрами запроса
+ * @param query
+ * @param param
+ * @param value
+ */
+void getParam(struct query *query, char *param, char *value) {
+    if (!strcmp(param, "info_hash")) {
+        memcpy(query->info_hash, value, 20);
+    } else if (!strcmp(param, "event")) {
+        if (!strcmp(value, EVENT_STRING_COMPLETED)) {
+            query->event = EVENT_ID_COMPLETED;
+        } else if (!strcmp(value, EVENT_STRING_STARTED)) {
+            query->event = EVENT_ID_STARTED;
+        } else if (!strcmp(value, EVENT_STRING_STOPPED)) {
+            query->event = EVENT_ID_STOPPED;
+        }
+    } else if(!strcmp(param, "port")) {
+        query->port = atoi(value);
+    }else if (!strcmp(param, "peer_id")) {
+        memcpy(query->peer_id, value, 20);
+    }else if (!strcmp(param, "compact")) {
+        query->compact = 1;
+    }else if (!strcmp(param, "no_peer_id")) {
+        query->no_peer_id = 1;
+    }
 }

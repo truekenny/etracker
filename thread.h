@@ -9,6 +9,7 @@ struct args {
     int number;
     struct rk_sema *sem;
     struct queue **first;
+    in_addr_t ip;
 };
 
 void *connection_handler(void *);

@@ -100,6 +100,7 @@ int main(int argc, char *argv[]) {
         threadArguments->number = ++threadCounter;
         threadArguments->sem = &sem;
         threadArguments->first = &first;
+        threadArguments->ip = clientAddr.sin_addr.s_addr;
 
         DEBUG && printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
 
