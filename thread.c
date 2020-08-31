@@ -11,6 +11,7 @@
 #include "uri.h"
 
 #define DEBUG 0
+#define KEEP_ALIVE 1
 #define READ_LENGTH 2000
 #define MESSAGE_LENGTH 20000
 #define THREAD_RESULT_LENGTH 20000
@@ -83,11 +84,15 @@ void *connection_handler(void *_args) {
                         "%s",
                         lenData, data);
                 send(threadSocket, resultMessage, strlen(resultMessage), 0);
+
+                int canKeepAlive = (strstr(fullMessage, "HTTP/1.1") != NULL);
                 memset(fullMessage, 0, sizeof(fullMessage));
                 c_free(data);
 
-                break;
-                // continue; // Connection: Keep-Alive
+                if (KEEP_ALIVE && canKeepAlive)
+                    continue; // Connection: Keep-Alive
+                else
+                    break;
             }
 
             continue;
