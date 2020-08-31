@@ -75,6 +75,8 @@ void *connection_handler(void *_args) {
 
                 parseUri(&query, fullMessage);
 
+                // char *peers =
+
                 rk_sema_wait(&sem);
                 char *data = printQueue(*first);
                 rk_sema_post(&sem);

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "uri.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define URI_PATH 0
 #define QUERY_PARAM 1
 #define QUERY_VALUE 2
@@ -93,6 +93,8 @@ void parseUri(struct query *query, char *message) {
 
                 // 0x41 => 'A'
                 current = (char) strtol(percentChars, NULL, 16);
+
+                DEBUG && printf("Decode %s -> %c\n", percentChars, current);
             }
 
             value[len] = current;
