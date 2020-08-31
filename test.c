@@ -3,17 +3,16 @@
 
 struct queue *first = NULL;
 
-void testQueue();
+int testQueue();
 
 int main() {
-    testQueue();
-    printf("Test complete\n");
+    printf("testQueue complete = %d\n", testQueue());
 }
 
 /**
  * Тестирует очередь
  */
-void testQueue() {
+int testQueue() {
     first = addToQueue(first, 1);
     first = addToQueue(first, 2);
     first = addToQueue(first, 3);
@@ -34,4 +33,6 @@ void testQueue() {
 
     first = addToQueue(first, 5);
     printQueue(first);
+
+    return 1;
 }

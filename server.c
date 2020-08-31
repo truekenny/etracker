@@ -51,8 +51,6 @@ int main(int argc, char *argv[]) {
 
     rk_sema_init(&sem, 1);
 
-    // testQueue();
-
     // Vars
     int clientSocket, sockAddrSize;
     struct sockaddr_in serverAddr, clientAddr;
@@ -62,9 +60,11 @@ int main(int argc, char *argv[]) {
 
     // Create socket
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket == -1)
-        printf("Could not create socket");
+    if (serverSocket == -1) {
+        perror("Could not create socket");
 
+        return 1;
+    }
     puts("Socket created");
 
     //Prepare the sockaddr_in structure
@@ -74,7 +74,11 @@ int main(int argc, char *argv[]) {
 
     // Reuse
     int option = 1;
-    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) < 0) {
+        perror("SO_REUSEADDR failed");
+
+        return 1;
+    }
 
     // Timeout
     // ? Возможно здесь это не надо
@@ -83,6 +87,7 @@ int main(int argc, char *argv[]) {
     // Bind
     if (bind(serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
         perror("Bind failed");
+
         return 1;
     }
     puts("Bind done");
