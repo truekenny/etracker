@@ -6,13 +6,10 @@
 #include "queue.h"
 #include "sem.h"
 #include "alloc.h"
+#include "socket.h"
+#include "uri.h"
+#include "string.h"
 
-#define PATH 0
-#define PARAM 1
-#define VALUE 2
-#define PATH_SIZE 50
-#define PARAM_VALUE_SIZE 20
-#define TIMEOUT_SOCKET 60
 #define SOCKET_QUEUE_LENGTH 150
 #define READ_ONE_LENGTH 2000
 #define MAX_MESSAGE_LENGTH 20000
@@ -44,13 +41,6 @@ struct args {
 
 // The thread function
 void *connection_handler(void *);
-
-void setTimeout(int socket);
-
-void parseUri(char *message);
-
-// Test queue
-__unused void testQueue();
 
 int main(int argc, char *argv[]) {
     // Check program's arguments
@@ -143,17 +133,6 @@ int main(int argc, char *argv[]) {
     }
 
     return 0;
-}
-
-/**
- * @param char* start
- * @param char* string
- * @return _Bool Строка str начинается на pre
- */
-_Bool startsWith(const char *start, const char *string) {
-    size_t lenPre = strlen(start),
-            lenStr = strlen(string);
-    return lenStr < lenPre ? 0 : memcmp(start, string, lenPre) == 0;
 }
 
 /**
@@ -255,109 +234,4 @@ void *connection_handler(void *_args) {
     }
 
     return 0;
-}
-
-/**
- * Установка Timeout
- * @param socket
- */
-void setTimeout(int socket) {
-    struct timeval tv;
-    tv.tv_sec = TIMEOUT_SOCKET;
-    tv.tv_usec = 0;
-    if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *) &tv, sizeof tv) < 0) {
-        printf("Could not set SO_RCVTIMEO socket\n");
-
-        exit(1);
-    }
-    if (setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (const char *) &tv, sizeof tv) < 0) {
-        printf("Could not set SO_SNDTIMEO socket\n");
-
-        exit(1);
-    }
-}
-
-/**
- * Разбор URI строки
- * @param message
- */
-void parseUri(char *message) {
-    printf("Uri:\n");
-    char path[PATH_SIZE + 1] = {0},
-            param[PARAM_VALUE_SIZE + 1] = {0},
-            value[PARAM_VALUE_SIZE + 1] = {0};
-    int status = PATH;
-    size_t len;
-
-    for (int i = strlen("GET "); i < strlen(message); i++) {
-        char current = message[i];
-        if (current == ' ') {
-            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
-                   strcmp(param, "123456"));
-            break;
-        }
-        printf("%d=%c\n", i, current);
-        if (status == PATH) {
-            if (current == '?') {
-                status = PARAM;
-                printf("Path:%s, %lu\n", path, strlen(path));
-                printf("Status=PARAM\n");
-                continue;
-            }
-            if ((len = strlen(path)) < PATH_SIZE) {
-                path[len] = current;
-            }
-            continue;
-        }
-        if (current == '=') {
-            memset(&value, 0, PARAM_VALUE_SIZE);
-            status = VALUE;
-            continue;
-        }
-        if (current == '&') {
-            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
-                   strcmp(param, "123456"));
-
-            memset(&param, 0, PARAM_VALUE_SIZE);
-            status = PARAM;
-
-            continue;
-        }
-        if (status == PARAM && (len = strlen(param)) < PARAM_VALUE_SIZE) {
-            param[len] = current;
-        }
-        if (status == VALUE && (len = strlen(value)) < PARAM_VALUE_SIZE) {
-            value[len] = current;
-        }
-    }
-    printf(".\n");
-
-}
-
-/**
- * Тестирует очередь
- */
-__unused void testQueue() {
-    first = addToQueue(first, 1);
-    first = addToQueue(first, 2);
-    first = addToQueue(first, 3);
-    first = addToQueue(first, 4);
-    printQueue(first);
-
-    first = deleteFromQueue(first, 2);
-    printQueue(first);
-
-    first = deleteFromQueue(first, 1);
-    printQueue(first);
-
-    first = deleteFromQueue(first, 4);
-    printQueue(first);
-
-    first = deleteFromQueue(first, 3);
-    printQueue(first);
-
-    first = addToQueue(first, 5);
-    printQueue(first);
-
-    exit(0);
 }
