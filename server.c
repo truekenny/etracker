@@ -16,12 +16,6 @@
 #define MAX_MESSAGE_LENGTH 20000
 #define MAX_RESULT_LENGTH 20000
 
-
-/**
- * Первый элемент очереди
- */
-struct queue *first = NULL;
-
 /**
  * Аргументы переданные в поток
  */
@@ -29,6 +23,7 @@ struct args {
     int sock;
     int number;
     struct rk_sema *sem;
+    struct queue **first;
 };
 
 // The thread function
@@ -48,6 +43,7 @@ int main(int argc, char *argv[]) {
     char ip[16]; // IP адрес 123.123.123.123\0
     uint16_t port; // Порт клиентской стороны
     int threadCounter = 0; // Счётчик подключений
+    struct queue *first = NULL; // Очередь
 
     // Инициализация семафора
     rk_sema_init(&sem, 1);
@@ -93,6 +89,9 @@ int main(int argc, char *argv[]) {
     puts("Waiting for incoming connections...");
     sockAddrSize = sizeof(struct sockaddr_in);
 
+    printf("first = %p\n", first);
+    printf("&first = %p\n", &first);
+
     while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, (socklen_t *) &sockAddrSize))) {
         if (clientSocket == -1) {
             perror("Accept failed"); // Timeout
@@ -114,6 +113,7 @@ int main(int argc, char *argv[]) {
         threadArguments->sock = clientSocket;
         threadArguments->number = ++threadCounter;
         threadArguments->sem = &sem;
+        threadArguments->first = &first;
 
         printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
 
@@ -144,11 +144,14 @@ void *connection_handler(void *_args) {
     int threadSocket = ((struct args *) _args)->sock;
     int threadNumber = ((struct args *) _args)->number;
     struct rk_sema sem = *((struct args *) _args)->sem;
+    struct queue **first = ((struct args *) _args)->first;
+    printf("first = %p\n", first);
+    printf("*first = %p\n", *first);
 
     c_free(_args);
 
     rk_sema_wait(&sem);
-    first = addToQueue(first, threadNumber);
+    *first = addToQueue(*first, threadNumber);
     rk_sema_post(&sem);
 
     printf("Handler: sock:%d number:%d\n", threadSocket, threadNumber);
@@ -188,7 +191,7 @@ void *connection_handler(void *_args) {
                 parseUri(fullMessage);
 
                 rk_sema_wait(&sem);
-                char *data = printQueue(first);
+                char *data = printQueue(*first);
                 rk_sema_post(&sem);
                 size_t lenData = strlen(data);
 
@@ -218,7 +221,7 @@ void *connection_handler(void *_args) {
     close(threadSocket);
 
     rk_sema_wait(&sem);
-    first = deleteFromQueue(first, threadNumber);
+    *first = deleteFromQueue(*first, threadNumber);
     rk_sema_post(&sem);
 
     printf("Recv bytes: %d\n", receiveBytesCount);

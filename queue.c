@@ -45,6 +45,7 @@ struct queue *addToQueue(struct queue *first, int n) {
     } else {
 
         struct queue *next = first;
+        printf("  Add %d: Next->n = %d\n", n, next->n);
         while (next->q != NULL) {
             next = next->q;
             printf("  Add %d: Next->n = %d\n", n, next->n);
