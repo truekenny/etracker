@@ -18,16 +18,6 @@
 
 
 /**
- * Сокет сервера
- */
-int serverSocket;
-
-/**
- * Семафор для работы с очередью
- */
-struct rk_sema sem;
-
-/**
  * Первый элемент очереди
  */
 struct queue *first = NULL;
@@ -38,6 +28,7 @@ struct queue *first = NULL;
 struct args {
     int sock;
     int number;
+    struct rk_sema *sem;
 };
 
 // The thread function
@@ -50,14 +41,16 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    rk_sema_init(&sem, 1);
-
     // Vars
-    int clientSocket, sockAddrSize;
+    struct rk_sema sem; // Семафор
+    int serverSocket, clientSocket, sockAddrSize; // Сокеты и размер структуры sockaddr_in
     struct sockaddr_in serverAddr, clientAddr;
-    char ip[100];
-    uint16_t port;
-    int threadCounter = 0;
+    char ip[16]; // IP адрес 123.123.123.123\0
+    uint16_t port; // Порт клиентской стороны
+    int threadCounter = 0; // Счётчик подключений
+
+    // Инициализация семафора
+    rk_sema_init(&sem, 1);
 
     // Create socket
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -120,6 +113,7 @@ int main(int argc, char *argv[]) {
         struct args *threadArguments = (struct args *) c_malloc(sizeof(struct args));
         threadArguments->sock = clientSocket;
         threadArguments->number = ++threadCounter;
+        threadArguments->sem = &sem;
 
         printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
 
@@ -149,6 +143,7 @@ int main(int argc, char *argv[]) {
 void *connection_handler(void *_args) {
     int threadSocket = ((struct args *) _args)->sock;
     int threadNumber = ((struct args *) _args)->number;
+    struct rk_sema sem = *((struct args *) _args)->sem;
 
     c_free(_args);
 
