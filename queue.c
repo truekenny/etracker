@@ -6,9 +6,9 @@
 #include "alloc.h"
 
 #define DEBUG 0
-#define MAX_LINE_LENGTH 1000
-#define MAX_RESULT_LENGTH 19000
-#define MAX_END_RESULT_LENGTH 1000
+#define LINE_LENGTH 1000
+#define RESULT_LENGTH 19000
+#define ENDING_LENGTH 1000
 
 /**
  * Очередь
@@ -55,10 +55,10 @@ char *printQueue(struct queue *first) {
     if (DEBUG)
         printf("Start printing…\n");
 
-    char *result, line[MAX_LINE_LENGTH];
+    char *result, line[LINE_LENGTH];
     long int t_time = time(NULL);
 
-    result = c_calloc(sizeof(char), MAX_RESULT_LENGTH);
+    result = c_calloc(sizeof(char), RESULT_LENGTH);
     sprintf(line, "%.24s - now\n", ctime(&t_time));
     strcat(result, line);
 
@@ -67,7 +67,7 @@ char *printQueue(struct queue *first) {
         DEBUG && printf("  Print: n = %d\n", next->n);
 
         sprintf(line, "%.24s - %d\n", ctime(&next->t_time), next->n);
-        if (strlen(result) + strlen(line) > MAX_RESULT_LENGTH - MAX_END_RESULT_LENGTH) {
+        if (strlen(result) + strlen(line) > RESULT_LENGTH - ENDING_LENGTH) {
             DEBUG && printf("Error: Result too long: n = %d\n", next->n);
 
             exit(1);
