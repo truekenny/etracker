@@ -26,6 +26,12 @@ int maxQueueLength = 0,
         currentQueueLength = 0;
 
 /**
+ * @param first
+ * @return Размер очереди
+ */
+int getSize(struct queue *first);
+
+/**
  * Добавляет элемент в очередь
  * @param first
  * @param n
@@ -43,6 +49,8 @@ struct queue *addToQueue(struct queue *first, int n) {
 
     first = newFirst;
     DEBUG && printf("End of add n = %d\n", n);
+
+    DEBUG && printf("Size after delete: %d\n", getSize(first));
 
     return first;
 }
@@ -151,5 +159,23 @@ struct queue *deleteFromQueue(struct queue *first, int n) {
         exit(1);
     }
 
+    DEBUG && printf("Size after delete: %d\n", getSize(first));
+
     return first;
+}
+
+/**
+ * @param first
+ * @return Размер очереди
+ */
+int getSize(struct queue *first) {
+    int size = 0;
+
+    struct queue *next = first;
+    while (next != NULL) {
+        next = next->q;
+        size++;
+    }
+
+    return size;
 }
