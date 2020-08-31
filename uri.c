@@ -2,6 +2,7 @@
 #include <string.h>
 #include "uri.h"
 
+#define DEBUG 0
 #define PATH 0
 #define PARAM 1
 #define VALUE 2
@@ -13,7 +14,14 @@
  * @param message
  */
 void parseUri(char *message) {
-    printf("Uri:\n");
+    DEBUG && printf("Uri:\n");
+
+    if (DEBUG) {
+        char firstLine[200] = {0};
+        memcpy(firstLine, message, strchr(message, '\r') - message);
+        printf("%s\n", firstLine);
+    }
+
     char path[PATH_SIZE + 1] = {0},
             param[PARAM_VALUE_SIZE + 1] = {0},
             value[PARAM_VALUE_SIZE + 1] = {0};
@@ -23,16 +31,16 @@ void parseUri(char *message) {
     for (int i = strlen("GET "); i < strlen(message); i++) {
         char current = message[i];
         if (current == ' ') {
-            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
-                   strcmp(param, "123456"));
+            DEBUG && printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
+                            strcmp(param, "123456"));
             break;
         }
-        printf("%d=%c\n", i, current);
+        DEBUG && printf("%d=%c\n", i, current);
         if (status == PATH) {
             if (current == '?') {
                 status = PARAM;
-                printf("Path:%s, %lu\n", path, strlen(path));
-                printf("Status=PARAM\n");
+                DEBUG && printf("Path:%s, %lu\n", path, strlen(path));
+                DEBUG && printf("Status=PARAM\n");
                 continue;
             }
             if ((len = strlen(path)) < PATH_SIZE) {
@@ -46,8 +54,8 @@ void parseUri(char *message) {
             continue;
         }
         if (current == '&') {
-            printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
-                   strcmp(param, "123456"));
+            DEBUG && printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
+                            strcmp(param, "123456"));
 
             memset(&param, 0, PARAM_VALUE_SIZE);
             status = PARAM;
@@ -61,5 +69,5 @@ void parseUri(char *message) {
             value[len] = current;
         }
     }
-    printf(".\n");
+    DEBUG && printf(".\n");
 }

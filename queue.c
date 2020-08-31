@@ -5,6 +5,7 @@
 #include "queue.h"
 #include "alloc.h"
 
+#define DEBUG 0
 #define MAX_LINE_LENGTH 1000
 #define MAX_RESULT_LENGTH 19000
 #define MAX_END_RESULT_LENGTH 1000
@@ -34,14 +35,14 @@ struct queue *addToQueue(struct queue *first, int n) {
     if (maxQueueLength < ++currentQueueLength)
         maxQueueLength = currentQueueLength;
 
-    printf("Start to add n = %d\n", n);
+    DEBUG && printf("Start to add n = %d\n", n);
     struct queue *newFirst = c_calloc(1, sizeof(struct queue));
     newFirst->n = n;
     newFirst->t_time = time(NULL);
     newFirst->q = first;
 
     first = newFirst;
-    printf("End of add n = %d\n", n);
+    DEBUG && printf("End of add n = %d\n", n);
 
     return first;
 }
@@ -51,7 +52,8 @@ struct queue *addToQueue(struct queue *first, int n) {
  * @param first
  */
 char *printQueue(struct queue *first) {
-    puts("Start printing…");
+    if (DEBUG)
+        printf("Start printing…\n");
 
     char *result, line[MAX_LINE_LENGTH];
     long int t_time = time(NULL);
@@ -62,11 +64,11 @@ char *printQueue(struct queue *first) {
 
     struct queue *next = first;
     while (next != NULL) {
-        printf("  Print: n = %d\n", next->n);
+        DEBUG && printf("  Print: n = %d\n", next->n);
 
         sprintf(line, "%.24s - %d\n", ctime(&next->t_time), next->n);
         if (strlen(result) + strlen(line) > MAX_RESULT_LENGTH - MAX_END_RESULT_LENGTH) {
-            printf("Error: Result too long: n = %d\n", next->n);
+            DEBUG && printf("Error: Result too long: n = %d\n", next->n);
 
             exit(1);
             // return result;
@@ -92,7 +94,7 @@ char *printQueue(struct queue *first) {
             countChanges->countMalloc + countChanges->countCalloc - countChanges->countFree);
     strcat(result, line);
 
-    puts("End of print");
+    DEBUG && puts("End of print");
 
     return result;
 }
@@ -106,7 +108,7 @@ char *printQueue(struct queue *first) {
 struct queue *deleteFromQueue(struct queue *first, int n) {
     currentQueueLength--;
 
-    printf("Delete: n = %d\n", n);
+    DEBUG && printf("Delete: n = %d\n", n);
 
     struct queue *next = first;
     struct queue *previous = NULL;
@@ -114,21 +116,21 @@ struct queue *deleteFromQueue(struct queue *first, int n) {
     _Bool hasDelete = 0;
 
     while (next != NULL) {
-        printf("  Delete %d: n = %d\n", n, next->n);
+        DEBUG && printf("  Delete %d: n = %d\n", n, next->n);
 
         if (next->n == n) {
             hasDelete = 1;
 
-            printf("  Delete %d: next->n == n\n", n);
+            DEBUG && printf("  Delete %d: next->n == n\n", n);
             if (previous == NULL) {
-                printf("  Delete %d: Previous is null\n", n);
+                DEBUG && printf("  Delete %d: Previous is null\n", n);
 
                 first = next->q;
                 c_free(next);
 
                 break;
             } else {
-                printf("  Delete %d: Previous n = %d\n", n, previous->n);
+                DEBUG && printf("  Delete %d: Previous n = %d\n", n, previous->n);
 
                 previous->q = next->q;
                 c_free(next);
@@ -141,7 +143,7 @@ struct queue *deleteFromQueue(struct queue *first, int n) {
         next = next->q;
     }
 
-    printf("End of delete %d\n", n);
+    DEBUG && printf("End of delete %d\n", n);
 
     if (!hasDelete) {
         printf("ERROR: Can not delete n = %d\n", n);

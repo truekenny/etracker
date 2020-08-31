@@ -11,6 +11,7 @@
 #include "uri.h"
 #include "string.h"
 
+#define DEBUG 0
 #define SOCKET_QUEUE_LENGTH 150
 #define READ_ONE_LENGTH 2000
 #define MAX_MESSAGE_LENGTH 20000
@@ -55,7 +56,7 @@ int main(int argc, char *argv[]) {
 
         return 1;
     }
-    puts("Socket created");
+    DEBUG && puts("Socket created");
 
     //Prepare the sockaddr_in structure
     serverAddr.sin_family = AF_INET;
@@ -80,7 +81,7 @@ int main(int argc, char *argv[]) {
 
         return 1;
     }
-    puts("Bind done");
+    DEBUG && puts("Bind done");
 
     // Listen
     listen(serverSocket, SOCKET_QUEUE_LENGTH);
@@ -89,8 +90,8 @@ int main(int argc, char *argv[]) {
     puts("Waiting for incoming connections...");
     sockAddrSize = sizeof(struct sockaddr_in);
 
-    printf("first = %p\n", first);
-    printf("&first = %p\n", &first);
+    DEBUG && printf("first = %p\n", first);
+    DEBUG && printf("&first = %p\n", &first);
 
     while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, (socklen_t *) &sockAddrSize))) {
         if (clientSocket == -1) {
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
         threadArguments->sem = &sem;
         threadArguments->first = &first;
 
-        printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
+        DEBUG && printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
 
         if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) threadArguments) != 0) {
             perror("Could not create thread");
@@ -123,7 +124,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        puts("Handler assigned");
+        DEBUG && puts("Handler assigned");
     }
 
     if (clientSocket < 0) {
@@ -145,8 +146,8 @@ void *connection_handler(void *_args) {
     int threadNumber = ((struct args *) _args)->number;
     struct rk_sema sem = *((struct args *) _args)->sem;
     struct queue **first = ((struct args *) _args)->first;
-    printf("first = %p\n", first);
-    printf("*first = %p\n", *first);
+    DEBUG && printf("first = %p\n", first);
+    DEBUG && printf("*first = %p\n", *first);
 
     c_free(_args);
 
@@ -154,7 +155,7 @@ void *connection_handler(void *_args) {
     *first = addToQueue(*first, threadNumber);
     rk_sema_post(&sem);
 
-    printf("Handler: sock:%d number:%d\n", threadSocket, threadNumber);
+    DEBUG && printf("Handler: sock:%d number:%d\n", threadSocket, threadNumber);
 
     int receiveBytesCount;
     _Bool isHttp = 0;
@@ -164,7 +165,7 @@ void *connection_handler(void *_args) {
 
     while (memset(readOneMessage, 0, sizeof(readOneMessage))
            && (receiveBytesCount = recv(threadSocket, readOneMessage, READ_ONE_LENGTH, 0)) > 0) {
-        printf("> %s", readOneMessage);
+        DEBUG && printf("> %s", readOneMessage);
 
         if (startsWith("stop", readOneMessage)) {
             printf("STOP\n");
@@ -173,7 +174,7 @@ void *connection_handler(void *_args) {
 
         if (!isHttp && startsWith("GET ", readOneMessage)) {
             isHttp = 1;
-            printf("isHttp = 1\n");
+            DEBUG && printf("isHttp = 1\n");
         }
 
         if (isHttp) {
@@ -183,10 +184,10 @@ void *connection_handler(void *_args) {
             }
 
             strcat(fullMessage, readOneMessage);
-            printf("message = %s", fullMessage);
+            DEBUG && printf("message = %s", fullMessage);
 
             if (strstr(fullMessage, "\r\n\r\n") != NULL) {
-                printf("Message complete\n");
+                DEBUG && printf("Message complete\n");
 
                 parseUri(fullMessage);
 
@@ -215,7 +216,7 @@ void *connection_handler(void *_args) {
 
 
         send(threadSocket, readOneMessage, receiveBytesCount, 0);
-        printf("< %s", readOneMessage);
+        DEBUG && printf("< %s", readOneMessage);
     }
 
     close(threadSocket);
@@ -224,17 +225,17 @@ void *connection_handler(void *_args) {
     *first = deleteFromQueue(*first, threadNumber);
     rk_sema_post(&sem);
 
-    printf("Recv bytes: %d\n", receiveBytesCount);
+    DEBUG && printf("Recv bytes: %d\n", receiveBytesCount);
 
     if (receiveBytesCount == 0)
-        puts("Client Disconnected");
+        DEBUG && puts("Client Disconnected");
     else if (receiveBytesCount < 0)
         perror("Recv failed");
     else
-        puts("I Disconnect Client");
+        DEBUG && puts("I Disconnect Client");
 
     if (pthread_detach(pthread_self()) != 0) {
-        perror("could not detach thread");
+        perror("Could not detach thread");
     }
 
     return 0;
