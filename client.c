@@ -71,6 +71,7 @@ int main(int argc, char *argv[]) {
         }
         printf("< %s", sbuff);
 
+        memset(rbuff, 0, MAX_SIZE);
         if ((n = recv(sock_desc, rbuff, MAX_SIZE, 0)) <= 0) {
             printf("Error %d\n", n);
             break;

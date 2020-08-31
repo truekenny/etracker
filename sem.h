@@ -15,6 +15,7 @@ struct rk_sema {
     dispatch_semaphore_t    sem;
 #else
     sem_t sem;
+    #define uint32_t u_int32_t
 #endif
 };
 

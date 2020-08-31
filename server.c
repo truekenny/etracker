@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <unistd.h>
 #include "queue.h"
 #include "sem.h"
 #include "alloc.h"
