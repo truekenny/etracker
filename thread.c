@@ -106,7 +106,7 @@ void *connection_handler(void *_args) {
                         peer = updatePeer(firstByte, &query);
                         getPeerString(&result, peer, &query);
                         break;
-                }
+                } // End of switch
 
                 if (query.event != 0) {
                     sprintf(resultMessage,
@@ -122,7 +122,7 @@ void *connection_handler(void *_args) {
                     send(threadSocket, resultMessage, resultMessageSize + result.size, 0);
 
                     c_free(result.data);
-                }
+                } // End of query.event != 0
 
                 int canKeepAlive = (strstr(fullMessage, "HTTP/1.1") != NULL);
                 memset(fullMessage, 0, sizeof(fullMessage));
