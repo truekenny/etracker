@@ -62,6 +62,7 @@ void parseUri(struct query *query, char *message) {
         if (current == '=') {
             memset(&value, 0, PARAM_VALUE_LENGTH);
             status = QUERY_VALUE;
+            len = 0;
             continue;
         }
         if (current == '&') {
@@ -77,7 +78,7 @@ void parseUri(struct query *query, char *message) {
         if (status == QUERY_PARAM && (len = strlen(param)) < PARAM_VALUE_LENGTH) {
             param[len] = current;
         }
-        if (status == QUERY_VALUE && (len = strlen(value)) < PARAM_VALUE_LENGTH) {
+        if (status == QUERY_VALUE && len < PARAM_VALUE_LENGTH) {
             if (current == '%') {
                 percent = 1;
                 continue;
@@ -98,6 +99,7 @@ void parseUri(struct query *query, char *message) {
             }
 
             value[len] = current;
+            len++;
         }
     }
     DEBUG && printf(".\n");
