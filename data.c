@@ -1,3 +1,4 @@
+#include <ntsid.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -6,9 +7,53 @@
 #include "data.h"
 #include "alloc.h"
 
-int getPeerSize(struct peer *peer);
+__unused int getPeerSize(struct peer *peer);
 
 void int2ip(char *dest, unsigned int source);
+
+struct peer *deletePeer(struct firstByte *firstByte, struct query *query) {
+    struct torrent *currentTorrent = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
+
+    while (currentTorrent != NULL) {
+        // Торрент нашелся
+        if (memcmp(currentTorrent->hash_info, query->info_hash, 20) == 0) {
+            struct peer *currentPeer = currentTorrent->peer;
+            struct peer *previous = {0};
+
+            while (currentPeer != NULL) {
+                // Пир нашелся
+                if (memcmp(currentPeer->peer_id, query->peer_id, 20) == 0) {
+                    // Пир в списке первый
+                    if (previous == NULL) {
+                        currentTorrent->peer = currentPeer->next;
+                    }
+                        // Пир не первый
+                    else {
+                        previous->next = currentPeer->next;
+                    }
+                    c_free(currentPeer);
+
+                    return currentTorrent->peer;
+                }
+
+                previous = currentPeer;
+                currentPeer = currentPeer->next;
+            }
+
+            // У торрента нет такого пира
+            return currentTorrent->peer;
+        }
+
+        currentTorrent = currentTorrent->next;
+    }
+
+    if (currentTorrent == NULL) {
+        return NULL;
+    }
+
+    // Нет такого торрента
+    return currentTorrent->peer;
+}
 
 struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
     struct torrent *firstTorrent = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
@@ -210,7 +255,7 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
     c_free(peerString.data);
 }
 
-int getPeerSize(struct peer *peer) {
+__unused int getPeerSize(struct peer *peer) {
     struct peer *currentPeer;
     int size = 0;
 

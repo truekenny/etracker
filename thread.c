@@ -101,6 +101,8 @@ void *connection_handler(void *_args) {
 
                         break;
                     case EVENT_ID_STOPPED:
+                        peer = deletePeer(firstByte, &query);
+                        getPeerString(&result, peer, &query);
                         break;
                     default:
                         peer = updatePeer(firstByte, &query);
