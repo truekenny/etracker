@@ -74,35 +74,58 @@ void *connection_handler(void *_args) {
                 DEBUG && printf("Message complete\n");
 
                 struct query query = {0};
-                query.ip = ntohl(ip);
+                query.ip = ip;
 
                 parseUri(&query, fullMessage);
 
+                struct peer *peer;
+                struct result result = {0};
+
                 switch (query.event) {
+                    case 0:
+                        rk_sema_wait(&sem);
+                        char *data = printQueue(*first);
+                        rk_sema_post(&sem);
+                        size_t lenData = strlen(data);
+
+                        sprintf(resultMessage,
+                                "HTTP/1.1 200 OK\r\n"
+                                "Content-Type: text/plain; charset=UTF-8\r\n"
+                                "Content-Length: %zu\r\n"
+                                "Server: sc6\r\n"
+                                "\r\n"
+                                "%s",
+                                lenData, data);
+                        c_free(data);
+                        send(threadSocket, resultMessage, strlen(resultMessage), 0);
+
+                        break;
                     case EVENT_ID_STOPPED:
                         break;
                     default:
-                        updatePeer(firstByte, &query);
+                        peer = updatePeer(firstByte, &query);
+                        getPeerString(&result, peer, &query);
                         break;
                 }
 
-                rk_sema_wait(&sem);
-                char *data = printQueue(*first);
-                rk_sema_post(&sem);
-                size_t lenData = strlen(data);
+                if (query.event != 0) {
+                    sprintf(resultMessage,
+                            "HTTP/1.1 200 OK\r\n"
+                            "Content-Type: text/plain; charset=UTF-8\r\n"
+                            "Content-Length: %zu\r\n"
+                            "Server: sc6\r\n"
+                            "\r\n",
+                            result.size);
+                    unsigned long resultMessageSize = strlen(resultMessage);
+                    memcpy(&resultMessage[resultMessageSize], result.data, result.size);
 
-                sprintf(resultMessage,
-                        "HTTP/1.1 200 OK\r\n"
-                        "Content-Type: text/plain; charset=UTF-8\r\n"
-                        "Content-Length: %zu\r\n"
-                        "\r\n"
-                        "%s",
-                        lenData, data);
-                send(threadSocket, resultMessage, strlen(resultMessage), 0);
+                    send(threadSocket, resultMessage, resultMessageSize + result.size, 0);
+
+                    c_free(result.data);
+                }
 
                 int canKeepAlive = (strstr(fullMessage, "HTTP/1.1") != NULL);
                 memset(fullMessage, 0, sizeof(fullMessage));
-                c_free(data);
 
                 if (KEEP_ALIVE && canKeepAlive)
                     continue; // Connection: Keep-Alive

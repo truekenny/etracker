@@ -4,6 +4,11 @@
 #include "uri.h"
 #include "sem.h"
 
+struct result {
+    char *data;
+    unsigned long size;
+};
+
 struct peer {
     unsigned short port;
     unsigned int ip;
@@ -29,6 +34,8 @@ struct firstByte {
     struct secondByte secondByte[256];
 };
 
-void updatePeer(struct firstByte *firstByte, struct query *query);
+struct peer *updatePeer(struct firstByte *firstByte, struct query *query);
+
+void getPeerString(struct result *result, struct peer *peer, struct query *query);
 
 #endif //SC6_DATA_H

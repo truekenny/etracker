@@ -125,7 +125,7 @@ void getParam(struct query *query, char *param, char *value) {
             query->event = EVENT_ID_PAUSED;
         }
     } else if (!strcmp(param, "port")) {
-        query->port = atoi(value);
+        query->port = htons(atoi(value));
     } else if (!strcmp(param, "peer_id")) {
         memcpy(query->peer_id, value, PARAM_VALUE_LENGTH);
     } else if (!strcmp(param, "compact")) {
