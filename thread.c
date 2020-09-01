@@ -9,6 +9,7 @@
 #include "queue.h"
 #include "string.h"
 #include "uri.h"
+#include "data.h"
 
 #define DEBUG 0
 #define KEEP_ALIVE 1
@@ -27,6 +28,8 @@ void *connection_handler(void *_args) {
     struct rk_sema sem = *((struct args *) _args)->sem;
     struct queue **first = ((struct args *) _args)->first;
     in_addr_t ip = ((struct args *) _args)->ip;
+    struct firstByte *firstByte = ((struct args *) _args)->firstByte;
+
     DEBUG && printf("first = %p\n", first);
     DEBUG && printf("*first = %p\n", *first);
 
@@ -75,7 +78,13 @@ void *connection_handler(void *_args) {
 
                 parseUri(&query, fullMessage);
 
-                // char *peers =
+                switch (query.event) {
+                    case EVENT_ID_STOPPED:
+                        break;
+                    default:
+                        updatePeer(firstByte, &query);
+                        break;
+                }
 
                 rk_sema_wait(&sem);
                 char *data = printQueue(*first);

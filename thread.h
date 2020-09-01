@@ -1,6 +1,8 @@
 #ifndef SC6_THREAD_H
 #define SC6_THREAD_H
 
+#include "data.h"
+
 /**
  * Аргументы переданные в поток
  */
@@ -10,6 +12,7 @@ struct args {
     struct rk_sema *sem;
     struct queue **first;
     in_addr_t ip;
+    struct firstByte *firstByte;
 };
 
 void *connection_handler(void *);

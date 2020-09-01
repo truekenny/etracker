@@ -11,6 +11,7 @@
 #include "uri.h"
 #include "string.h"
 #include "thread.h"
+#include "data.h"
 
 #define DEBUG 0
 #define SOCKET_QUEUE_LENGTH 150
@@ -30,6 +31,7 @@ int main(int argc, char *argv[]) {
     uint16_t port; // Порт клиентской стороны
     int threadCounter = 0; // Счётчик подключений
     struct queue *first = NULL; // Очередь
+    struct firstByte firstByte = {0};
 
     // Инициализация семафора
     rk_sema_init(&sem, 1);
@@ -101,6 +103,7 @@ int main(int argc, char *argv[]) {
         threadArguments->sem = &sem;
         threadArguments->first = &first;
         threadArguments->ip = clientAddr.sin_addr.s_addr;
+        threadArguments->firstByte = &firstByte;
 
         DEBUG && printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
 
