@@ -50,7 +50,7 @@ struct queue *addToQueue(struct queue *first, int n) {
     first = newFirst;
     DEBUG && printf("End of add n = %d\n", n);
 
-    DEBUG && printf("Size after delete: %d\n", getSize(first));
+    DEBUG && printf("Size after add: %d\n", getSize(first));
 
     return first;
 }
@@ -60,8 +60,9 @@ struct queue *addToQueue(struct queue *first, int n) {
  * @param first
  */
 char *printQueue(struct queue *first) {
-    if (DEBUG)
+    if (DEBUG) {
         printf("Start printing…\n");
+    }
 
     char *result, line[LINE_LENGTH];
     long int t_time = time(NULL);
@@ -118,37 +119,37 @@ struct queue *deleteFromQueue(struct queue *first, int n) {
 
     DEBUG && printf("Delete: n = %d\n", n);
 
-    struct queue *next = first;
-    struct queue *previous = NULL;
-
     _Bool hasDelete = 0;
 
-    while (next != NULL) {
-        DEBUG && printf("  Delete %d: n = %d\n", n, next->n);
+    if (first == NULL) {
+        DEBUG && printf("  Delete %d: first = NULL\n", n);
+    } else if (first->n == n) {
+        DEBUG && printf("  Delete %d: first deleted\n", n);
 
-        if (next->n == n) {
-            hasDelete = 1;
+        hasDelete = 1;
+        first = first->q;
+    } else {
+        struct queue *next = first->q;
+        struct queue *previous = first;
 
-            DEBUG && printf("  Delete %d: next->n == n\n", n);
-            if (previous == NULL) {
-                DEBUG && printf("  Delete %d: Previous is null\n", n);
+        while (next != NULL) {
+            DEBUG && printf("  Delete %d: n = %d\n", n, next->n);
 
-                first = next->q;
-                c_free(next);
-
-                break;
-            } else {
+            if (next->n == n) {
+                DEBUG && printf("  Delete %d: next->n == n\n", n);
                 DEBUG && printf("  Delete %d: Previous n = %d\n", n, previous->n);
+
+                hasDelete = 1;
 
                 previous->q = next->q;
                 c_free(next);
 
                 break;
             }
-        }
 
-        previous = next;
-        next = next->q;
+            previous = next;
+            next = next->q;
+        }
     }
 
     DEBUG && printf("End of delete %d\n", n);
