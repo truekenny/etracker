@@ -127,7 +127,10 @@ struct queue *deleteFromQueue(struct queue *first, int n) {
         DEBUG && printf("  Delete %d: first deleted\n", n);
 
         hasDelete = 1;
+        struct queue *forFree = first;
         first = first->q;
+
+        c_free(forFree);
     } else {
         struct queue *next = first->q;
         struct queue *previous = first;
