@@ -116,7 +116,7 @@ void getParam(struct query *query, char *param, char *value) {
         memcpy(query->info_hash, value, PARAM_VALUE_LENGTH);
 
         // Random peers
-        if(RANDOM_DATA) {
+        if(RANDOM_DATA_INFO_HASH) {
             query->info_hash[0] = (rand() % 256);
             query->info_hash[1] = (rand() % 256);
             query->info_hash[2] = (rand() % 256);
@@ -141,7 +141,7 @@ void getParam(struct query *query, char *param, char *value) {
         memcpy(query->peer_id, value, PARAM_VALUE_LENGTH);
 
         // Random peers
-        if(RANDOM_DATA) {
+        if(RANDOM_DATA_PEER_ID) {
             query->peer_id[0] = (rand() % 256);
             query->peer_id[1] = (rand() % 256);
             query->peer_id[2] = (rand() % 256);

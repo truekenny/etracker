@@ -84,10 +84,12 @@ int main(int argc, char *argv[]) {
     DEBUG && printf("first = %p\n", first);
     DEBUG && printf("&first = %p\n", &first);
 
-    if (INTERVAL < 1000)
+    if (INTERVAL < 100)
         printf("- Interval: %d\n", INTERVAL);
-    if (RANDOM_DATA)
-        printf("- Random data: %d\n", RANDOM_DATA);
+    if (RANDOM_DATA_INFO_HASH)
+        printf("- Random data info_hash: %d\n", RANDOM_DATA_INFO_HASH);
+    if (RANDOM_DATA_PEER_ID)
+        printf("- Random data peer_id: %d\n", RANDOM_DATA_PEER_ID);
 
     while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, (socklen_t *) &sockAddrSize))) {
         if (clientSocket == -1) {
