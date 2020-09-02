@@ -4,6 +4,7 @@
 #include <string.h>
 #include "socket.h"
 
+#define DEBUG 0
 #define TIMEOUT_SOCKET 60
 
 /**
@@ -51,6 +52,7 @@ void sendMessage(int socket, int code, char *message, size_t size) {
             break;
     }
     send(socket, headers, strlen(headers), 0);
+    DEBUG && printf("%s", headers);
 
     if (code != 200) {
         sprintf(body,
@@ -69,16 +71,21 @@ void sendMessage(int socket, int code, char *message, size_t size) {
     memset(headers, 0, sizeof(headers));
     sprintf(headers, "Content-Type: text/plain\r\n"
                          "Content-Length: %zu\r\n"
+                         "Connection: Keep-Alive\r\n"
                          "Server: sc6\r\n"
                          "\r\n",
             size
     );
     send(socket, headers, strlen(headers), 0);
+    DEBUG && printf("%s", headers);
 
     // Body
-    if (code == 200)
+    if (code == 200) {
         send(socket, message, size, 0);
+        DEBUG && printf("%s\n", message);
+    }
     else {
         send(socket, body, strlen(body), 0);
+        DEBUG && printf("%s", body);
     }
 }

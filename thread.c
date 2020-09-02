@@ -176,7 +176,8 @@ void *connection_handler(void *_args) {
                     sendMessage(threadSocket, 404, "Page not found", 14);
                 }
 
-                int canKeepAlive = (strstr(fullMessage, "HTTP/1.1") != NULL);
+                int canKeepAlive = (strstr(fullMessage, "HTTP/1.1") != NULL)
+                                   || (strstr(fullMessage, "Connection: Keep-Alive") != NULL);
                 memset(fullMessage, 0, sizeof(fullMessage));
 
                 if (KEEP_ALIVE && canKeepAlive)

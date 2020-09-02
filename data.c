@@ -10,7 +10,6 @@
 #include "time.h"
 
 #define MAX_PEER_PER_RESULT 50
-#define INTERVAL 1800
 
 int getPeerSize(struct peer *peer);
 
@@ -18,6 +17,7 @@ void int2ip(char *dest, unsigned int source);
 
 void runGarbageCollector(struct firstByte *firstByte) {
     int i, j;
+    int removedPeers = 0, removedTorrents = 0;
     unsigned long now = time(NULL);
     unsigned long limitTime = now - INTERVAL * 2;
 
@@ -46,6 +46,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
                             c_free(currentPeer);
                             currentPeer = previousPeer->next;
                         }
+                        removedPeers++;
 
                         continue;
                     }
@@ -65,6 +66,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
                         c_free(currentTorrent);
                         currentTorrent = previousTorrent->next;
                     }
+                    removedTorrents++;
 
                     continue;
                 }
@@ -77,6 +79,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
         }
     }
 
+    printf("Garbage peers: %d, torrents: %d\n", removedPeers, removedTorrents);
     printf("Garbage time: %lu µs\n", getDiffTime(startTime));
 }
 

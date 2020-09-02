@@ -114,6 +114,15 @@ void parseUri(struct query *query, char *message) {
 void getParam(struct query *query, char *param, char *value) {
     if (!strcmp(param, "info_hash")) {
         memcpy(query->info_hash, value, PARAM_VALUE_LENGTH);
+
+        // Random peers
+        if(RANDOM_DATA) {
+            query->info_hash[0] = (rand() % 256);
+            query->info_hash[1] = (rand() % 256);
+            query->info_hash[2] = (rand() % 256);
+            query->info_hash[3] = (rand() % 256);
+        }
+
     } else if (!strcmp(param, "event")) {
         if (!strcmp(value, EVENT_STRING_COMPLETED)) {
             query->event = EVENT_ID_COMPLETED;
@@ -130,6 +139,15 @@ void getParam(struct query *query, char *param, char *value) {
         query->port = htons(atoi(value));
     } else if (!strcmp(param, "peer_id")) {
         memcpy(query->peer_id, value, PARAM_VALUE_LENGTH);
+
+        // Random peers
+        if(RANDOM_DATA) {
+            query->peer_id[0] = (rand() % 256);
+            query->peer_id[1] = (rand() % 256);
+            query->peer_id[2] = (rand() % 256);
+            query->peer_id[3] = (rand() % 256);
+        }
+
     } else if (!strcmp(param, "compact")) {
         query->compact = 1;
     } else if (!strcmp(param, "no_peer_id")) {

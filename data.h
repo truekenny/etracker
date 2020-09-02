@@ -4,6 +4,9 @@
 #include "uri.h"
 #include "sem.h"
 
+//#define INTERVAL 1800
+#define INTERVAL 20
+
 struct result {
     char *data;
     unsigned long size;
