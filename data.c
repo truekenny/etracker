@@ -158,6 +158,7 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
         peer->ip = query->ip;
         peer->port = query->port;
         peer->updateTime = time(NULL);
+        peer->event = query->event;
         firstTorrent->peer = peer;
 
         firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]] = firstTorrent;
@@ -173,7 +174,9 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
                 while (currentPeer != NULL) {
                     // Пир нашелся
                     if (memcmp(currentPeer->peer_id, query->peer_id, PARAM_VALUE_LENGTH) == 0) {
+                        currentPeer->port = query->port;
                         currentPeer->updateTime = time(NULL);
+                        currentPeer->event = query->event;
 
                         break;
                     }
@@ -188,6 +191,7 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
                     peer->ip = query->ip;
                     peer->port = query->port;
                     peer->updateTime = time(NULL);
+                    peer->event = query->event;
 
                     peer->next = currentTorrent->peer;
                     currentTorrent->peer = peer;
@@ -224,7 +228,7 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
     return NULL;
 }
 
-void getPeerString(struct result *result, struct peer *peer, struct query *query) {
+void renderPeers(struct result *result, struct peer *peer, struct query *query) {
     int peerCounter = 0;
 
     result->data = c_calloc(1, 10000);
@@ -236,12 +240,21 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
     unsigned long sizeMiddleBuffer;
 
     char ip[16];
+    unsigned int complete = 0;
+    unsigned int incomplete = 0;
 
     struct peer *currentPeer = peer;
     while (currentPeer != NULL) {
+        if (currentPeer->event == EVENT_ID_COMPLETED)
+            complete++;
+        else
+            incomplete++;
+
         peerCounter++;
-        if (peerCounter > query->numwant || peerCounter > MAX_PEER_PER_RESULT)
-            break;
+        if (peerCounter > query->numwant || peerCounter > MAX_PEER_PER_RESULT) {
+            currentPeer = currentPeer->next;
+            continue; // Не отображать данные всех пиров, а только указанного кол-ва (numwant)
+        }
 
         if (query->compact) {
             // $peers .= pack('Nn', $array['ip'], $array['port']);
@@ -312,11 +325,13 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
     if (query->compact) {
         sprintf(result->data,
                 "d"
-                "8:complete" "i0e"
-                "10:incomplete" "i1e"
+                "8:complete" "i%de"
+                "10:incomplete" "i%de"
                 "8:interval" "i%de"
                 "5:peers"
                 "%lu:",
+                complete,
+                incomplete,
                 INTERVAL,
                 peerString.size
         );
@@ -324,11 +339,13 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
     } else {
         sprintf(result->data,
                 "d"
-                "8:complete" "i0e"
-                "10:incomplete" "i1e"
+                "8:complete" "i%de"
+                "10:incomplete" "i%de"
                 "8:interval" "i%de"
                 "5:peers"
                 "l",
+                complete,
+                incomplete,
                 INTERVAL
         );
         result->size = strlen(result->data);
