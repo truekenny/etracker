@@ -136,28 +136,31 @@ void *connection_handler(void *_args) {
 
                     parseUri(&query, fullMessage);
 
-                    struct peer *peer;
-                    struct result result = {0};
+                    if (!query.port) {
+                        sendMessage(threadSocket, 400, "Field Port must be filled", 25);
+                    } else {
+                        struct peer *peer;
+                        struct result result = {0};
 
-                    switch (query.event) {
-                        case EVENT_ID_STOPPED:
-                            waitSem(firstByte, &query);
-                            peer = deletePeer(firstByte, &query);
-                            renderPeers(&result, peer, &query);
-                            postSem(firstByte, &query);
-                            break;
-                        default:
-                            waitSem(firstByte, &query);
-                            peer = updatePeer(firstByte, &query);
-                            renderPeers(&result, peer, &query);
-                            postSem(firstByte, &query);
-                            // runGarbageCollector(firstByte);
-                            break;
-                    } // End of switch
+                        switch (query.event) {
+                            case EVENT_ID_STOPPED:
+                                waitSem(firstByte, &query);
+                                peer = deletePeer(firstByte, &query);
+                                renderPeers(&result, peer, &query);
+                                postSem(firstByte, &query);
+                                break;
+                            default:
+                                waitSem(firstByte, &query);
+                                peer = updatePeer(firstByte, &query);
+                                renderPeers(&result, peer, &query);
+                                postSem(firstByte, &query);
+                                // runGarbageCollector(firstByte);
+                                break;
+                        } // End of switch
 
-                    sendMessage(threadSocket, 200, result.data, result.size);
-
-                    c_free(result.data);
+                        sendMessage(threadSocket, 200, result.data, result.size);
+                        c_free(result.data);
+                    }
                 } else if (startsWith("GET /stats", fullMessage)) {
                     rk_sema_wait(&sem);
                     char *data = printQueue(*first);
@@ -165,7 +168,6 @@ void *connection_handler(void *_args) {
                     size_t lenData = strlen(data);
 
                     sendMessage(threadSocket, 200, data, lenData);
-
                     c_free(data);
                 } else {
                     sendMessage(threadSocket, 404, "Page not found", 14);

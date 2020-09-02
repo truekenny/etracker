@@ -37,3 +37,4 @@ d8:completei0e10:downloadedi0e10:incompletei1e8:intervali1856e12:min intervali92
 curl -i "http://tracker.noobsubs.net:63000/announce?info_hash=12345678901234567890&event=started&port=12345&peer_id=11111222223333344444&left=10&downloaded=10&uploaded=10"
 d8:completei0e10:downloadedi0e10:incompletei1e8:intervali1924e12:min intervali962e5:peers6:Oov;09e
 
+d14:failure reason7:messagee

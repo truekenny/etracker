@@ -26,32 +26,59 @@ void setTimeout(int socket) {
     }
 }
 
+/**
+ * Отправка сообщения по сокету
+ * @param socket
+ * @param code
+ * @param message
+ * @param size
+ */
 void sendMessage(int socket, int code, char *message, size_t size) {
-    char sendMessage[1000] = {0};
+    char headers[1000] = {0};
+    char body[1000] = {0};
 
     // First line headers
     switch (code) {
         case 400:
-            sprintf(sendMessage, "HTTP/1.0 400 Invalid Request\r\n");
+            sprintf(headers, "HTTP/1.0 400 Invalid Request\r\n");
             break;
         case 404:
-            sprintf(sendMessage, "HTTP/1.0 404 Not Found\r\n");
+            sprintf(headers, "HTTP/1.0 404 Not Found\r\n");
             break;
         case 200:
         default:
-            sprintf(sendMessage, "HTTP/1.1 200 OK\r\n");
+            sprintf(headers, "HTTP/1.1 200 OK\r\n");
             break;
     }
-    send(socket, sendMessage, strlen(sendMessage), 0);
+    send(socket, headers, strlen(headers), 0);
+
+    if (code != 200) {
+        sprintf(body,
+                "d"
+                "14:failure reason"
+                "%zu:%s"
+                "e",
+                size,
+                message
+        );
+
+        size = strlen(body);
+    }
 
     // End of headers
-    memset(sendMessage,0,sizeof(sendMessage));
-    sprintf(sendMessage, "Content-Type: text/plain\r\n"
+    memset(headers, 0, sizeof(headers));
+    sprintf(headers, "Content-Type: text/plain\r\n"
                          "Content-Length: %zu\r\n"
                          "Server: sc6\r\n"
                          "\r\n",
             size
     );
-    send(socket, sendMessage, strlen(sendMessage), 0);
-    send(socket, message, size, 0);
+    send(socket, headers, strlen(headers), 0);
+
+    // Body
+    if (code == 200)
+        send(socket, message, size, 0);
+    else {
+        send(socket, body, strlen(body), 0);
+    }
 }
