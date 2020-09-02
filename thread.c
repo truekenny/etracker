@@ -12,6 +12,7 @@
 #include "string.h"
 #include "uri.h"
 #include "data.h"
+#include "socket.h"
 
 #define DEBUG 0
 #define KEEP_ALIVE 1
@@ -25,8 +26,6 @@ struct garbageCollectorArgs {
 };
 
 void *garbageCollectorThread(void *_args);
-
-void sendMessage(int socket, int code, char *message, size_t size);
 
 void runGarbageCollectorThread(struct firstByte *firstByte) {
     pthread_attr_t tattr;
@@ -156,17 +155,7 @@ void *connection_handler(void *_args) {
                             break;
                     } // End of switch
 
-                    sprintf(resultMessage,
-                            "HTTP/1.1 200 OK\r\n"
-                            "Content-Type: text/plain; charset=UTF-8\r\n"
-                            "Content-Length: %zu\r\n"
-                            "Server: sc6\r\n"
-                            "\r\n",
-                            result.size);
-                    unsigned long resultMessageSize = strlen(resultMessage);
-                    memcpy(&resultMessage[resultMessageSize], result.data, result.size);
-
-                    send(threadSocket, resultMessage, resultMessageSize + result.size, 0);
+                    sendMessage(threadSocket, 200, result.data, result.size);
 
                     c_free(result.data);
                 } else if (startsWith("GET /stats", fullMessage)) {
@@ -219,34 +208,4 @@ void *connection_handler(void *_args) {
     }
 
     return 0;
-}
-
-void sendMessage(int socket, int code, char *message, size_t size) {
-    char sendMessage[20000] = {0};
-
-    // First line headers
-    switch (code) {
-        case 400:
-            sprintf(sendMessage, "HTTP/1.0 400 Invalid Request\r\n");
-            break;
-        case 404:
-            sprintf(sendMessage, "HTTP/1.0 404 Not Found\r\n");
-            break;
-        case 200:
-        default:
-            sprintf(sendMessage, "HTTP/1.1 200 OK\r\n");
-            break;
-    }
-    send(socket, sendMessage, strlen(sendMessage), 0);
-
-    // End of headers
-    memset(sendMessage,0,sizeof(sendMessage));
-    sprintf(sendMessage, "Content-Type: text/plain\r\n"
-                     "Content-Length: %zu\r\n"
-                     "Server: sc6\r\n"
-                     "\r\n",
-                     size
-    );
-    send(socket, sendMessage, strlen(sendMessage), 0);
-    send(socket, message, size, 0);
 }
