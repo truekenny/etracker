@@ -34,7 +34,7 @@ void setTimeout(int socket) {
  * @param message
  * @param size
  */
-void sendMessage(int socket, int code, char *message, size_t size) {
+void sendMessage(int socket, int code, char *message, size_t size, int canKeepAlive) {
     char headers[1000] = {0};
     char body[1000] = {0};
 
@@ -68,12 +68,18 @@ void sendMessage(int socket, int code, char *message, size_t size) {
     }
 
     // End of headers
+    if (canKeepAlive) {
+        memset(headers, 0, sizeof(headers));
+        sprintf(headers, "Connection: Keep-Alive\r\n");
+        send(socket, headers, strlen(headers), 0);
+        DEBUG && printf("%s", headers);
+    }
+
     memset(headers, 0, sizeof(headers));
     sprintf(headers, "Content-Type: text/plain\r\n"
-                         "Content-Length: %zu\r\n"
-                         "Connection: Keep-Alive\r\n"
-                         "Server: sc6\r\n"
-                         "\r\n",
+                     "Content-Length: %zu\r\n"
+                     "Server: sc6\r\n"
+                     "\r\n",
             size
     );
     send(socket, headers, strlen(headers), 0);
@@ -83,8 +89,7 @@ void sendMessage(int socket, int code, char *message, size_t size) {
     if (code == 200) {
         send(socket, message, size, 0);
         DEBUG && printf("%s\n", message);
-    }
-    else {
+    } else {
         send(socket, body, strlen(body), 0);
         DEBUG && printf("%s", body);
     }

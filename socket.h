@@ -3,6 +3,6 @@
 
 void setTimeout(int socket);
 
-void sendMessage(int socket, int code, char *message, size_t size);
+void sendMessage(int socket, int code, char *message, size_t size, int canKeepAlive);
 
 #endif //SC6_SOCKET_H

@@ -128,6 +128,9 @@ void *connection_handler(void *_args) {
             if (strstr(fullMessage, "\r\n\r\n") != NULL) {
                 DEBUG && printf("Message complete\n");
 
+                int canKeepAlive = (strstr(fullMessage, "HTTP/1.1") != NULL)
+                                   || (strstr(fullMessage, "Connection: Keep-Alive") != NULL);
+
                 if (startsWith("GET /announce", fullMessage)) {
                     struct query query = {0};
                     query.ip = ip;
@@ -137,7 +140,7 @@ void *connection_handler(void *_args) {
                     parseUri(&query, fullMessage);
 
                     if (!query.port) {
-                        sendMessage(threadSocket, 400, "Field Port must be filled", 25);
+                        sendMessage(threadSocket, 400, "Field Port must be filled", 25, canKeepAlive);
                     } else {
                         struct peer *peer;
                         struct result result = {0};
@@ -158,7 +161,7 @@ void *connection_handler(void *_args) {
                                 break;
                         } // End of switch
 
-                        sendMessage(threadSocket, 200, result.data, result.size);
+                        sendMessage(threadSocket, 200, result.data, result.size, canKeepAlive);
                         c_free(result.data);
                     }
                 } else if (startsWith("GET /stats", fullMessage)) {
@@ -167,17 +170,15 @@ void *connection_handler(void *_args) {
                     rk_sema_post(&sem);
                     size_t lenData = strlen(data);
 
-                    sendMessage(threadSocket, 200, data, lenData);
+                    sendMessage(threadSocket, 200, data, lenData, canKeepAlive);
                     c_free(data);
                 } else if (startsWith("GET /garbage", fullMessage)) {
                     runGarbageCollector(firstByte);
-                    sendMessage(threadSocket, 200, "OK", 2);
+                    sendMessage(threadSocket, 200, "OK", 2, canKeepAlive);
                 } else {
-                    sendMessage(threadSocket, 404, "Page not found", 14);
+                    sendMessage(threadSocket, 404, "Page not found", 14, canKeepAlive);
                 }
 
-                int canKeepAlive = (strstr(fullMessage, "HTTP/1.1") != NULL)
-                                   || (strstr(fullMessage, "Connection: Keep-Alive") != NULL);
                 memset(fullMessage, 0, sizeof(fullMessage));
 
                 if (KEEP_ALIVE && canKeepAlive)
