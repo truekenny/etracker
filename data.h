@@ -4,8 +4,7 @@
 #include "uri.h"
 #include "sem.h"
 
-//#define INTERVAL 1800
-#define INTERVAL 20
+#define INTERVAL 1800
 
 struct result {
     char *data;
@@ -25,6 +24,8 @@ struct peer {
 struct torrent {
     char hash_info[20];
     struct peer *peer;
+    unsigned int complete;
+    unsigned int incomplete;
 
     struct torrent *next;
 };
@@ -44,9 +45,9 @@ void initSem(struct firstByte *firstByte);
 void waitSem(struct firstByte *firstByte, struct query *query);
 void postSem(struct firstByte *firstByte, struct query *query);
 
-struct peer *deletePeer(struct firstByte *firstByte, struct query *query);
-struct peer *updatePeer(struct firstByte *firstByte, struct query *query);
+struct torrent *deletePeer(struct firstByte *firstByte, struct query *query);
+struct torrent *updatePeer(struct firstByte *firstByte, struct query *query);
 
-void renderPeers(struct result *result, struct peer *peer, struct query *query);
+void renderPeers(struct result *result, struct torrent *torrent, struct query *query);
 
 #endif //SC6_DATA_H

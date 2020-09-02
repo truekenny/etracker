@@ -142,20 +142,20 @@ void *connection_handler(void *_args) {
                     if (!query.port) {
                         sendMessage(threadSocket, 400, "Field Port must be filled", 25, canKeepAlive);
                     } else {
-                        struct peer *peer;
+                        struct torrent *torrent;
                         struct result result = {0};
 
                         switch (query.event) {
                             case EVENT_ID_STOPPED:
                                 waitSem(firstByte, &query);
-                                peer = deletePeer(firstByte, &query);
-                                renderPeers(&result, peer, &query);
+                                torrent = deletePeer(firstByte, &query);
+                                renderPeers(&result, torrent, &query);
                                 postSem(firstByte, &query);
                                 break;
                             default:
                                 waitSem(firstByte, &query);
-                                peer = updatePeer(firstByte, &query);
-                                renderPeers(&result, peer, &query);
+                                torrent = updatePeer(firstByte, &query);
+                                renderPeers(&result, torrent, &query);
                                 postSem(firstByte, &query);
                                 // runGarbageCollector(firstByte);
                                 break;

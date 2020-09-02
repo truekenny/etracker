@@ -15,6 +15,8 @@ int getPeerSize(struct peer *peer);
 
 void int2ip(char *dest, unsigned int source);
 
+void torrentChangeStats(struct torrent *torrent, unsigned char oldEvent, unsigned char newEvent, char diff);
+
 void runGarbageCollector(struct firstByte *firstByte) {
     int i, j;
     int removedPeers = 0, removedTorrents = 0;
@@ -37,6 +39,8 @@ void runGarbageCollector(struct firstByte *firstByte) {
                 while (currentPeer != NULL) {
                     if (currentPeer->updateTime < limitTime) {
                         // Пир просрочен
+                        torrentChangeStats(currentTorrent, currentPeer->event, currentPeer->event, -1);
+
                         if (previousPeer == NULL) {
                             currentTorrent->peer = currentPeer->next;
                             c_free(currentPeer);
@@ -103,7 +107,7 @@ void postSem(struct firstByte *firstByte, struct query *query) {
     rk_sema_post(sem);
 }
 
-struct peer *deletePeer(struct firstByte *firstByte, struct query *query) {
+struct torrent *deletePeer(struct firstByte *firstByte, struct query *query) {
     struct torrent *currentTorrent = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
 
     while (currentTorrent != NULL) {
@@ -123,9 +127,10 @@ struct peer *deletePeer(struct firstByte *firstByte, struct query *query) {
                     else {
                         previous->next = currentPeer->next;
                     }
+                    torrentChangeStats(currentTorrent, currentPeer->event, currentPeer->event, -1);
                     c_free(currentPeer);
 
-                    return currentTorrent->peer;
+                    return currentTorrent;
                 }
 
                 previous = currentPeer;
@@ -133,7 +138,7 @@ struct peer *deletePeer(struct firstByte *firstByte, struct query *query) {
             }
 
             // У торрента нет такого пира
-            return currentTorrent->peer;
+            return currentTorrent;
         }
 
         currentTorrent = currentTorrent->next;
@@ -144,10 +149,10 @@ struct peer *deletePeer(struct firstByte *firstByte, struct query *query) {
     }
 
     // Нет такого торрента
-    return currentTorrent->peer;
+    return currentTorrent;
 }
 
-struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
+struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
     struct torrent *firstTorrent = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
 
     // Торрентов нет - нужен новый торрент и пир
@@ -166,7 +171,9 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
 
         firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]] = firstTorrent;
 
-        return peer;
+        torrentChangeStats(firstTorrent, peer->event, peer->event, 1);
+
+        return firstTorrent;
     } else {
         struct torrent *currentTorrent = firstTorrent;
 
@@ -177,6 +184,11 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
                 while (currentPeer != NULL) {
                     // Пир нашелся
                     if (memcmp(currentPeer->peer_id, query->peer_id, PARAM_VALUE_LENGTH) == 0) {
+                        // Самая первая строка, чтобы зафиксировать оба event
+                        // Если event не меняется, то значения complete и incomplete не меняются
+                        if (currentPeer->event != query->event)
+                            torrentChangeStats(currentTorrent, currentPeer->event, query->event, 1);
+
                         currentPeer->port = query->port;
                         currentPeer->updateTime = time(NULL);
                         currentPeer->event = query->event;
@@ -198,9 +210,11 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
 
                     peer->next = currentTorrent->peer;
                     currentTorrent->peer = peer;
+
+                    torrentChangeStats(currentTorrent, peer->event, peer->event, 1);
                 }
 
-                return currentTorrent->peer;
+                return currentTorrent;
                 // break;
             }
 
@@ -222,7 +236,9 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
             torrent->next = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
             firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]] = torrent;
 
-            return peer;
+            torrentChangeStats(torrent, peer->event, peer->event, 1);
+
+            return torrent;
         }
     }
 
@@ -231,7 +247,9 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
     return NULL;
 }
 
-void renderPeers(struct result *result, struct peer *peer, struct query *query) {
+void renderPeers(struct result *result, struct torrent *torrent, struct query *query) {
+    struct peer *peer = torrent->peer;
+
     int peerCounter = 0;
 
     result->data = c_calloc(1, 10000);
@@ -243,21 +261,14 @@ void renderPeers(struct result *result, struct peer *peer, struct query *query) 
     unsigned long sizeMiddleBuffer;
 
     char ip[16];
-    unsigned int complete = 0;
-    unsigned int incomplete = 0;
+    unsigned int complete = torrent->complete;
+    unsigned int incomplete = torrent->incomplete;
 
     struct peer *currentPeer = peer;
     while (currentPeer != NULL) {
-        if (currentPeer->event == EVENT_ID_COMPLETED)
-            complete++;
-        else
-            incomplete++;
-
         peerCounter++;
-        if (peerCounter > query->numwant || peerCounter > MAX_PEER_PER_RESULT) {
-            currentPeer = currentPeer->next;
-            continue; // Не отображать данные всех пиров, а только указанного кол-ва (numwant)
-        }
+        if (peerCounter > query->numwant || peerCounter > MAX_PEER_PER_RESULT)
+            break;
 
         if (query->compact) {
             // $peers .= pack('Nn', $array['ip'], $array['port']);
@@ -390,4 +401,25 @@ void int2ip(char *dest, unsigned int source) {
     memset(dest, 0, 16);
 
     sprintf(dest, "%d.%d.%d.%d", src[0], src[1], src[2], src[3]);
+}
+
+/**
+ * Меняет значение complete и incomplete торрента
+ * @param torrent
+ * @param oldEvent
+ * @param newEvent
+ * @param diff
+ */
+void torrentChangeStats(struct torrent *torrent, unsigned char oldEvent, unsigned char newEvent, char diff) {
+    if (oldEvent == EVENT_ID_COMPLETED && newEvent == EVENT_ID_COMPLETED) {
+        torrent->complete += diff;
+    } else if (oldEvent != EVENT_ID_COMPLETED && newEvent != EVENT_ID_COMPLETED) {
+        torrent->incomplete += diff;
+    } else if (oldEvent != EVENT_ID_COMPLETED && newEvent == EVENT_ID_COMPLETED) {
+        torrent->incomplete -= diff;
+        torrent->complete += diff;
+    } else if (oldEvent == EVENT_ID_COMPLETED && newEvent != EVENT_ID_COMPLETED) {
+        torrent->incomplete += diff;
+        torrent->complete -= diff;
+    }
 }

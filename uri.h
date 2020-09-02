@@ -2,7 +2,7 @@
 #define SC6_URI_H
 
 #define RANDOM_DATA_INFO_HASH 0
-#define RANDOM_DATA_PEER_ID 1
+#define RANDOM_DATA_PEER_ID 0
 #define EVENT_ID_STARTED   1
 #define EVENT_ID_COMPLETED 2
 #define EVENT_ID_STOPPED   3
