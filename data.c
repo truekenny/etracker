@@ -22,7 +22,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
     unsigned long now = time(NULL);
     unsigned long limitTime = now - INTERVAL * 2;
 
-    double startTime = getStartTime();
+    unsigned long startTime = getStartTime();
 
     for (i = 0; i < 256; i++) {
         for (j = 0; j < 256; j++) {
@@ -78,8 +78,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
         }
     }
 
-    // printf("Garbage time: %lu s.\n", time(NULL) - now);
-    printf("Garbage ms: %.2f ms.\n", getDiffTime(startTime));
+    printf("Garbage time: %lu µs\n", getDiffTime(startTime));
 }
 
 void initSem(struct firstByte *firstByte) {

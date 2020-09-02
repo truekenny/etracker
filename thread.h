@@ -15,6 +15,8 @@ struct args {
     struct firstByte *firstByte;
 };
 
+void runGarbageCollectorThread(struct firstByte *firstByte);
+
 void *connection_handler(void *);
 
 #endif //SC6_THREAD_H

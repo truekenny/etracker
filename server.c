@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
     uint16_t port; // Порт клиентской стороны
     int threadCounter = 0; // Счётчик подключений
     struct queue *first = NULL; // Очередь
-    struct firstByte firstByte = {0};
+    struct firstByte firstByte = {0}; // Торренты и пиры
 
     initSem(&firstByte);
 
@@ -71,6 +71,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     DEBUG && puts("Bind done");
+
+    runGarbageCollectorThread(&firstByte);
 
     // Listen
     listen(serverSocket, SOCKET_QUEUE_LENGTH);

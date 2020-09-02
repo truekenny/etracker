@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <sched.h>
 #include "thread.h"
 #include "sem.h"
 #include "alloc.h"
@@ -16,6 +17,53 @@
 #define READ_LENGTH 2000
 #define MESSAGE_LENGTH 20000
 #define THREAD_RESULT_LENGTH 20000
+#define GARBAGE_COLLECTOR_TIME 15 * 60
+
+struct garbageCollectorArgs {
+    struct firstByte *firstByte;
+};
+
+void *garbageCollectorThread(void *_args);
+
+void runGarbageCollectorThread(struct firstByte *firstByte) {
+    pthread_attr_t tattr;
+    pthread_t tid;
+    int ret;
+    int newPriority = 5;
+    struct sched_param param;
+
+    struct garbageCollectorArgs *garbageCollectorArgs = c_calloc(1, sizeof(struct garbageCollectorArgs));
+    garbageCollectorArgs->firstByte = firstByte;
+
+    // initialized with default attributes
+    ret = pthread_attr_init(&tattr);
+
+    // safe to get existing scheduling param
+    ret = pthread_attr_getschedparam(&tattr, &param);
+
+    printf("Garbage thread change priority %d -> %d\n", param.sched_priority, newPriority);
+
+    // set the priority; others are unchanged
+    param.sched_priority = newPriority;
+
+    // setting the new scheduling param
+    ret = pthread_attr_setschedparam(&tattr, &param);
+
+    // with new priority specified
+    ret = pthread_create(&tid, &tattr, garbageCollectorThread, (void *) garbageCollectorArgs);
+}
+
+void *garbageCollectorThread(void *_args) {
+    struct firstByte *firstByte = ((struct garbageCollectorArgs *) _args)->firstByte;
+    c_free(_args);
+
+    while (1) {
+        runGarbageCollector(firstByte);
+        sleep(GARBAGE_COLLECTOR_TIME);
+    }
+
+    return 0;
+}
 
 /**
  * This will handle connection for each client
@@ -111,6 +159,7 @@ void *connection_handler(void *_args) {
                         peer = updatePeer(firstByte, &query);
                         getPeerString(&result, peer, &query);
                         postSem(firstByte, &query);
+                        // runGarbageCollector(firstByte);
                         break;
                 } // End of switch
 
