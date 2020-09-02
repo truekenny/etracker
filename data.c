@@ -6,6 +6,9 @@
 #include <netinet/in.h>
 #include "data.h"
 #include "alloc.h"
+#include "uri.h"
+
+#define MAX_PEER_PER_RESULT 50
 
 __unused int getPeerSize(struct peer *peer);
 
@@ -14,8 +17,8 @@ void int2ip(char *dest, unsigned int source);
 void initSem(struct firstByte *firstByte) {
     int i, j;
 
-    for (i = 0; i<256; i++) {
-        for (j = 0; j<256; j++) {
+    for (i = 0; i < 256; i++) {
+        for (j = 0; j < 256; j++) {
             rk_sema_init(&firstByte->secondByte[i].sem[j], 1);
         }
     }
@@ -36,13 +39,13 @@ struct peer *deletePeer(struct firstByte *firstByte, struct query *query) {
 
     while (currentTorrent != NULL) {
         // Торрент нашелся
-        if (memcmp(currentTorrent->hash_info, query->info_hash, 20) == 0) {
+        if (memcmp(currentTorrent->hash_info, query->info_hash, PARAM_VALUE_LENGTH) == 0) {
             struct peer *currentPeer = currentTorrent->peer;
             struct peer *previous = {0};
 
             while (currentPeer != NULL) {
                 // Пир нашелся
-                if (memcmp(currentPeer->peer_id, query->peer_id, 20) == 0) {
+                if (memcmp(currentPeer->peer_id, query->peer_id, PARAM_VALUE_LENGTH) == 0) {
                     // Пир в списке первый
                     if (previous == NULL) {
                         currentTorrent->peer = currentPeer->next;
@@ -82,10 +85,10 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
     if (firstTorrent == NULL) {
         // usleep(1000); - проверка работы семафора
         firstTorrent = c_calloc(1, sizeof(struct torrent));
-        memcpy(firstTorrent->hash_info, query->info_hash, 20);
+        memcpy(firstTorrent->hash_info, query->info_hash, PARAM_VALUE_LENGTH);
 
         struct peer *peer = c_calloc(1, sizeof(struct peer));
-        memcpy(peer->peer_id, query->peer_id, 20);
+        memcpy(peer->peer_id, query->peer_id, PARAM_VALUE_LENGTH);
         peer->ip = query->ip;
         peer->port = query->port;
         peer->updateTime = time(NULL);
@@ -99,11 +102,11 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
 
         while (currentTorrent != NULL) {
             // Торрент нашелся
-            if (memcmp(currentTorrent->hash_info, query->info_hash, 20) == 0) {
+            if (memcmp(currentTorrent->hash_info, query->info_hash, PARAM_VALUE_LENGTH) == 0) {
                 struct peer *currentPeer = currentTorrent->peer;
                 while (currentPeer != NULL) {
                     // Пир нашелся
-                    if (memcmp(currentPeer->peer_id, query->peer_id, 20) == 0) {
+                    if (memcmp(currentPeer->peer_id, query->peer_id, PARAM_VALUE_LENGTH) == 0) {
                         currentPeer->updateTime = time(NULL);
 
                         break;
@@ -115,7 +118,7 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
                 // Пир не найден - нужет новый пир
                 if (currentPeer == NULL) {
                     struct peer *peer = c_calloc(1, sizeof(struct peer));
-                    memcpy(peer->peer_id, query->peer_id, 20);
+                    memcpy(peer->peer_id, query->peer_id, PARAM_VALUE_LENGTH);
                     peer->ip = query->ip;
                     peer->port = query->port;
                     peer->updateTime = time(NULL);
@@ -134,10 +137,10 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
         // Торрент не найден - нужен новый и новый пир
         if (currentTorrent == NULL) {
             struct torrent *torrent = c_calloc(1, sizeof(struct torrent));
-            memcpy(torrent->hash_info, query->info_hash, 20);
+            memcpy(torrent->hash_info, query->info_hash, PARAM_VALUE_LENGTH);
 
             struct peer *peer = c_calloc(1, sizeof(struct peer));
-            memcpy(peer->peer_id, query->peer_id, 20);
+            memcpy(peer->peer_id, query->peer_id, PARAM_VALUE_LENGTH);
             peer->ip = query->ip;
             peer->port = query->port;
             peer->updateTime = time(NULL);
@@ -156,6 +159,8 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
 }
 
 void getPeerString(struct result *result, struct peer *peer, struct query *query) {
+    int peerCounter = 0;
+
     result->data = c_calloc(1, 10000);
 
     struct result peerString = {0};
@@ -168,13 +173,15 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
 
     struct peer *currentPeer = peer;
     while (currentPeer != NULL) {
+        if (++peerCounter > MAX_PEER_PER_RESULT)
+            break;
 
         if (query->compact) {
             // $peers .= pack('Nn', $array['ip'], $array['port']);
-            memcpy(&peerString.data[peerString.size], &currentPeer->ip, 4);
-            peerString.size += 4;
-            memcpy(&peerString.data[peerString.size], &currentPeer->port, 2);
-            peerString.size += 2;
+            memcpy(&peerString.data[peerString.size], &currentPeer->ip, sizeof(int)); // 4
+            peerString.size += sizeof(int);
+            memcpy(&peerString.data[peerString.size], &currentPeer->port, sizeof(short)); // 2
+            peerString.size += sizeof(short);
         } else if (query->no_peer_id) {
             // "l"
             // "d"
@@ -209,15 +216,16 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
             sprintf(middleBuffer,
                     "d"
                     "4:port" "i%de"
-                    "7:peer id" "20:",
-                    htons(currentPeer->port)
+                    "7:peer id" "%d:",
+                    htons(currentPeer->port),
+                    PARAM_VALUE_LENGTH
             );
             sizeMiddleBuffer = strlen(middleBuffer);
             memcpy(&peerString.data[peerString.size], middleBuffer, sizeMiddleBuffer);
             peerString.size += sizeMiddleBuffer;
 
-            memcpy(&peerString.data[peerString.size], &currentPeer->peer_id, 20);
-            peerString.size += 20;
+            memcpy(&peerString.data[peerString.size], &currentPeer->peer_id, PARAM_VALUE_LENGTH);
+            peerString.size += PARAM_VALUE_LENGTH;
 
             int2ip(ip, currentPeer->ip);
             sprintf(middleBuffer,

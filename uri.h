@@ -9,6 +9,7 @@
 #define EVENT_STRING_COMPLETED "completed"
 #define EVENT_STRING_STOPPED   "stopped"
 #define EVENT_STRING_PAUSED    "paused"
+// Обязательно 20, очень большая связанность
 #define PARAM_VALUE_LENGTH 20
 
 struct query {
