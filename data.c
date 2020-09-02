@@ -239,7 +239,8 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
 
     struct peer *currentPeer = peer;
     while (currentPeer != NULL) {
-        if (++peerCounter > MAX_PEER_PER_RESULT)
+        peerCounter++;
+        if (peerCounter > query->numwant || peerCounter > MAX_PEER_PER_RESULT)
             break;
 
         if (query->compact) {
@@ -312,13 +313,10 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
         sprintf(result->data,
                 "d"
                 "8:complete" "i0e"
-                "10:downloaded" "i0e"
                 "10:incomplete" "i1e"
                 "8:interval" "i%de"
-                "12:min interval" "i%de"
                 "5:peers"
                 "%lu:",
-                INTERVAL,
                 INTERVAL,
                 peerString.size
         );
@@ -327,13 +325,10 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
         sprintf(result->data,
                 "d"
                 "8:complete" "i0e"
-                "10:downloaded" "i0e"
                 "10:incomplete" "i1e"
                 "8:interval" "i%de"
-                "12:min interval" "i%de"
                 "5:peers"
                 "l",
-                INTERVAL,
                 INTERVAL
         );
         result->size = strlen(result->data);
@@ -344,12 +339,12 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
     result->size += peerString.size;
 
     if (!query->compact) {
-        memcpy(&result->data[result->size], "e", 1);
-        result->size += strlen("e");
+        memcpy(&result->data[result->size], "e", sizeof(char));
+        result->size += sizeof(char);
     }
 
-    memcpy(&result->data[result->size], "e", 1);
-    result->size += strlen("e");
+    memcpy(&result->data[result->size], "e", sizeof(char));
+    result->size += sizeof(char);
 
     c_free(peerString.data);
 }

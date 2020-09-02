@@ -42,10 +42,15 @@ void runGarbageCollectorThread(struct firstByte *firstByte) {
     // safe to get existing scheduling param
     ret = pthread_attr_getschedparam(&tattr, &param);
 
-    printf("Garbage thread change priority %d -> %d\n", param.sched_priority, newPriority);
+    if(param.sched_priority > newPriority) {
+        printf("Garbage thread change priority %d -> %d\n", param.sched_priority, newPriority);
 
-    // set the priority; others are unchanged
-    param.sched_priority = newPriority;
+        // set the priority; others are unchanged
+        param.sched_priority = newPriority;
+    } else {
+        printf("Garbage thread NO change priority %d -> %d\n", param.sched_priority, newPriority);
+    }
+
 
     // setting the new scheduling param
     ret = pthread_attr_setschedparam(&tattr, &param);
@@ -124,6 +129,7 @@ void *connection_handler(void *_args) {
 
                 struct query query = {0};
                 query.ip = ip;
+                query.numwant = DEFAULT_NUM_WANT;
 
                 parseUri(&query, fullMessage);
 
@@ -139,7 +145,7 @@ void *connection_handler(void *_args) {
 
                         sprintf(resultMessage,
                                 "HTTP/1.1 200 OK\r\n"
-                                "Content-Type: text/plain; charset=UTF-8\r\n"
+                                "Content-Type: text/plain\r\n"
                                 "Content-Length: %zu\r\n"
                                 "Server: sc6\r\n"
                                 "\r\n"

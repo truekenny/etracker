@@ -132,5 +132,7 @@ void getParam(struct query *query, char *param, char *value) {
         query->compact = 1;
     } else if (!strcmp(param, "no_peer_id")) {
         query->no_peer_id = 1;
+    } else if(!strcmp(param, "numwant")) {
+        query->numwant = atoi(value);
     }
 }

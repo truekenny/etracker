@@ -11,6 +11,7 @@
 #define EVENT_STRING_PAUSED    "paused"
 // Обязательно 20, очень большая связанность
 #define PARAM_VALUE_LENGTH 20
+#define DEFAULT_NUM_WANT 50
 
 struct query {
     char info_hash[PARAM_VALUE_LENGTH];
@@ -20,6 +21,7 @@ struct query {
     char peer_id[PARAM_VALUE_LENGTH];
     _Bool compact;
     _Bool no_peer_id;
+    unsigned int numwant;
 };
 
 void parseUri(struct query *query, char *message);
