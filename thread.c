@@ -169,6 +169,9 @@ void *connection_handler(void *_args) {
 
                     sendMessage(threadSocket, 200, data, lenData);
                     c_free(data);
+                } else if (startsWith("GET /garbage", fullMessage)) {
+                    runGarbageCollector(firstByte);
+                    sendMessage(threadSocket, 200, "OK", 2);
                 } else {
                     sendMessage(threadSocket, 404, "Page not found", 14);
                 }

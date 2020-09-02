@@ -19,7 +19,7 @@ void getParam(struct query *query, char *param, char *value);
 void parseUri(struct query *query, char *message) {
     DEBUG && printf("Uri:\n");
 
-    if (1) {
+    if (DEBUG) {
         char firstLine[FIRST_LINE_LENGTH] = {0};
 
         int len = strchr(message, '\r') - message;
