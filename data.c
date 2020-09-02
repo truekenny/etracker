@@ -11,6 +11,26 @@ __unused int getPeerSize(struct peer *peer);
 
 void int2ip(char *dest, unsigned int source);
 
+void initSem(struct firstByte *firstByte) {
+    int i, j;
+
+    for (i = 0; i<256; i++) {
+        for (j = 0; j<256; j++) {
+            rk_sema_init(&firstByte->secondByte[i].sem[j], 1);
+        }
+    }
+}
+
+void waitSem(struct firstByte *firstByte, struct query *query) {
+    struct rk_sema *sem = &firstByte->secondByte[query->info_hash[0]].sem[query->info_hash[1]];
+    rk_sema_wait(sem);
+}
+
+void postSem(struct firstByte *firstByte, struct query *query) {
+    struct rk_sema *sem = &firstByte->secondByte[query->info_hash[0]].sem[query->info_hash[1]];
+    rk_sema_post(sem);
+}
+
 struct peer *deletePeer(struct firstByte *firstByte, struct query *query) {
     struct torrent *currentTorrent = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
 
@@ -60,6 +80,7 @@ struct peer *updatePeer(struct firstByte *firstByte, struct query *query) {
 
     // Торрентов нет - нужен новый торрент и пир
     if (firstTorrent == NULL) {
+        // usleep(1000); - проверка работы семафора
         firstTorrent = c_calloc(1, sizeof(struct torrent));
         memcpy(firstTorrent->hash_info, query->info_hash, 20);
 
@@ -141,7 +162,7 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
     peerString.data = c_calloc(1, 10000);
 
     char middleBuffer[500] = {0};
-    unsigned long sizeMiddleBuffer = 0;
+    unsigned long sizeMiddleBuffer;
 
     char ip[16];
 

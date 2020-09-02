@@ -101,12 +101,16 @@ void *connection_handler(void *_args) {
 
                         break;
                     case EVENT_ID_STOPPED:
+                        waitSem(firstByte, &query);
                         peer = deletePeer(firstByte, &query);
                         getPeerString(&result, peer, &query);
+                        postSem(firstByte, &query);
                         break;
                     default:
+                        waitSem(firstByte, &query);
                         peer = updatePeer(firstByte, &query);
                         getPeerString(&result, peer, &query);
+                        postSem(firstByte, &query);
                         break;
                 } // End of switch
 

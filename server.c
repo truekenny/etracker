@@ -33,6 +33,8 @@ int main(int argc, char *argv[]) {
     struct queue *first = NULL; // Очередь
     struct firstByte firstByte = {0};
 
+    initSem(&firstByte);
+
     // Инициализация семафора
     rk_sema_init(&sem, 1);
 
