@@ -19,7 +19,7 @@ void getParam(struct query *query, char *param, char *value);
 void parseUri(struct query *query, char *message) {
     DEBUG && printf("Uri:\n");
 
-    if (DEBUG) {
+    if (1) {
         char firstLine[FIRST_LINE_LENGTH] = {0};
 
         int len = strchr(message, '\r') - message;
@@ -123,6 +123,8 @@ void getParam(struct query *query, char *param, char *value) {
             query->event = EVENT_ID_STOPPED;
         } else if (!strcmp(value, EVENT_STRING_PAUSED)) {
             query->event = EVENT_ID_PAUSED;
+        } else {
+            query->event = 0;
         }
     } else if (!strcmp(param, "port")) {
         query->port = htons(atoi(value));

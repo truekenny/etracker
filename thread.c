@@ -26,6 +26,8 @@ struct garbageCollectorArgs {
 
 void *garbageCollectorThread(void *_args);
 
+void sendMessage(int socket, int code, char *message, size_t size);
+
 void runGarbageCollectorThread(struct firstByte *firstByte) {
     pthread_attr_t tattr;
     pthread_t tid;
@@ -42,7 +44,7 @@ void runGarbageCollectorThread(struct firstByte *firstByte) {
     // safe to get existing scheduling param
     ret = pthread_attr_getschedparam(&tattr, &param);
 
-    if(param.sched_priority > newPriority) {
+    if (param.sched_priority > newPriority) {
         printf("Garbage thread change priority %d -> %d\n", param.sched_priority, newPriority);
 
         // set the priority; others are unchanged
@@ -127,50 +129,33 @@ void *connection_handler(void *_args) {
             if (strstr(fullMessage, "\r\n\r\n") != NULL) {
                 DEBUG && printf("Message complete\n");
 
-                struct query query = {0};
-                query.ip = ip;
-                query.numwant = DEFAULT_NUM_WANT;
+                if (startsWith("GET /announce", fullMessage)) {
+                    struct query query = {0};
+                    query.ip = ip;
+                    query.numwant = DEFAULT_NUM_WANT;
+                    query.event = EVENT_ID_STARTED;
 
-                parseUri(&query, fullMessage);
+                    parseUri(&query, fullMessage);
 
-                struct peer *peer;
-                struct result result = {0};
+                    struct peer *peer;
+                    struct result result = {0};
 
-                switch (query.event) {
-                    case 0:
-                        rk_sema_wait(&sem);
-                        char *data = printQueue(*first);
-                        rk_sema_post(&sem);
-                        size_t lenData = strlen(data);
+                    switch (query.event) {
+                        case EVENT_ID_STOPPED:
+                            waitSem(firstByte, &query);
+                            peer = deletePeer(firstByte, &query);
+                            renderPeers(&result, peer, &query);
+                            postSem(firstByte, &query);
+                            break;
+                        default:
+                            waitSem(firstByte, &query);
+                            peer = updatePeer(firstByte, &query);
+                            renderPeers(&result, peer, &query);
+                            postSem(firstByte, &query);
+                            // runGarbageCollector(firstByte);
+                            break;
+                    } // End of switch
 
-                        sprintf(resultMessage,
-                                "HTTP/1.1 200 OK\r\n"
-                                "Content-Type: text/plain\r\n"
-                                "Content-Length: %zu\r\n"
-                                "Server: sc6\r\n"
-                                "\r\n"
-                                "%s",
-                                lenData, data);
-                        c_free(data);
-                        send(threadSocket, resultMessage, strlen(resultMessage), 0);
-
-                        break;
-                    case EVENT_ID_STOPPED:
-                        waitSem(firstByte, &query);
-                        peer = deletePeer(firstByte, &query);
-                        renderPeers(&result, peer, &query);
-                        postSem(firstByte, &query);
-                        break;
-                    default:
-                        waitSem(firstByte, &query);
-                        peer = updatePeer(firstByte, &query);
-                        renderPeers(&result, peer, &query);
-                        postSem(firstByte, &query);
-                        // runGarbageCollector(firstByte);
-                        break;
-                } // End of switch
-
-                if (query.event != 0) {
                     sprintf(resultMessage,
                             "HTTP/1.1 200 OK\r\n"
                             "Content-Type: text/plain; charset=UTF-8\r\n"
@@ -184,7 +169,18 @@ void *connection_handler(void *_args) {
                     send(threadSocket, resultMessage, resultMessageSize + result.size, 0);
 
                     c_free(result.data);
-                } // End of query.event != 0
+                } else if (startsWith("GET /stats", fullMessage)) {
+                    rk_sema_wait(&sem);
+                    char *data = printQueue(*first);
+                    rk_sema_post(&sem);
+                    size_t lenData = strlen(data);
+
+                    sendMessage(threadSocket, 200, data, lenData);
+
+                    c_free(data);
+                } else {
+                    sendMessage(threadSocket, 404, "Page not found", 14);
+                }
 
                 int canKeepAlive = (strstr(fullMessage, "HTTP/1.1") != NULL);
                 memset(fullMessage, 0, sizeof(fullMessage));
@@ -223,4 +219,34 @@ void *connection_handler(void *_args) {
     }
 
     return 0;
+}
+
+void sendMessage(int socket, int code, char *message, size_t size) {
+    char sendMessage[20000] = {0};
+
+    // First line headers
+    switch (code) {
+        case 400:
+            sprintf(sendMessage, "HTTP/1.0 400 Invalid Request\r\n");
+            break;
+        case 404:
+            sprintf(sendMessage, "HTTP/1.0 404 Not Found\r\n");
+            break;
+        case 200:
+        default:
+            sprintf(sendMessage, "HTTP/1.1 200 OK\r\n");
+            break;
+    }
+    send(socket, sendMessage, strlen(sendMessage), 0);
+
+    // End of headers
+    memset(sendMessage,0,sizeof(sendMessage));
+    sprintf(sendMessage, "Content-Type: text/plain\r\n"
+                     "Content-Length: %zu\r\n"
+                     "Server: sc6\r\n"
+                     "\r\n",
+                     size
+    );
+    send(socket, sendMessage, strlen(sendMessage), 0);
+    send(socket, message, size, 0);
 }
