@@ -1,4 +1,3 @@
-#include <ntsid.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,7 +12,7 @@
 #define MAX_PEER_PER_RESULT 50
 #define INTERVAL 1800
 
-__unused int getPeerSize(struct peer *peer);
+int getPeerSize(struct peer *peer);
 
 void int2ip(char *dest, unsigned int source);
 
@@ -355,7 +354,7 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
     c_free(peerString.data);
 }
 
-__unused int getPeerSize(struct peer *peer) {
+int getPeerSize(struct peer *peer) {
     struct peer *currentPeer;
     int size = 0;
 

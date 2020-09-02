@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <sched.h>
+#include <unistd.h>
 #include "thread.h"
 #include "sem.h"
 #include "alloc.h"
