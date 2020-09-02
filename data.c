@@ -4,15 +4,83 @@
 #include <string.h>
 #include <time.h>
 #include <netinet/in.h>
+#include <sys/time.h>
 #include "data.h"
 #include "alloc.h"
 #include "uri.h"
+#include "time.h"
 
 #define MAX_PEER_PER_RESULT 50
+#define INTERVAL 1800
 
 __unused int getPeerSize(struct peer *peer);
 
 void int2ip(char *dest, unsigned int source);
+
+void runGarbageCollector(struct firstByte *firstByte) {
+    int i, j;
+    unsigned long now = time(NULL);
+    unsigned long limitTime = now - INTERVAL * 2;
+
+    double startTime = getStartTime();
+
+    for (i = 0; i < 256; i++) {
+        for (j = 0; j < 256; j++) {
+            rk_sema_wait(&firstByte->secondByte[i].sem[j]);
+
+            struct torrent *currentTorrent = firstByte->secondByte[i].torrent[j];
+            struct torrent *previousTorrent = NULL;
+
+            while (currentTorrent != NULL) {
+                struct peer *currentPeer = currentTorrent->peer;
+                struct peer *previousPeer = NULL;
+
+                while (currentPeer != NULL) {
+                    if (currentPeer->updateTime < limitTime) {
+                        // Пир просрочен
+                        if (previousPeer == NULL) {
+                            currentTorrent->peer = currentPeer->next;
+                            c_free(currentPeer);
+                            currentPeer = currentTorrent->peer;
+                        } else {
+                            previousPeer->next = currentPeer->next;
+                            c_free(currentPeer);
+                            currentPeer = previousPeer->next;
+                        }
+
+                        continue;
+                    }
+
+                    previousPeer = currentPeer;
+                    currentPeer = currentPeer->next;
+                }
+
+                if (currentTorrent->peer == NULL) {
+                    // Надо удалить торрент, так как нет пиров
+                    if (previousTorrent == NULL) {
+                        firstByte->secondByte[i].torrent[j] = currentTorrent->next;
+                        c_free(currentTorrent);
+                        currentTorrent = firstByte->secondByte[i].torrent[j];
+                    } else {
+                        previousTorrent->next = currentTorrent->next;
+                        c_free(currentTorrent);
+                        currentTorrent = previousTorrent->next;
+                    }
+
+                    continue;
+                }
+
+                previousTorrent = currentTorrent;
+                currentTorrent = currentTorrent->next;
+            }
+
+            rk_sema_post(&firstByte->secondByte[i].sem[j]);
+        }
+    }
+
+    // printf("Garbage time: %lu s.\n", time(NULL) - now);
+    printf("Garbage ms: %.2f ms.\n", getDiffTime(startTime));
+}
 
 void initSem(struct firstByte *firstByte) {
     int i, j;
@@ -248,10 +316,12 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
                 "8:complete" "i0e"
                 "10:downloaded" "i0e"
                 "10:incomplete" "i1e"
-                "8:interval" "i1800e"
-                "12:min interval" "i1800e"
+                "8:interval" "i%de"
+                "12:min interval" "i%de"
                 "5:peers"
                 "%lu:",
+                INTERVAL,
+                INTERVAL,
                 peerString.size
         );
         result->size = strlen(result->data);
@@ -261,10 +331,12 @@ void getPeerString(struct result *result, struct peer *peer, struct query *query
                 "8:complete" "i0e"
                 "10:downloaded" "i0e"
                 "10:incomplete" "i1e"
-                "8:interval" "i1800e"
-                "12:min interval" "i1800e"
+                "8:interval" "i%de"
+                "12:min interval" "i%de"
                 "5:peers"
-                "l"
+                "l",
+                INTERVAL,
+                INTERVAL
         );
         result->size = strlen(result->data);
 

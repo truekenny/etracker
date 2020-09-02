@@ -34,6 +34,8 @@ struct firstByte {
     struct secondByte secondByte[256];
 };
 
+void runGarbageCollector(struct firstByte *firstByte);
+
 void initSem(struct firstByte *firstByte);
 void waitSem(struct firstByte *firstByte, struct query *query);
 void postSem(struct firstByte *firstByte, struct query *query);
