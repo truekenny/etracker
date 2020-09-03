@@ -149,11 +149,11 @@ void setNobody() {
     if ((p = getpwnam(name)) == NULL) {
         perror("Getpwnam failed");
     } else {
-        if (setuid(p->pw_uid)) {
-            perror("Setuid failed");
-        }
         if (setgid(p->pw_gid)) {
             perror("Setgid failed");
+        }
+        if (setuid(p->pw_uid)) {
+            perror("Setuid failed");
         }
     };
 }
