@@ -77,9 +77,10 @@ char *printQueue(struct queue *first) {
 
         sprintf(line, "%.24s - %d\n", ctime(&next->t_time), next->n);
         if (strlen(result) + strlen(line) > RESULT_LENGTH - ENDING_LENGTH) {
-            DEBUG && printf("Error: Result too long: n = %d\n", next->n);
+            DEBUG && printf("Error: printQueue: Result too long: n = %d\n", next->n);
 
-            exit(1);
+            break;
+            // exit(1);
             // return result;
         }
         strcat(result, line);
