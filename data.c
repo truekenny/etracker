@@ -21,7 +21,14 @@ void torrentChangeStats(struct torrent *torrent, unsigned char oldEvent, unsigne
 
 void runGarbageCollector(struct firstByte *firstByte) {
     int i, j;
-    int removedPeers = 0, removedTorrents = 0;
+    unsigned int totalPeers = 0,
+    totalTorrents = 0,
+    maxPeersInOneTorrent = 0,
+    maxTorrentsInOneHash = 0,
+    currentPeersInOneTorrent = 0,
+    currentTorrentsInOneHash = 0,
+    removedPeers = 0,
+    removedTorrents = 0;
     unsigned long now = time(NULL);
     unsigned long limitTime = now - INTERVAL * 2;
 
@@ -34,11 +41,21 @@ void runGarbageCollector(struct firstByte *firstByte) {
             struct torrent *currentTorrent = firstByte->secondByte[i].torrent[j];
             struct torrent *previousTorrent = NULL;
 
+            currentTorrentsInOneHash = 0;
+
             while (currentTorrent != NULL) {
+                totalTorrents++;
+                currentTorrentsInOneHash++;
+
                 struct peer *currentPeer = currentTorrent->peer;
                 struct peer *previousPeer = NULL;
 
+                currentPeersInOneTorrent = 0;
+
                 while (currentPeer != NULL) {
+                    totalPeers++;
+                    currentPeersInOneTorrent++;
+
                     if (currentPeer->updateTime < limitTime) {
                         // Пир просрочен
                         torrentChangeStats(currentTorrent, currentPeer->event, currentPeer->event, -1);
@@ -53,6 +70,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
                             currentPeer = previousPeer->next;
                         }
                         removedPeers++;
+                        totalPeers--;
 
                         continue;
                     }
@@ -60,6 +78,9 @@ void runGarbageCollector(struct firstByte *firstByte) {
                     previousPeer = currentPeer;
                     currentPeer = currentPeer->next;
                 }
+
+                if(currentPeersInOneTorrent > maxPeersInOneTorrent)
+                    maxPeersInOneTorrent = currentPeersInOneTorrent;
 
                 if (currentTorrent->peer == NULL) {
                     // Надо удалить торрент, так как нет пиров
@@ -73,6 +94,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
                         currentTorrent = previousTorrent->next;
                     }
                     removedTorrents++;
+                    totalTorrents--;
 
                     continue;
                 }
@@ -81,12 +103,22 @@ void runGarbageCollector(struct firstByte *firstByte) {
                 currentTorrent = currentTorrent->next;
             }
 
+            if(currentTorrentsInOneHash > maxTorrentsInOneHash)
+                maxTorrentsInOneHash = currentTorrentsInOneHash;
+
             rk_sema_post(&firstByte->secondByte[i].sem[j]);
         }
     }
 
-    printf("Garbage peers: %d, torrents: %d\n", removedPeers, removedTorrents);
-    printf("Garbage time: %lu µs\n", getDiffTime(startTime));
+    printf("Garbage:   Peers Torrents\n"
+           "Total:   %7d %8d\n"
+           "Max in:  %7d %8d\n"
+           "Removed: %7d %8d\n"
+           "Time: %lu µs\n",
+           totalPeers, totalTorrents,
+           maxPeersInOneTorrent, maxTorrentsInOneHash,
+           removedPeers, removedTorrents,
+                   getDiffTime(startTime));
 }
 
 void initSem(struct firstByte *firstByte) {
