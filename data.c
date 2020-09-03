@@ -411,7 +411,11 @@ void int2ip(char *dest, unsigned int source) {
 
     memset(dest, 0, 16);
 
-    sprintf(dest, "%d.%d.%d.%d", src[0], src[1], src[2], src[3]);
+    sprintf(dest, "%d.%d.%d.%d",
+            (unsigned char)src[0],
+            (unsigned char)src[1],
+            (unsigned char)src[2],
+            (unsigned char)src[3]);
 }
 
 /**
