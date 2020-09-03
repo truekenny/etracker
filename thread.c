@@ -15,7 +15,7 @@
 #include "socket.h"
 
 #define DEBUG 0
-#define QUEUE_ENABLE 1
+#define QUEUE_ENABLE 0
 #define KEEP_ALIVE 0
 #define READ_LENGTH 2000
 #define MESSAGE_LENGTH 20000
@@ -222,9 +222,9 @@ void *connection_handler(void *_args) {
 
     if (receiveBytesCount == 0)
         DEBUG && puts("Client Disconnected");
-    else if (receiveBytesCount < 0)
-        perror("Recv failed");
-    else
+    else if (receiveBytesCount < 0) {
+        if (DEBUG) perror("Recv failed");
+    } else
         DEBUG && puts("I Disconnect Client");
 
     if (pthread_detach(pthread_self()) != 0) {

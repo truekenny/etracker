@@ -5,7 +5,7 @@
 #include "socket.h"
 
 #define DEBUG 0
-#define TIMEOUT_SOCKET 60
+#define TIMEOUT_SOCKET 5
 
 /**
  * Установка Timeout
