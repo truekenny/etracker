@@ -11,7 +11,7 @@
 #define MSG_NOSIGNAL 0
 #endif
 
-void send_(int socket, void *message, size_t size);
+ssize_t send_(int socket, void *message, size_t size);
 
 /**
  * Установка Timeout
@@ -57,7 +57,7 @@ void sendMessage(int socket, int code, char *message, size_t size, int canKeepAl
             sprintf(headers, "HTTP/1.1 200 OK\r\n");
             break;
     }
-    send_(socket, headers, strlen(headers));
+    if (send_(socket, headers, strlen(headers)) < 0) return;
     DEBUG && printf("%s", headers);
 
     if (code != 200) {
@@ -83,7 +83,7 @@ Connection: Keep-Alive
     if (canKeepAlive) {
         memset(headers, 0, sizeof(headers));
         sprintf(headers, "Connection: Keep-Alive\r\n");
-        send_(socket, headers, strlen(headers));
+        if (send_(socket, headers, strlen(headers)) < 0) return;
         DEBUG && printf("%s", headers);
     }
 
@@ -94,21 +94,24 @@ Connection: Keep-Alive
                      "\r\n",
             size
     );
-    send_(socket, headers, strlen(headers));
+    if (send_(socket, headers, strlen(headers)) < 0) return;
     DEBUG && printf("%s", headers);
 
     // Body
     if (code == 200) {
-        send_(socket, message, size);
+        if (send_(socket, message, size) < 0) return;
         DEBUG && printf("%s\n", message);
     } else {
-        send_(socket, body, strlen(body));
+        if (send_(socket, body, strlen(body)) < 0) return;
         DEBUG && printf("%s", body);
     }
 }
 
-void send_(int socket, void *message, size_t size) {
-    if (send(socket, message, size, MSG_DONTWAIT | MSG_NOSIGNAL) == -1) {
+ssize_t send_(int socket, void *message, size_t size) {
+    ssize_t result = send(socket, message, size, MSG_DONTWAIT | MSG_NOSIGNAL);
+    if (result == -1) {
         perror("Send failed");
     }
+
+    return result;
 }
