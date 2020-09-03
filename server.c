@@ -4,6 +4,8 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include "queue.h"
 #include "sem.h"
 #include "alloc.h"
@@ -101,6 +103,7 @@ int main(int argc, char *argv[]) {
                 break;
         }
 
+        // fcntl(clientSocket, F_SETFL, O_NONBLOCK);
         setTimeout(clientSocket);
 
         inet_ntop(AF_INET, &(clientAddr.sin_addr), ip, INET_ADDRSTRLEN);

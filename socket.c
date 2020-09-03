@@ -37,6 +37,7 @@ void setTimeout(int socket) {
 void sendMessage(int socket, int code, char *message, size_t size, int canKeepAlive) {
     char headers[1000] = {0};
     char body[1000] = {0};
+    int sendFlags = MSG_DONTWAIT;
 
     // First line headers
     switch (code) {
@@ -51,7 +52,7 @@ void sendMessage(int socket, int code, char *message, size_t size, int canKeepAl
             sprintf(headers, "HTTP/1.1 200 OK\r\n");
             break;
     }
-    send(socket, headers, strlen(headers), 0);
+    send(socket, headers, strlen(headers), sendFlags);
     DEBUG && printf("%s", headers);
 
     if (code != 200) {
@@ -71,7 +72,7 @@ void sendMessage(int socket, int code, char *message, size_t size, int canKeepAl
     if (canKeepAlive) {
         memset(headers, 0, sizeof(headers));
         sprintf(headers, "Connection: Keep-Alive\r\n");
-        send(socket, headers, strlen(headers), 0);
+        send(socket, headers, strlen(headers), sendFlags);
         DEBUG && printf("%s", headers);
     }
 
@@ -82,15 +83,15 @@ void sendMessage(int socket, int code, char *message, size_t size, int canKeepAl
                      "\r\n",
             size
     );
-    send(socket, headers, strlen(headers), 0);
+    send(socket, headers, strlen(headers), sendFlags);
     DEBUG && printf("%s", headers);
 
     // Body
     if (code == 200) {
-        send(socket, message, size, 0);
+        send(socket, message, size, sendFlags);
         DEBUG && printf("%s\n", message);
     } else {
-        send(socket, body, strlen(body), 0);
+        send(socket, body, strlen(body), sendFlags);
         DEBUG && printf("%s", body);
     }
 }
