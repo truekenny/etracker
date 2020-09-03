@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <pwd.h>
 #include "queue.h"
 #include "sem.h"
 #include "alloc.h"
@@ -17,6 +18,8 @@
 
 #define DEBUG 0
 #define SOCKET_QUEUE_LENGTH 150
+
+void setNobody();
 
 int main(int argc, char *argv[]) {
     // Check program's arguments
@@ -93,6 +96,8 @@ int main(int argc, char *argv[]) {
     if (RANDOM_DATA_PEER_ID)
         printf("- Random data peer_id: %d\n", RANDOM_DATA_PEER_ID);
 
+    setNobody();
+
     while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, (socklen_t *) &sockAddrSize))) {
         if (clientSocket == -1) {
             perror("Accept failed"); // Timeout
@@ -135,5 +140,20 @@ int main(int argc, char *argv[]) {
 
     printf("Bye-Bye\n");
 
-    return 0;
+    return EXIT_SUCCESS;
+}
+
+void setNobody() {
+    const char *name = "nobody";
+    struct passwd *p;
+    if ((p = getpwnam(name)) == NULL) {
+        perror("Getpwnam failed");
+    } else {
+        if (setuid(p->pw_uid)) {
+            perror("Setuid failed");
+        }
+        if (setgid(p->pw_gid)) {
+            perror("Setgid failed");
+        }
+    };
 }
