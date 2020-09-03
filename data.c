@@ -259,7 +259,18 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
 }
 
 void renderPeers(struct result *result, struct torrent *torrent, struct query *query) {
-    struct peer *peer = torrent->peer;
+    struct peer *peer = {0};
+    unsigned int complete = 0;
+    unsigned int incomplete = 0;
+
+    // После event=stopped торрента может и не быть
+    if (torrent == NULL) {
+        peer = NULL;
+    } else {
+        peer = torrent->peer;
+        complete = torrent->complete;
+        incomplete = torrent->incomplete;
+    }
 
     int peerCounter = 0;
 
@@ -272,8 +283,6 @@ void renderPeers(struct result *result, struct torrent *torrent, struct query *q
     unsigned long sizeMiddleBuffer;
 
     char ip[16];
-    unsigned int complete = torrent->complete;
-    unsigned int incomplete = torrent->incomplete;
 
     struct peer *currentPeer = peer;
     while (currentPeer != NULL) {
@@ -412,10 +421,10 @@ void int2ip(char *dest, unsigned int source) {
     memset(dest, 0, 16);
 
     sprintf(dest, "%d.%d.%d.%d",
-            (unsigned char)src[0],
-            (unsigned char)src[1],
-            (unsigned char)src[2],
-            (unsigned char)src[3]);
+            (unsigned char) src[0],
+            (unsigned char) src[1],
+            (unsigned char) src[2],
+            (unsigned char) src[3]);
 }
 
 /**

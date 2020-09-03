@@ -26,7 +26,7 @@ void parseUri(struct query *query, char *message) {
         int len = strchr(message, '\r') - message;
         if (len < FIRST_LINE_LENGTH) {
             memcpy(firstLine, message, len);
-            printf("%s\n", firstLine);
+            printf("%d %s\n", query->threadNumber, firstLine);
         } else
             printf("Len of first line = %d\n", len);
     }
