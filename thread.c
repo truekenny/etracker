@@ -111,7 +111,7 @@ void *connection_handler(void *_args) {
     char resultMessage[THREAD_RESULT_LENGTH] = {0};
 
     while (memset(readOneMessage, 0, sizeof(readOneMessage))
-           && (receiveBytesCount = recv(threadSocket, readOneMessage, READ_LENGTH, 0)) > 0) {
+           && (receiveBytesCount = recv(threadSocket, readOneMessage, READ_LENGTH, MSG_NOSIGNAL)) > 0) {
         DEBUG && printf("> %s", readOneMessage);
 
         if (startsWith("stop", readOneMessage)) {

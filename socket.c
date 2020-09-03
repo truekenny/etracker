@@ -7,10 +7,6 @@
 #define DEBUG 0
 #define TIMEOUT_SOCKET 5
 
-#ifdef __APPLE__
-#define MSG_NOSIGNAL 0
-#endif
-
 /**
  * Установка Timeout
  * @param socket
