@@ -1,4 +1,6 @@
 #include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "sem.h"
 
 /**
@@ -12,7 +14,10 @@ void rk_sema_init(struct rk_sema *s, uint32_t value) {
 
     *sem = dispatch_semaphore_create(value);
 #else
-    sem_init(&s->sem, 0, value);
+    if (sem_init(&s->sem, 0, value)) {
+        perror("Sem_init failed");
+        exit(0);
+    }
 #endif
 }
 
@@ -28,6 +33,9 @@ void rk_sema_wait(struct rk_sema *s) {
 
     do {
         r = sem_wait(&s->sem);
+        if (r) {
+            perror("Sem_wait failed");
+        }
     } while (r == -1 && errno == EINTR);
 #endif
 }
@@ -40,6 +48,9 @@ void rk_sema_post(struct rk_sema *s) {
 #ifdef __APPLE__
     dispatch_semaphore_signal(s->sem);
 #else
-    sem_post(&s->sem);
+    if (sem_post(&s->sem)) {
+        perror("Sem_post failed");
+        exit(0);
+    }
 #endif
 }

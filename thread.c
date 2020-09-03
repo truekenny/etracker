@@ -19,7 +19,7 @@
 #define READ_LENGTH 2000
 #define MESSAGE_LENGTH 20000
 #define THREAD_RESULT_LENGTH 20000
-#define GARBAGE_COLLECTOR_TIME 15 * 60
+#define GARBAGE_COLLECTOR_TIME (15 * 60)
 
 struct garbageCollectorArgs {
     struct firstByte *firstByte;
@@ -80,7 +80,7 @@ void *garbageCollectorThread(void *_args) {
 void *connection_handler(void *_args) {
     int threadSocket = ((struct args *) _args)->sock;
     int threadNumber = ((struct args *) _args)->number;
-    struct rk_sema sem = *((struct args *) _args)->sem;
+    struct rk_sema *sem = ((struct args *) _args)->sem;
     struct queue **first = ((struct args *) _args)->first;
     in_addr_t ip = ((struct args *) _args)->ip;
     struct firstByte *firstByte = ((struct args *) _args)->firstByte;
@@ -90,9 +90,16 @@ void *connection_handler(void *_args) {
 
     c_free(_args);
 
-    rk_sema_wait(&sem);
+    rk_sema_wait(sem);
+
+    if (CHECK_SEMAPHORE) {
+        printf("Check semaphore connection_handler begin = %d\n", threadNumber);
+        usleep(rand() % 5000 + 5000); // проверка работы семафора
+        printf("Check semaphore connection_handler end = %d\n", threadNumber);
+    }
+
     *first = addToQueue(*first, threadNumber);
-    rk_sema_post(&sem);
+    rk_sema_post(sem);
 
     DEBUG && printf("Handler: sock:%d number:%d\n", threadSocket, threadNumber);
 
@@ -136,6 +143,7 @@ void *connection_handler(void *_args) {
                     query.ip = ip;
                     query.numwant = DEFAULT_NUM_WANT;
                     query.event = EVENT_ID_STARTED;
+                    query.threadNumber = threadNumber;
 
                     parseUri(&query, fullMessage);
 
@@ -165,9 +173,9 @@ void *connection_handler(void *_args) {
                         c_free(result.data);
                     }
                 } else if (startsWith("GET /stats", fullMessage)) {
-                    rk_sema_wait(&sem);
+                    rk_sema_wait(sem);
                     char *data = printQueue(*first);
-                    rk_sema_post(&sem);
+                    rk_sema_post(sem);
                     size_t lenData = strlen(data);
 
                     sendMessage(threadSocket, 200, data, lenData, canKeepAlive);
@@ -197,9 +205,9 @@ void *connection_handler(void *_args) {
 
     close(threadSocket);
 
-    rk_sema_wait(&sem);
+    rk_sema_wait(sem);
     *first = deleteFromQueue(*first, threadNumber);
-    rk_sema_post(&sem);
+    rk_sema_post(sem);
 
     DEBUG && printf("Recv bytes: %d\n", receiveBytesCount);
 

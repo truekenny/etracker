@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Vars
-    struct rk_sema sem; // Семафор
+    struct rk_sema sem = {0}; // Семафор
     int serverSocket, clientSocket, sockAddrSize; // Сокеты и размер структуры sockaddr_in
     struct sockaddr_in serverAddr, clientAddr;
     char ip[16]; // IP адрес 123.123.123.123\0

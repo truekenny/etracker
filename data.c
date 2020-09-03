@@ -4,6 +4,8 @@
 #include <time.h>
 #include <netinet/in.h>
 #include <sys/time.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include "data.h"
 #include "alloc.h"
 #include "uri.h"
@@ -157,7 +159,11 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
 
     // Торрентов нет - нужен новый торрент и пир
     if (firstTorrent == NULL) {
-        // usleep(1000); - проверка работы семафора
+        if (CHECK_SEMAPHORE) {
+            printf("Check semaphore updatePeer(%d) begin = %d\n", 1, query->threadNumber);
+            usleep(rand() % 5000 + 5000); // проверка работы семафора
+            printf("Check semaphore updatePeer(%d) end = %d\n", 1, query->threadNumber);
+        }
         firstTorrent = c_calloc(1, sizeof(struct torrent));
         memcpy(firstTorrent->hash_info, query->info_hash, PARAM_VALUE_LENGTH);
 
@@ -175,6 +181,11 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
 
         return firstTorrent;
     } else {
+        if (CHECK_SEMAPHORE) {
+            printf("Check semaphore updatePeer(%d) begin = %d\n", 2, query->threadNumber);
+            usleep(rand() % 5000 + 5000); // проверка работы семафора
+            printf("Check semaphore updatePeer(%d) end = %d\n", 2, query->threadNumber);
+        }
         struct torrent *currentTorrent = firstTorrent;
 
         while (currentTorrent != NULL) {

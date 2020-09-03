@@ -7,6 +7,8 @@
 #include <semaphore.h>
 #endif
 
+#define CHECK_SEMAPHORE 0
+
 /**
  * Структура семафора
  */

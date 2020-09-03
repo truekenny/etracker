@@ -24,6 +24,8 @@ struct query {
     _Bool compact;
     _Bool no_peer_id;
     unsigned int numwant;
+
+    int threadNumber;
 };
 
 void parseUri(struct query *query, char *message);
