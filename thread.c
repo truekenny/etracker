@@ -116,7 +116,7 @@ void *connection_handler(void *_args) {
 
         if (startsWith("stop", readOneMessage)) {
             printf("STOP\n");
-            exit(0);
+            exit(40);
         }
 
         if (!isHttp && startsWith("GET ", readOneMessage)) {

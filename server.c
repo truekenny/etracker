@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     if (serverSocket == -1) {
         perror("Could not create socket");
 
-        return 1;
+        return 2;
     }
     DEBUG && puts("Socket created");
 
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
     if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) < 0) {
         perror("SO_REUSEADDR failed");
 
-        return 1;
+        return 3;
     }
 
     // Timeout
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     if (bind(serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
         perror("Bind failed");
 
-        return 1;
+        return 4;
     }
     DEBUG && puts("Bind done");
 
@@ -97,10 +97,7 @@ int main(int argc, char *argv[]) {
         if (clientSocket == -1) {
             perror("Accept failed"); // Timeout
 
-            if (serverSocket)
-                continue;
-            else
-                break;
+            continue;
         }
 
         // fcntl(clientSocket, F_SETFL, O_NONBLOCK);
@@ -124,7 +121,7 @@ int main(int argc, char *argv[]) {
         if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) threadArguments) != 0) {
             perror("Could not create thread");
 
-            return 1;
+            return 5;
         }
 
         DEBUG && puts("Handler assigned");
@@ -133,8 +130,10 @@ int main(int argc, char *argv[]) {
     if (clientSocket < 0) {
         perror("Accept failed (end)");
 
-        return 1;
+        return 6;
     }
+
+    printf("Bye-Bye\n");
 
     return 0;
 }

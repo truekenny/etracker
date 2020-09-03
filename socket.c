@@ -18,12 +18,12 @@ void setTimeout(int socket) {
     if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *) &tv, sizeof tv) < 0) {
         printf("Could not set SO_RCVTIMEO socket\n");
 
-        exit(1);
+        exit(30);
     }
     if (setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, (const char *) &tv, sizeof tv) < 0) {
         printf("Could not set SO_SNDTIMEO socket\n");
 
-        exit(1);
+        exit(31);
     }
 }
 
@@ -67,6 +67,12 @@ void sendMessage(int socket, int code, char *message, size_t size, int canKeepAl
 
         size = strlen(body);
     }
+
+    /*
+GET /announce?port=123&peer_id=12345678901234567890&info_hash=12345678901234567890&compact=1 HTTP/1.1
+Connection: Keep-Alive
+     */
+
 
     // End of headers
     if (canKeepAlive) {

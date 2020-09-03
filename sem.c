@@ -16,7 +16,7 @@ void rk_sema_init(struct rk_sema *s, uint32_t value) {
 #else
     if (sem_init(&s->sem, 0, value)) {
         perror("Sem_init failed");
-        exit(0);
+        exit(10);
     }
 #endif
 }
@@ -50,7 +50,7 @@ void rk_sema_post(struct rk_sema *s) {
 #else
     if (sem_post(&s->sem)) {
         perror("Sem_post failed");
-        exit(0);
+        exit(11);
     }
 #endif
 }

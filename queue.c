@@ -80,8 +80,6 @@ char *printQueue(struct queue *first) {
             DEBUG && printf("Error: printQueue: Result too long: n = %d\n", next->n);
 
             break;
-            // exit(1);
-            // return result;
         }
         strcat(result, line);
 
@@ -161,7 +159,7 @@ struct queue *deleteFromQueue(struct queue *first, int n) {
     if (!hasDelete) {
         printf("ERROR: Can not delete n = %d\n", n);
 
-        exit(1);
+        exit(20);
     }
 
     DEBUG && printf("Size after delete: %d\n", getSize(first));
