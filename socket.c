@@ -7,6 +7,10 @@
 #define DEBUG 0
 #define TIMEOUT_SOCKET 5
 
+#ifdef __APPLE__
+#define MSG_NOSIGNAL 0
+#endif
+
 /**
  * Установка Timeout
  * @param socket
@@ -37,7 +41,7 @@ void setTimeout(int socket) {
 void sendMessage(int socket, int code, char *message, size_t size, int canKeepAlive) {
     char headers[1000] = {0};
     char body[1000] = {0};
-    int sendFlags = MSG_DONTWAIT;
+    int sendFlags = MSG_DONTWAIT | MSG_NOSIGNAL;
 
     // First line headers
     switch (code) {
