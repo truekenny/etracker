@@ -11,8 +11,6 @@
 #define MSG_NOSIGNAL 0
 #endif
 
-ssize_t send_(int socket, void *message, size_t size);
-
 /**
  * Установка Timeout
  * @param socket

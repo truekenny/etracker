@@ -206,7 +206,9 @@ void *connection_handler(void *_args) {
         }
 
 
-        send(threadSocket, readOneMessage, receiveBytesCount, 0);
+        if (send_(threadSocket, readOneMessage, receiveBytesCount) < 0) {
+            perror("Default message failed");
+        }
         DEBUG && printf("< %s", readOneMessage);
     }
 
