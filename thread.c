@@ -15,7 +15,8 @@
 #include "socket.h"
 
 #define DEBUG 0
-#define KEEP_ALIVE 1
+#define QUEUE_ENABLE 1
+#define KEEP_ALIVE 0
 #define READ_LENGTH 2000
 #define MESSAGE_LENGTH 20000
 #define THREAD_RESULT_LENGTH 20000
@@ -90,16 +91,16 @@ void *connection_handler(void *_args) {
 
     c_free(_args);
 
-    rk_sema_wait(sem);
-
-    if (CHECK_SEMAPHORE) {
-        printf("Check semaphore connection_handler begin = %d\n", threadNumber);
-        usleep(rand() % 5000 + 5000); // проверка работы семафора
-        printf("Check semaphore connection_handler end = %d\n", threadNumber);
+    if (QUEUE_ENABLE) {
+        rk_sema_wait(sem);
+        if (CHECK_SEMAPHORE) {
+            printf("Check semaphore connection_handler begin = %d\n", threadNumber);
+            usleep(rand() % 5000 + 5000); // проверка работы семафора
+            printf("Check semaphore connection_handler end = %d\n", threadNumber);
+        }
+        *first = addToQueue(*first, threadNumber);
+        rk_sema_post(sem);
     }
-
-    *first = addToQueue(*first, threadNumber);
-    rk_sema_post(sem);
 
     DEBUG && printf("Handler: sock:%d number:%d\n", threadSocket, threadNumber);
 
@@ -135,8 +136,8 @@ void *connection_handler(void *_args) {
             if (strstr(fullMessage, "\r\n\r\n") != NULL) {
                 DEBUG && printf("Message complete\n");
 
-                int canKeepAlive = (strstr(fullMessage, "HTTP/1.1") != NULL)
-                                   || (strstr(fullMessage, "Connection: Keep-Alive") != NULL);
+                int canKeepAlive = KEEP_ALIVE && ((strstr(fullMessage, "HTTP/1.1") != NULL)
+                                                  || (strstr(fullMessage, "Connection: Keep-Alive") != NULL));
 
                 if (startsWith("GET /announce", fullMessage)) {
                     struct query query = {0};
@@ -173,9 +174,15 @@ void *connection_handler(void *_args) {
                         c_free(result.data);
                     }
                 } else if (startsWith("GET /stats", fullMessage)) {
-                    rk_sema_wait(sem);
-                    char *data = printQueue(*first);
-                    rk_sema_post(sem);
+                    char *data = {0};
+
+                    if (QUEUE_ENABLE) {
+                        rk_sema_wait(sem);
+                        data = printQueue(*first);
+                        rk_sema_post(sem);
+                    } else {
+                        data = c_calloc(1, 1);
+                    }
                     size_t lenData = strlen(data);
 
                     sendMessage(threadSocket, 200, data, lenData, canKeepAlive);
@@ -189,7 +196,7 @@ void *connection_handler(void *_args) {
 
                 memset(fullMessage, 0, sizeof(fullMessage));
 
-                if (KEEP_ALIVE && canKeepAlive)
+                if (canKeepAlive)
                     continue; // Connection: Keep-Alive
                 else
                     break;
@@ -205,9 +212,11 @@ void *connection_handler(void *_args) {
 
     close(threadSocket);
 
-    rk_sema_wait(sem);
-    *first = deleteFromQueue(*first, threadNumber);
-    rk_sema_post(sem);
+    if (QUEUE_ENABLE) {
+        rk_sema_wait(sem);
+        *first = deleteFromQueue(*first, threadNumber);
+        rk_sema_post(sem);
+    }
 
     DEBUG && printf("Recv bytes: %d\n", receiveBytesCount);
 
