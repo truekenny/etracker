@@ -1,6 +1,8 @@
 #ifndef SC6_URI_H
 #define SC6_URI_H
 
+#include "block.h"
+
 #define RANDOM_DATA_INFO_HASH 0
 #define RANDOM_DATA_PEER_ID 0
 #define EVENT_ID_STARTED   1
@@ -16,6 +18,7 @@
 #define DEFAULT_NUM_WANT 50
 
 struct query {
+    unsigned char has_info_hash;
     unsigned char info_hash[PARAM_VALUE_LENGTH];
     unsigned char event;
     unsigned short port;
@@ -28,6 +31,6 @@ struct query {
     int threadNumber;
 };
 
-void parseUri(struct query *query, char *message);
+void parseUri(struct query *query, struct block *block, char *message);
 
 #endif //SC6_URI_H

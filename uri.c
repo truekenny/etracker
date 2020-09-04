@@ -11,13 +11,13 @@
 #define PATH_LENGTH 50
 #define FIRST_LINE_LENGTH 1000
 
-void getParam(struct query *query, char *param, char *value);
+void getParam(struct query *query, struct block *block, char *param, char *value);
 
 /**
  * Разбор URI строки
  * @param message
  */
-void parseUri(struct query *query, char *message) {
+void parseUri(struct query *query, struct block *block, char *message) {
     DEBUG && printf("Uri:\n");
 
     if (DEBUG) {
@@ -44,7 +44,7 @@ void parseUri(struct query *query, char *message) {
         if (current == ' ') {
             DEBUG && printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
                             strcmp(param, "123456"));
-            getParam(query, &param[0], &value[0]);
+            getParam(query, block, &param[0], &value[0]);
             break;
         }
         DEBUG && printf("%d=%c\n", i, current);
@@ -69,7 +69,7 @@ void parseUri(struct query *query, char *message) {
         if (current == '&') {
             DEBUG && printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
                             strcmp(param, "123456"));
-            getParam(query, &param[0], &value[0]);
+            getParam(query, block, &param[0], &value[0]);
 
             memset(&param, 0, PARAM_VALUE_LENGTH);
             status = QUERY_PARAM;
@@ -112,16 +112,21 @@ void parseUri(struct query *query, char *message) {
  * @param param
  * @param value
  */
-void getParam(struct query *query, char *param, char *value) {
+void getParam(struct query *query, struct block *block, char *param, char *value) {
     if (!strcmp(param, "info_hash")) {
         memcpy(query->info_hash, value, PARAM_VALUE_LENGTH);
+        query->has_info_hash = 1;
 
         // Random peers
-        if(RANDOM_DATA_INFO_HASH) {
+        if (RANDOM_DATA_INFO_HASH) {
             query->info_hash[0] = (rand() % 256);
             query->info_hash[1] = (rand() % 256);
             query->info_hash[2] = (rand() % 256);
             query->info_hash[3] = (rand() % 256);
+        }
+
+        if (block != NULL) {
+            addStringBlock(block, query->info_hash, PARAM_VALUE_LENGTH);
         }
 
     } else if (!strcmp(param, "event")) {
@@ -142,7 +147,7 @@ void getParam(struct query *query, char *param, char *value) {
         memcpy(query->peer_id, value, PARAM_VALUE_LENGTH);
 
         // Random peers
-        if(RANDOM_DATA_PEER_ID) {
+        if (RANDOM_DATA_PEER_ID) {
             query->peer_id[0] = (rand() % 256);
             query->peer_id[1] = (rand() % 256);
             query->peer_id[2] = (rand() % 256);
@@ -153,7 +158,7 @@ void getParam(struct query *query, char *param, char *value) {
         query->compact = 1;
     } else if (!strcmp(param, "no_peer_id")) {
         query->no_peer_id = 1;
-    } else if(!strcmp(param, "numwant")) {
+    } else if (!strcmp(param, "numwant")) {
         query->numwant = atoi(value);
     }
 }

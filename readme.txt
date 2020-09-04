@@ -38,3 +38,36 @@ curl -i "http://tracker.noobsubs.net:63000/announce?info_hash=123456789012345678
 d8:completei0e10:downloadedi0e10:incompletei1e8:intervali1924e12:min intervali962e5:peers6:Oov;09e
 
 d14:failure reason7:messagee
+
+curl -i "http://tracker.bt4g.com:2095/scrape?info_hash=12345678901234567890&event=started&port=12345&peer_id=11111222223333344444&left=10&downloaded=10&uploaded=10&compact=1"
+d5:filesd20:12345678901234567890d8:completei0e10:incompletei0eeee
+
+d
+5:files
+    d
+    20:12345678901234567890
+        d
+        8:complete i0e
+        10:incompletei0e
+        e
+    e
+e
+
+curl -i "http://tracker.bt4g.com:2095/scrape?info_hash=12345678901234567890&info_hash=02345678901234567890"
+d5:filesd20:12345678901234567890d8:completei0e10:incompletei0ee20:02345678901234567890d8:completei0e10:incompletei0eeee
+
+d
+5:files
+    d
+    20:12345678901234567890
+        d
+        8:completei0e
+        10:incompletei0e
+        e
+    20:02345678901234567890
+        d
+        8:completei0e
+        10:incompletei0e
+        e
+    e
+e

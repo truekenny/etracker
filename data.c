@@ -13,6 +13,8 @@
 
 #define MAX_PEER_PER_RESULT 50
 
+void renderTorrent(struct block *block, struct torrent* torrent);
+
 int getPeerSize(struct peer *peer);
 
 void int2ip(char *dest, unsigned int source);
@@ -147,7 +149,7 @@ struct torrent *deletePeer(struct firstByte *firstByte, struct query *query) {
 
     while (currentTorrent != NULL) {
         // Торрент нашелся
-        if (memcmp(currentTorrent->hash_info, query->info_hash, PARAM_VALUE_LENGTH) == 0) {
+        if (memcmp(currentTorrent->info_hash, query->info_hash, PARAM_VALUE_LENGTH) == 0) {
             struct peer *currentPeer = currentTorrent->peer;
             struct peer *previous = {0};
 
@@ -198,7 +200,7 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
             printf("Check semaphore updatePeer(%d) end = %d\n", 1, query->threadNumber);
         }
         firstTorrent = c_calloc(1, sizeof(struct torrent));
-        memcpy(firstTorrent->hash_info, query->info_hash, PARAM_VALUE_LENGTH);
+        memcpy(firstTorrent->info_hash, query->info_hash, PARAM_VALUE_LENGTH);
 
         struct peer *peer = c_calloc(1, sizeof(struct peer));
         memcpy(peer->peer_id, query->peer_id, PARAM_VALUE_LENGTH);
@@ -223,7 +225,7 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
 
         while (currentTorrent != NULL) {
             // Торрент нашелся
-            if (memcmp(currentTorrent->hash_info, query->info_hash, PARAM_VALUE_LENGTH) == 0) {
+            if (memcmp(currentTorrent->info_hash, query->info_hash, PARAM_VALUE_LENGTH) == 0) {
                 struct peer *currentPeer = currentTorrent->peer;
                 while (currentPeer != NULL) {
                     // Пир нашелся
@@ -269,7 +271,7 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
         // Торрент не найден - нужен новый и новый пир
         if (currentTorrent == NULL) {
             struct torrent *torrent = c_calloc(1, sizeof(struct torrent));
-            memcpy(torrent->hash_info, query->info_hash, PARAM_VALUE_LENGTH);
+            memcpy(torrent->info_hash, query->info_hash, PARAM_VALUE_LENGTH);
 
             struct peer *peer = c_calloc(1, sizeof(struct peer));
             memcpy(peer->peer_id, query->peer_id, PARAM_VALUE_LENGTH);
@@ -290,6 +292,75 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
     // Эта строка недолжна быть достижима
     printf("This should not be seen: updatePeer\n");
     return NULL;
+}
+
+void renderTorrents(struct block *block, struct firstByte *firstByte, struct block *hashes) {
+    struct block *torrentBlock = initBlock();
+
+    addStringBlock(block, "d"
+                          "5:files"
+                          "d", 9);
+
+    if (hashes->size == 0) {
+        int i, j;
+
+        for (i = 0; i < 256; i++) {
+            for (j = 0; j < 256; j++) {
+                rk_sema_wait(&firstByte->secondByte[i].sem[j]);
+
+                struct torrent *currentTorrent = firstByte->secondByte[i].torrent[j];
+
+                while (currentTorrent != NULL) {
+                    renderTorrent(torrentBlock, currentTorrent);
+
+                    currentTorrent = currentTorrent->next;
+                }
+
+                rk_sema_post(&firstByte->secondByte[i].sem[j]);
+            }
+        }
+    } else {
+        unsigned char hash[PARAM_VALUE_LENGTH];
+
+        for (int index = 0; index < hashes->size / PARAM_VALUE_LENGTH; ++index) {
+            memcpy(&hash, &hashes->data[index * PARAM_VALUE_LENGTH], PARAM_VALUE_LENGTH);
+
+            rk_sema_wait(&firstByte->secondByte[hash[0]].sem[hash[1]]);
+
+            struct torrent *currentTorrent = firstByte->secondByte[hash[0]].torrent[hash[1]];
+
+            while (currentTorrent != NULL) {
+                if(memcmp(hash, currentTorrent->info_hash, PARAM_VALUE_LENGTH) == 0) {
+                    renderTorrent(torrentBlock, currentTorrent);
+
+                    break;
+                }
+
+                currentTorrent = currentTorrent->next;
+            }
+
+            rk_sema_post(&firstByte->secondByte[hash[0]].sem[hash[1]]);
+        }
+    }
+
+    addStringBlock(block, torrentBlock->data, torrentBlock->size);
+
+    addStringBlock(block, "e"
+                          "e", 2);
+
+    freeBlock(torrentBlock);
+}
+
+
+
+void renderTorrent(struct block *block, struct torrent* torrent) {
+    addStringBlock(block, "20:", 3);
+    addStringBlock(block, torrent->info_hash, PARAM_VALUE_LENGTH);
+    addFormatStringBlock(block, 1000, "d"
+                                      "8:completei%de"
+                                      "10:incompletei%de"
+                                      "10:downloadedi%de"
+                                      "e", torrent->complete, torrent->incomplete, torrent->downloaded);
 }
 
 void renderPeers(struct block *block, struct torrent *torrent, struct query *query) {

@@ -23,7 +23,7 @@ struct peer {
 };
 
 struct torrent {
-    char hash_info[20];
+    char info_hash[20];
     struct peer *peer;
     unsigned int complete;
     unsigned int incomplete;
@@ -51,5 +51,6 @@ struct torrent *deletePeer(struct firstByte *firstByte, struct query *query);
 struct torrent *updatePeer(struct firstByte *firstByte, struct query *query);
 
 void renderPeers(struct block *block, struct torrent *torrent, struct query *query);
+void renderTorrents(struct block *block, struct firstByte *firstByte, struct block *hashes);
 
 #endif //SC6_DATA_H

@@ -105,7 +105,7 @@ void *connection_handler(void *_args) {
 
     int receivedSize;
     _Bool isHttp = 0;
-    struct block * fullMessage = initBlock();
+    struct block *fullMessage = initBlock();
     char receivedMessage[RECEIVED_MESSAGE_LENGTH + 1] = {0};
 
     while (memset(receivedMessage, 0, sizeof(receivedMessage))
@@ -139,10 +139,12 @@ void *connection_handler(void *_args) {
                     query.event = EVENT_ID_STARTED;
                     query.threadNumber = threadNumber;
 
-                    parseUri(&query, fullMessage->data);
+                    parseUri(&query, NULL, fullMessage->data);
 
-                    if (!query.port) {
-                        sendMessage(threadSocket, 400, "Field Port must be filled", 25, canKeepAlive);
+                    if (!query.has_info_hash) {
+                        sendMessage(threadSocket, 400, "Field 'info_hash' must be filled", 25, canKeepAlive);
+                    } else if (!query.port) {
+                        sendMessage(threadSocket, 400, "Field 'port' must be filled", 25, canKeepAlive);
                     } else {
                         struct torrent *torrent;
                         struct block *block = initBlock();
@@ -166,7 +168,7 @@ void *connection_handler(void *_args) {
                         freeBlock(block);
                     }
                 } else if (startsWith("GET /stats", fullMessage->data)) {
-                    struct block * block = {0};
+                    struct block *block = {0};
 
                     if (QUEUE_ENABLE) {
                         rk_sema_wait(sem);
@@ -174,7 +176,7 @@ void *connection_handler(void *_args) {
                         rk_sema_post(sem);
                     } else {
                         block = initBlock();
-                        addFormatStringBlock(block,  500,"Stats Offline: %d", threadNumber);
+                        addFormatStringBlock(block, 500, "Stats Offline: %d", threadNumber);
                     }
 
                     sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
@@ -182,6 +184,17 @@ void *connection_handler(void *_args) {
                 } else if (startsWith("GET /garbage", fullMessage->data)) {
                     runGarbageCollector(firstByte);
                     sendMessage(threadSocket, 200, "OK", 2, canKeepAlive);
+                } else if (startsWith("GET /scrape", fullMessage->data)) {
+                    struct query query = {0};
+                    struct block *hashes = initBlock();
+                    struct block *block = initBlock();
+                    parseUri(&query, hashes, fullMessage->data);
+
+                    renderTorrents(block, firstByte, hashes);
+                    sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
+
+                    freeBlock(hashes);
+                    freeBlock(block);
                 } else {
                     sendMessage(threadSocket, 404, "Page not found", 14, canKeepAlive);
                 }
