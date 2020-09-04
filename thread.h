@@ -2,6 +2,7 @@
 #define SC6_THREAD_H
 
 #include "data.h"
+#include "stats.h"
 
 /**
  * Аргументы переданные в поток
@@ -13,6 +14,7 @@ struct args {
     struct queue **first;
     in_addr_t ip;
     struct firstByte *firstByte;
+    struct stats *stats;
 };
 
 void runGarbageCollectorThread(struct firstByte *firstByte);

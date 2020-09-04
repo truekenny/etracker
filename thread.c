@@ -84,6 +84,7 @@ void *connection_handler(void *_args) {
     struct queue **first = ((struct args *) _args)->first;
     in_addr_t ip = ((struct args *) _args)->ip;
     struct firstByte *firstByte = ((struct args *) _args)->firstByte;
+    struct stats *stats = ((struct args *) _args)->stats;
 
     DEBUG && printf("first = %p\n", first);
     DEBUG && printf("*first = %p\n", *first);
@@ -111,6 +112,9 @@ void *connection_handler(void *_args) {
     while (memset(receivedMessage, 0, sizeof(receivedMessage))
            && (receivedSize = recv(threadSocket, receivedMessage, RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL)) > 0) {
         DEBUG && printf("> %s", receivedMessage);
+
+        stats->recv_bytes += receivedSize;
+        stats->recv_pass++;
 
         if (startsWith("stop", receivedMessage)) {
             printf("STOP\n");
@@ -142,9 +146,9 @@ void *connection_handler(void *_args) {
                     parseUri(&query, NULL, fullMessage->data);
 
                     if (!query.has_info_hash) {
-                        sendMessage(threadSocket, 400, "Field 'info_hash' must be filled", 25, canKeepAlive);
+                        sendMessage(threadSocket, 400, "Field 'info_hash' must be filled", 25, canKeepAlive, stats);
                     } else if (!query.port) {
-                        sendMessage(threadSocket, 400, "Field 'port' must be filled", 25, canKeepAlive);
+                        sendMessage(threadSocket, 400, "Field 'port' must be filled", 25, canKeepAlive, stats);
                     } else {
                         struct torrent *torrent;
                         struct block *block = initBlock();
@@ -164,7 +168,7 @@ void *connection_handler(void *_args) {
                                 break;
                         } // End of switch
 
-                        sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
+                        sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive, stats);
                         freeBlock(block);
                     }
                 } else if (startsWith("GET /stats", fullMessage->data)) {
@@ -176,46 +180,69 @@ void *connection_handler(void *_args) {
                         rk_sema_post(sem);
                     } else {
                         block = initBlock();
-                        addFormatStringBlock(block, 500, "Stats Offline: %d", threadNumber);
+                        addFormatStringBlock(block, 2500,
+                                             "Stats Offline:\n"
+                                             "start_time = %.24s\n" "thread_number = %d\n"
+                                             "stats.http_200 = %d\n" "stats.http_400 = %d\n"
+                                             "stats.http_403 = %d\n" "stats.http_404 = %d\n"
+                                             "stats.send_pass = %d\n" "stats.recv_pass = %d\n"
+                                             "stats.accept_pass = %d\n"
+                                             "stats.send_failed = %d\n" "stats.recv_failed = %d\n"
+                                             "stats.accept_failed = %d\n"
+                                             "stats.keep_alive = %d\n" "stats.no_keep_alive = %d\n"
+                                             "stats.sent_bytes = %llu\n" "stats.recv_bytes = %llu\n",
+                                             ctime(&stats->time), threadNumber,
+                                             stats->http_200, stats->http_400,
+                                             stats->http_403, stats->http_404,
+                                             stats->send_pass, stats->recv_pass,
+                                             stats->accept_pass,
+                                             stats->send_failed, stats->recv_failed,
+                                             stats->accept_failed,
+                                             stats->keep_alive, stats->no_keep_alive,
+                                             stats->sent_bytes, stats->recv_bytes
+                        );
                     }
 
-                    sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
+                    sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive, stats);
                     freeBlock(block);
                 } else if (startsWith("GET /garbage", fullMessage->data)) {
                     runGarbageCollector(firstByte);
-                    sendMessage(threadSocket, 200, "OK", 2, canKeepAlive);
+                    sendMessage(threadSocket, 200, "OK", 2, canKeepAlive, stats);
                 } else if (startsWith("GET /scrape", fullMessage->data)) {
                     struct query query = {0};
                     struct block *hashes = initBlock();
                     struct block *block = initBlock();
                     parseUri(&query, hashes, fullMessage->data);
 
-                    if(!hashes->size && !ENABLE_FULL_SCRAPE) {
-                        sendMessage(threadSocket, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive);
+                    if (!hashes->size && !ENABLE_FULL_SCRAPE) {
+                        sendMessage(threadSocket, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive, stats);
                     } else {
                         renderTorrents(block, firstByte, hashes);
-                        sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
+                        sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive, stats);
                     }
 
                     freeBlock(hashes);
                     freeBlock(block);
                 } else {
-                    sendMessage(threadSocket, 404, "Page not found", 14, canKeepAlive);
+                    sendMessage(threadSocket, 404, "Page not found", 14, canKeepAlive, stats);
                 }
 
                 fullMessage = resetBlock(fullMessage);
 
-                if (canKeepAlive)
+                if (canKeepAlive) {
+                    stats->keep_alive++;
                     continue; // Connection: Keep-Alive
-                else
+                } else {
+                    stats->no_keep_alive++;
                     break;
+                }
             } // fullMessage
 
             continue;
         } // isHttp
 
 
-        send_(threadSocket, receivedMessage, receivedSize);
+        send_(threadSocket, receivedMessage, receivedSize, stats);
         DEBUG && printf("< %s", receivedMessage);
     }
 
@@ -231,12 +258,14 @@ void *connection_handler(void *_args) {
 
     DEBUG && printf("Recv bytes: %d\n", receivedSize);
 
-    if (receivedSize == 0)
+    if (receivedSize == 0) {
         DEBUG && puts("Client Disconnected");
-    else if (receivedSize < 0) {
+    } else if (receivedSize < 0) {
+        stats->recv_failed++;
         if (DEBUG) perror("Recv failed");
-    } else
+    } else {
         DEBUG && puts("I Disconnect Client");
+    }
 
     if (pthread_detach(pthread_self()) != 0) {
         perror("Could not detach thread");

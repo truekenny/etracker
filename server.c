@@ -37,6 +37,8 @@ int main(int argc, char *argv[]) {
     int threadCounter = 0; // Счётчик подключений
     struct queue *first = NULL; // Очередь
     struct firstByte firstByte = {0}; // Торренты и пиры
+    struct stats *stats = c_calloc(1, sizeof(struct stats));
+    stats->time = time(NULL);
 
     initSem(&firstByte);
 
@@ -100,10 +102,12 @@ int main(int argc, char *argv[]) {
 
     while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, (socklen_t *) &sockAddrSize))) {
         if (clientSocket == -1) {
+            stats->accept_failed++;
             perror("Accept failed"); // Timeout
 
             continue;
         }
+        stats->accept_pass++;
 
         // fcntl(clientSocket, F_SETFL, O_NONBLOCK);
         setTimeout(clientSocket);
@@ -120,6 +124,7 @@ int main(int argc, char *argv[]) {
         threadArguments->first = &first;
         threadArguments->ip = clientAddr.sin_addr.s_addr;
         threadArguments->firstByte = &firstByte;
+        threadArguments->stats = stats;
 
         DEBUG && printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
 
