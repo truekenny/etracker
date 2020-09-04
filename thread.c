@@ -16,7 +16,7 @@
 #include "block.h"
 
 #define DEBUG 0
-#define QUEUE_ENABLE 1
+#define QUEUE_ENABLE 0
 #define KEEP_ALIVE 0
 #define RECEIVED_MESSAGE_LENGTH 2000
 #define GARBAGE_COLLECTOR_TIME (15 * 60)
@@ -174,6 +174,7 @@ void *connection_handler(void *_args) {
                         rk_sema_post(sem);
                     } else {
                         block = initBlock();
+                        addFormatStringBlock(block,  500,"Stats Offline: %d", threadNumber);
                     }
 
                     sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
@@ -197,9 +198,7 @@ void *connection_handler(void *_args) {
         }
 
 
-        if (send_(threadSocket, receivedMessage, receivedSize) < 0) {
-            perror("Default message failed");
-        }
+        send_(threadSocket, receivedMessage, receivedSize);
         DEBUG && printf("< %s", receivedMessage);
     }
 

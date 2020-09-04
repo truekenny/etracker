@@ -110,11 +110,12 @@ void runGarbageCollector(struct firstByte *firstByte) {
         }
     }
 
-    printf("Garbage:   Peers Torrents\n"
-           "Total:   %7d %8d\n"
-           "Max in:  %7d %8d\n"
-           "Removed: %7d %8d\n"
-           "Time: %lu µs\n",
+    printf("%.24s Garbage: "
+           "%7d TP %7d TT "
+           "%7d MP %7d MT "
+           "%7d RP %7d RT "
+           "%7lu µs\n",
+           ctime((time_t *)&now),
            totalPeers, totalTorrents,
            maxPeersInOneTorrent, maxTorrentsInOneHash,
            removedPeers, removedTorrents,

@@ -93,7 +93,7 @@ void sendMessage(int socket, int code, char *message, size_t size, int canKeepAl
 
 ssize_t send_(int socket, void *message, size_t size) {
     ssize_t result = send(socket, message, size, MSG_DONTWAIT | MSG_NOSIGNAL);
-    if (result == -1) {
+    if (DEBUG && result == -1) {
         perror("Send failed");
     }
 
