@@ -232,6 +232,7 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
                         if (currentPeer->event != query->event)
                             torrentChangeStats(currentTorrent, currentPeer->event, query->event, 1);
 
+                        currentPeer->ip = query->ip;
                         currentPeer->port = query->port;
                         currentPeer->updateTime = time(NULL);
                         currentPeer->event = query->event;
