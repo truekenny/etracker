@@ -22,13 +22,13 @@ void torrentChangeStats(struct torrent *torrent, unsigned char oldEvent, unsigne
 void runGarbageCollector(struct firstByte *firstByte) {
     int i, j;
     unsigned int totalPeers = 0,
-    totalTorrents = 0,
-    maxPeersInOneTorrent = 0,
-    maxTorrentsInOneHash = 0,
-    currentPeersInOneTorrent = 0,
-    currentTorrentsInOneHash = 0,
-    removedPeers = 0,
-    removedTorrents = 0;
+            totalTorrents = 0,
+            maxPeersInOneTorrent = 0,
+            maxTorrentsInOneHash = 0,
+            currentPeersInOneTorrent = 0,
+            currentTorrentsInOneHash = 0,
+            removedPeers = 0,
+            removedTorrents = 0;
     unsigned long now = time(NULL);
     unsigned long limitTime = now - INTERVAL * 2;
 
@@ -79,7 +79,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
                     currentPeer = currentPeer->next;
                 }
 
-                if(currentPeersInOneTorrent > maxPeersInOneTorrent)
+                if (currentPeersInOneTorrent > maxPeersInOneTorrent)
                     maxPeersInOneTorrent = currentPeersInOneTorrent;
 
                 if (currentTorrent->peer == NULL) {
@@ -103,7 +103,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
                 currentTorrent = currentTorrent->next;
             }
 
-            if(currentTorrentsInOneHash > maxTorrentsInOneHash)
+            if (currentTorrentsInOneHash > maxTorrentsInOneHash)
                 maxTorrentsInOneHash = currentTorrentsInOneHash;
 
             rk_sema_post(&firstByte->secondByte[i].sem[j]);
@@ -115,11 +115,11 @@ void runGarbageCollector(struct firstByte *firstByte) {
            "%7d MP %7d MT "
            "%7d RP %7d RT "
            "%7lu µs\n",
-           ctime((time_t *)&now),
+           ctime((time_t *) &now),
            totalPeers, totalTorrents,
            maxPeersInOneTorrent, maxTorrentsInOneHash,
            removedPeers, removedTorrents,
-                   getDiffTime(startTime));
+           getDiffTime(startTime));
 }
 
 void initSem(struct firstByte *firstByte) {
@@ -292,10 +292,11 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
     return NULL;
 }
 
-void renderPeers(struct block * block, struct torrent *torrent, struct query *query) {
+void renderPeers(struct block *block, struct torrent *torrent, struct query *query) {
     struct peer *peer = {0};
     unsigned int complete = 0;
     unsigned int incomplete = 0;
+    unsigned int downloaded = 0;
 
     // После event=stopped торрента может и не быть
     if (torrent == NULL) {
@@ -304,6 +305,7 @@ void renderPeers(struct block * block, struct torrent *torrent, struct query *qu
         peer = torrent->peer;
         complete = torrent->complete;
         incomplete = torrent->incomplete;
+        downloaded = torrent->downloaded;
     }
 
     int peerCounter = 0;
@@ -324,31 +326,31 @@ void renderPeers(struct block * block, struct torrent *torrent, struct query *qu
         } else if (query->no_peer_id) {
             int2ip(ip, currentPeer->ip);
             addFormatStringBlock(peerBlock, 500,
-                    "d"
-                    "4:port" "i%de"
-                    "2:ip" "%lu:%s"
-                    "e",
-                    htons(currentPeer->port),
-                    strlen(ip),
-                    ip
+                                 "d"
+                                 "4:port" "i%de"
+                                 "2:ip" "%lu:%s"
+                                 "e",
+                                 htons(currentPeer->port),
+                                 strlen(ip),
+                                 ip
             );
         } else {
             addFormatStringBlock(peerBlock, 500,
-                    "d"
-                    "4:port" "i%de"
-                    "7:peer id" "%d:",
-                    htons(currentPeer->port),
-                    PARAM_VALUE_LENGTH
+                                 "d"
+                                 "4:port" "i%de"
+                                 "7:peer id" "%d:",
+                                 htons(currentPeer->port),
+                                 PARAM_VALUE_LENGTH
             );
 
             addStringBlock(peerBlock, &currentPeer->peer_id, PARAM_VALUE_LENGTH);
 
             int2ip(ip, currentPeer->ip);
             addFormatStringBlock(peerBlock, 500,
-                    "2:ip" "%lu:%s"
-                    "e",
-                    strlen(ip),
-                    ip
+                                 "2:ip" "%lu:%s"
+                                 "e",
+                                 strlen(ip),
+                                 ip
             );
         }
 
@@ -357,28 +359,32 @@ void renderPeers(struct block * block, struct torrent *torrent, struct query *qu
 
     if (query->compact) {
         addFormatStringBlock(block, 500,
-                "d"
-                "8:complete" "i%de"
-                "10:incomplete" "i%de"
-                "8:interval" "i%de"
-                "5:peers"
-                "%d:",
-                complete,
-                incomplete,
-                INTERVAL,
-                peerBlock->size
+                             "d"
+                             "8:complete" "i%de"
+                             "10:incomplete" "i%de"
+                             "10:downloaded" "i%de"
+                             "8:interval" "i%de"
+                             "5:peers"
+                             "%d:",
+                             complete,
+                             incomplete,
+                             downloaded,
+                             INTERVAL,
+                             peerBlock->size
         );
     } else {
         addFormatStringBlock(block, 500,
-                "d"
-                "8:complete" "i%de"
-                "10:incomplete" "i%de"
-                "8:interval" "i%de"
-                "5:peers"
-                "l",
-                complete,
-                incomplete,
-                INTERVAL
+                             "d"
+                             "8:complete" "i%de"
+                             "10:incomplete" "i%de"
+                             "10:downloaded" "i%de"
+                             "8:interval" "i%de"
+                             "5:peers"
+                             "l",
+                             complete,
+                             incomplete,
+                             downloaded,
+                             INTERVAL
         );
     }
 
@@ -428,6 +434,10 @@ void int2ip(char *dest, unsigned int source) {
  * @param diff
  */
 void torrentChangeStats(struct torrent *torrent, unsigned char oldEvent, unsigned char newEvent, char diff) {
+    if (newEvent == EVENT_ID_COMPLETED) {
+        torrent->downloaded++;
+    }
+
     if (oldEvent == EVENT_ID_COMPLETED && newEvent == EVENT_ID_COMPLETED) {
         torrent->complete += diff;
     } else if (oldEvent != EVENT_ID_COMPLETED && newEvent != EVENT_ID_COMPLETED) {

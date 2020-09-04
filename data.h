@@ -27,6 +27,7 @@ struct torrent {
     struct peer *peer;
     unsigned int complete;
     unsigned int incomplete;
+    unsigned int downloaded;
 
     struct torrent *next;
 };
