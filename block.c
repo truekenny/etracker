@@ -7,7 +7,7 @@
 
 #define DEBUG 0
 // Начальный размер памяти
-#define START_ALLOCATE_SIZE 1000
+#define START_ALLOCATE_SIZE 2000
 // Каждый раз расширяю память минимум в два раза
 #define MIN_RE_ALLOC_MULTIPLY 2
 #define max(a, b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
@@ -27,7 +27,7 @@ void freeBlock(struct block *block) {
     c_free(block);
 }
 
-void addStringBlock(struct block *block, char *string, unsigned int requiredSpace) {
+void addStringBlock(struct block *block, void *string, unsigned int requiredSpace) {
     reAllocBlock(block, requiredSpace);
 
     memcpy(&block->data[block->size], string, requiredSpace);

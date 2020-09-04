@@ -3,6 +3,7 @@
 
 #include "uri.h"
 #include "sem.h"
+#include "block.h"
 
 #define INTERVAL 1800
 
@@ -48,6 +49,6 @@ void postSem(struct firstByte *firstByte, struct query *query);
 struct torrent *deletePeer(struct firstByte *firstByte, struct query *query);
 struct torrent *updatePeer(struct firstByte *firstByte, struct query *query);
 
-void renderPeers(struct result *result, struct torrent *torrent, struct query *query);
+void renderPeers(struct block *block, struct torrent *torrent, struct query *query);
 
 #endif //SC6_DATA_H

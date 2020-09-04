@@ -291,7 +291,7 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
     return NULL;
 }
 
-void renderPeers(struct result *result, struct torrent *torrent, struct query *query) {
+void renderPeers(struct block * block, struct torrent *torrent, struct query *query) {
     struct peer *peer = {0};
     unsigned int complete = 0;
     unsigned int incomplete = 0;
@@ -307,13 +307,7 @@ void renderPeers(struct result *result, struct torrent *torrent, struct query *q
 
     int peerCounter = 0;
 
-    result->data = c_calloc(1, 10000);
-
-    struct result peerString = {0};
-    peerString.data = c_calloc(1, 10000);
-
-    char middleBuffer[500] = {0};
-    unsigned long sizeMiddleBuffer;
+    struct block *peerBlock = initBlock();
 
     char ip[16];
 
@@ -324,21 +318,11 @@ void renderPeers(struct result *result, struct torrent *torrent, struct query *q
             break;
 
         if (query->compact) {
-            // $peers .= pack('Nn', $array['ip'], $array['port']);
-            memcpy(&peerString.data[peerString.size], &currentPeer->ip, sizeof(int)); // 4
-            peerString.size += sizeof(int);
-            memcpy(&peerString.data[peerString.size], &currentPeer->port, sizeof(short)); // 2
-            peerString.size += sizeof(short);
+            addStringBlock(peerBlock, &currentPeer->ip, sizeof(int));
+            addStringBlock(peerBlock, &currentPeer->port, sizeof(short));
         } else if (query->no_peer_id) {
-            // "l"
-            // "d"
-            // "4:port" "i12345e"
-            // "2:ip" "13:93.157.234.32"
-            // "e"
-            // "e"
-            // $peers[] = array('ip' => long2ip($array['ip']), 'port' => intval($array['port']));
             int2ip(ip, currentPeer->ip);
-            sprintf(middleBuffer,
+            addFormatStringBlock(peerBlock, 500,
                     "d"
                     "4:port" "i%de"
                     "2:ip" "%lu:%s"
@@ -347,64 +331,44 @@ void renderPeers(struct result *result, struct torrent *torrent, struct query *q
                     strlen(ip),
                     ip
             );
-            sizeMiddleBuffer = strlen(middleBuffer);
-            memcpy(&peerString.data[peerString.size], middleBuffer, sizeMiddleBuffer);
-            peerString.size += sizeMiddleBuffer;
         } else {
-            // "l"
-            // "d"
-            // "4:port" "i12345e"
-            // "7:peer id" "20:11111222223333344444"
-            // "2:ip" "13:93.157.234.32"
-            // "e"
-            // "e"
-            // $peers[] = array('ip' => long2ip($array['ip']), 'port' => intval($array['port']), 'peer id' => $array['peer_id']);
-
-            sprintf(middleBuffer,
+            addFormatStringBlock(peerBlock, 500,
                     "d"
                     "4:port" "i%de"
                     "7:peer id" "%d:",
                     htons(currentPeer->port),
                     PARAM_VALUE_LENGTH
             );
-            sizeMiddleBuffer = strlen(middleBuffer);
-            memcpy(&peerString.data[peerString.size], middleBuffer, sizeMiddleBuffer);
-            peerString.size += sizeMiddleBuffer;
 
-            memcpy(&peerString.data[peerString.size], &currentPeer->peer_id, PARAM_VALUE_LENGTH);
-            peerString.size += PARAM_VALUE_LENGTH;
+            addStringBlock(peerBlock, &currentPeer->peer_id, PARAM_VALUE_LENGTH);
 
             int2ip(ip, currentPeer->ip);
-            sprintf(middleBuffer,
+            addFormatStringBlock(peerBlock, 500,
                     "2:ip" "%lu:%s"
                     "e",
                     strlen(ip),
                     ip
             );
-            sizeMiddleBuffer = strlen(middleBuffer);
-            memcpy(&peerString.data[peerString.size], middleBuffer, sizeMiddleBuffer);
-            peerString.size += sizeMiddleBuffer;
         }
 
         currentPeer = currentPeer->next;
     }
 
     if (query->compact) {
-        sprintf(result->data,
+        addFormatStringBlock(block, 500,
                 "d"
                 "8:complete" "i%de"
                 "10:incomplete" "i%de"
                 "8:interval" "i%de"
                 "5:peers"
-                "%lu:",
+                "%d:",
                 complete,
                 incomplete,
                 INTERVAL,
-                peerString.size
+                peerBlock->size
         );
-        result->size = strlen(result->data);
     } else {
-        sprintf(result->data,
+        addFormatStringBlock(block, 500,
                 "d"
                 "8:complete" "i%de"
                 "10:incomplete" "i%de"
@@ -415,22 +379,17 @@ void renderPeers(struct result *result, struct torrent *torrent, struct query *q
                 incomplete,
                 INTERVAL
         );
-        result->size = strlen(result->data);
-
     }
 
-    memcpy(&result->data[result->size], peerString.data, peerString.size);
-    result->size += peerString.size;
+    addStringBlock(block, peerBlock->data, peerBlock->size);
 
     if (!query->compact) {
-        memcpy(&result->data[result->size], "e", sizeof(char));
-        result->size += sizeof(char);
+        addStringBlock(block, "e", sizeof(char));
     }
 
-    memcpy(&result->data[result->size], "e", sizeof(char));
-    result->size += sizeof(char);
+    addStringBlock(block, "e", sizeof(char));
 
-    c_free(peerString.data);
+    freeBlock(peerBlock);
 }
 
 int getPeerSize(struct peer *peer) {

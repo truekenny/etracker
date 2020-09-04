@@ -13,6 +13,7 @@
 #include "uri.h"
 #include "data.h"
 #include "socket.h"
+#include "block.h"
 
 #define DEBUG 0
 #define QUEUE_ENABLE 0
@@ -152,26 +153,26 @@ void *connection_handler(void *_args) {
                         sendMessage(threadSocket, 400, "Field Port must be filled", 25, canKeepAlive);
                     } else {
                         struct torrent *torrent;
-                        struct result result = {0};
+                        struct block *block = initBlock();
 
                         switch (query.event) {
                             case EVENT_ID_STOPPED:
                                 waitSem(firstByte, &query);
                                 torrent = deletePeer(firstByte, &query);
-                                renderPeers(&result, torrent, &query);
+                                renderPeers(block, torrent, &query);
                                 postSem(firstByte, &query);
                                 break;
                             default:
                                 waitSem(firstByte, &query);
                                 torrent = updatePeer(firstByte, &query);
-                                renderPeers(&result, torrent, &query);
+                                renderPeers(block, torrent, &query);
                                 postSem(firstByte, &query);
                                 // runGarbageCollector(firstByte);
                                 break;
                         } // End of switch
 
-                        sendMessage(threadSocket, 200, result.data, result.size, canKeepAlive);
-                        c_free(result.data);
+                        sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
+                        freeBlock(block);
                     }
                 } else if (startsWith("GET /stats", fullMessage)) {
                     char *data = {0};
