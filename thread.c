@@ -17,7 +17,7 @@
 
 #define DEBUG 0
 #define QUEUE_ENABLE 0
-#define KEEP_ALIVE 0
+#define KEEP_ALIVE 1
 #define RECEIVED_MESSAGE_LENGTH 2000
 #define GARBAGE_COLLECTOR_TIME (15 * 60)
 
@@ -190,8 +190,12 @@ void *connection_handler(void *_args) {
                     struct block *block = initBlock();
                     parseUri(&query, hashes, fullMessage->data);
 
-                    renderTorrents(block, firstByte, hashes);
-                    sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
+                    if(!hashes->size && !ENABLE_FULL_SCRAPE) {
+                        sendMessage(threadSocket, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive);
+                    } else {
+                        renderTorrents(block, firstByte, hashes);
+                        sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
+                    }
 
                     freeBlock(hashes);
                     freeBlock(block);
@@ -205,10 +209,10 @@ void *connection_handler(void *_args) {
                     continue; // Connection: Keep-Alive
                 else
                     break;
-            }
+            } // fullMessage
 
             continue;
-        }
+        } // isHttp
 
 
         send_(threadSocket, receivedMessage, receivedSize);

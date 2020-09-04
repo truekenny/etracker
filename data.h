@@ -5,6 +5,7 @@
 #include "sem.h"
 #include "block.h"
 
+#define ENABLE_FULL_SCRAPE 0
 #define INTERVAL 1800
 
 struct result {

@@ -44,6 +44,9 @@ void sendMessage(int socket, int code, char *message, size_t size, int canKeepAl
         case 400:
             addStringBlock(block, "HTTP/1.0 400 Invalid Request\r\n", 30);
             break;
+        case 403:
+            addStringBlock(block, "HTTP/1.0 403 Forbidden\r\n", 24);
+            break;
         case 404:
             addStringBlock(block, "HTTP/1.0 404 Not Found\r\n", 24);
             break;

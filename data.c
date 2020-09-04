@@ -301,7 +301,7 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
                           "5:files"
                           "d", 9);
 
-    if (hashes->size == 0) {
+    if (hashes->size == 0 && ENABLE_FULL_SCRAPE) {
         int i, j;
 
         for (i = 0; i < 256; i++) {
