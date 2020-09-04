@@ -16,7 +16,7 @@
 #include "block.h"
 
 #define DEBUG 0
-#define QUEUE_ENABLE 0
+#define QUEUE_ENABLE 1
 #define KEEP_ALIVE 0
 #define READ_LENGTH 2000
 #define MESSAGE_LENGTH 20000
@@ -175,19 +175,18 @@ void *connection_handler(void *_args) {
                         freeBlock(block);
                     }
                 } else if (startsWith("GET /stats", fullMessage)) {
-                    char *data = {0};
+                    struct block * block = {0};
 
                     if (QUEUE_ENABLE) {
                         rk_sema_wait(sem);
-                        data = printQueue(*first);
+                        block = printQueue(*first);
                         rk_sema_post(sem);
                     } else {
-                        data = c_calloc(1, 1);
+                        block = initBlock();
                     }
-                    size_t lenData = strlen(data);
 
-                    sendMessage(threadSocket, 200, data, lenData, canKeepAlive);
-                    c_free(data);
+                    sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
+                    freeBlock(block);
                 } else if (startsWith("GET /garbage", fullMessage)) {
                     runGarbageCollector(firstByte);
                     sendMessage(threadSocket, 200, "OK", 2, canKeepAlive);

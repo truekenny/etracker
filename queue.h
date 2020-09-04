@@ -18,7 +18,7 @@ struct queue * addToQueue(struct queue *first, int n);
  * Распечатка очереди
  * @param first
  */
-char *printQueue(struct queue *first);
+struct block *printQueue(struct queue *first);
 
 /**
  * Удаление элемента из очереди

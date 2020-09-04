@@ -4,6 +4,7 @@
 #include <time.h>
 #include "queue.h"
 #include "alloc.h"
+#include "block.h"
 
 #define DEBUG 0
 #define LINE_LENGTH 1000
@@ -59,52 +60,44 @@ struct queue *addToQueue(struct queue *first, int n) {
  * Распечатка очереди
  * @param first
  */
-char *printQueue(struct queue *first) {
+struct block *printQueue(struct queue *first) {
     if (DEBUG) {
         printf("Start printing…\n");
     }
 
-    char *result, line[LINE_LENGTH];
+    struct block *block = initBlock();
     long int t_time = time(NULL);
 
-    result = c_calloc(sizeof(char), RESULT_LENGTH);
-    sprintf(line, "%.24s - now\n", ctime(&t_time));
-    strcat(result, line);
+    addFormatStringBlock(block, 1000, "%.24s - now\n", ctime(&t_time));
 
     struct queue *next = first;
     while (next != NULL) {
         DEBUG && printf("  Print: n = %d\n", next->n);
 
-        sprintf(line, "%.24s - %d\n", ctime(&next->t_time), next->n);
-        if (strlen(result) + strlen(line) > RESULT_LENGTH - ENDING_LENGTH) {
-            DEBUG && printf("Error: printQueue: Result too long: n = %d\n", next->n);
-
-            break;
-        }
-        strcat(result, line);
+        addFormatStringBlock(block, 1000, "%.24s - %d\n", ctime(&next->t_time), next->n);
 
         next = next->q;
     }
 
     // End of result
     struct c_countChanges *countChanges = c_result();
-    sprintf(line, "Max concurrency connection: %d\n"
-                  "Total malloc: %d\n"
-                  "Total calloc: %d\n"
-                  "Total *alloc: %d\n"
-                  "Total free: %d\n"
-                  "Total *alloc - free: %d\n",
-            maxQueueLength,
-            countChanges->countMalloc,
-            countChanges->countCalloc,
-            countChanges->countMalloc + countChanges->countCalloc,
-            countChanges->countFree,
-            countChanges->countMalloc + countChanges->countCalloc - countChanges->countFree);
-    strcat(result, line);
+    addFormatStringBlock(block, 2000,
+                         "Max concurrency connection: %d\n"
+                         "Total malloc: %d\n"
+                         "Total calloc: %d\n"
+                         "Total *alloc: %d\n"
+                         "Total free: %d\n"
+                         "Total *alloc - free: %d\n",
+                         maxQueueLength,
+                         countChanges->countMalloc,
+                         countChanges->countCalloc,
+                         countChanges->countMalloc + countChanges->countCalloc,
+                         countChanges->countFree,
+                         countChanges->countMalloc + countChanges->countCalloc - countChanges->countFree);
 
     DEBUG && puts("End of print");
 
-    return result;
+    return block;
 }
 
 /**
