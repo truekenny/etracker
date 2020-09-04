@@ -7,9 +7,6 @@
 #include "block.h"
 
 #define DEBUG 0
-#define LINE_LENGTH 1000
-#define RESULT_LENGTH 19000
-#define ENDING_LENGTH 1000
 
 /**
  * Очередь

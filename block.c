@@ -27,6 +27,12 @@ void freeBlock(struct block *block) {
     c_free(block);
 }
 
+struct block *resetBlock(struct block * block) {
+    freeBlock(block);
+
+    return initBlock();
+}
+
 void addStringBlock(struct block *block, void *string, unsigned int requiredSpace) {
     reAllocBlock(block, requiredSpace);
 

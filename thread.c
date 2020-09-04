@@ -18,9 +18,7 @@
 #define DEBUG 0
 #define QUEUE_ENABLE 1
 #define KEEP_ALIVE 0
-#define READ_LENGTH 2000
-#define MESSAGE_LENGTH 20000
-#define THREAD_RESULT_LENGTH 20000
+#define RECEIVED_MESSAGE_LENGTH 2000
 #define GARBAGE_COLLECTOR_TIME (15 * 60)
 
 struct garbageCollectorArgs {
@@ -105,49 +103,43 @@ void *connection_handler(void *_args) {
 
     DEBUG && printf("Handler: sock:%d number:%d\n", threadSocket, threadNumber);
 
-    int receiveBytesCount;
+    int receivedSize;
     _Bool isHttp = 0;
-    char fullMessage[MESSAGE_LENGTH] = {0};
-    char readOneMessage[READ_LENGTH + 1] = {0};
-    char resultMessage[THREAD_RESULT_LENGTH] = {0};
+    struct block * fullMessage = initBlock();
+    char receivedMessage[RECEIVED_MESSAGE_LENGTH + 1] = {0};
 
-    while (memset(readOneMessage, 0, sizeof(readOneMessage))
-           && (receiveBytesCount = recv(threadSocket, readOneMessage, READ_LENGTH, MSG_NOSIGNAL)) > 0) {
-        DEBUG && printf("> %s", readOneMessage);
+    while (memset(receivedMessage, 0, sizeof(receivedMessage))
+           && (receivedSize = recv(threadSocket, receivedMessage, RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL)) > 0) {
+        DEBUG && printf("> %s", receivedMessage);
 
-        if (startsWith("stop", readOneMessage)) {
+        if (startsWith("stop", receivedMessage)) {
             printf("STOP\n");
             exit(40);
         }
 
-        if (!isHttp && startsWith("GET ", readOneMessage)) {
+        if (!isHttp && startsWith("GET ", receivedMessage)) {
             isHttp = 1;
             DEBUG && printf("isHttp = 1\n");
         }
 
         if (isHttp) {
-            if (strlen(fullMessage) + strlen(readOneMessage) > MESSAGE_LENGTH) {
-                printf("Message too long\n");
-                break;
-            }
+            addStringBlock(fullMessage, receivedMessage, receivedSize);
+            DEBUG && printf("message = %s", fullMessage->data);
 
-            strcat(fullMessage, readOneMessage);
-            DEBUG && printf("message = %s", fullMessage);
-
-            if (strstr(fullMessage, "\r\n\r\n") != NULL) {
+            if (strstr(fullMessage->data, "\r\n\r\n") != NULL) {
                 DEBUG && printf("Message complete\n");
 
-                int canKeepAlive = KEEP_ALIVE && ((strstr(fullMessage, "HTTP/1.1") != NULL)
-                                                  || (strstr(fullMessage, "Connection: Keep-Alive") != NULL));
+                int canKeepAlive = KEEP_ALIVE && ((strstr(fullMessage->data, "HTTP/1.1") != NULL)
+                                                  || (strstr(fullMessage->data, "Connection: Keep-Alive") != NULL));
 
-                if (startsWith("GET /announce", fullMessage)) {
+                if (startsWith("GET /announce", fullMessage->data)) {
                     struct query query = {0};
                     query.ip = ip;
                     query.numwant = DEFAULT_NUM_WANT;
                     query.event = EVENT_ID_STARTED;
                     query.threadNumber = threadNumber;
 
-                    parseUri(&query, fullMessage);
+                    parseUri(&query, fullMessage->data);
 
                     if (!query.port) {
                         sendMessage(threadSocket, 400, "Field Port must be filled", 25, canKeepAlive);
@@ -167,14 +159,13 @@ void *connection_handler(void *_args) {
                                 torrent = updatePeer(firstByte, &query);
                                 renderPeers(block, torrent, &query);
                                 postSem(firstByte, &query);
-                                // runGarbageCollector(firstByte);
                                 break;
                         } // End of switch
 
                         sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
                         freeBlock(block);
                     }
-                } else if (startsWith("GET /stats", fullMessage)) {
+                } else if (startsWith("GET /stats", fullMessage->data)) {
                     struct block * block = {0};
 
                     if (QUEUE_ENABLE) {
@@ -187,14 +178,14 @@ void *connection_handler(void *_args) {
 
                     sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive);
                     freeBlock(block);
-                } else if (startsWith("GET /garbage", fullMessage)) {
+                } else if (startsWith("GET /garbage", fullMessage->data)) {
                     runGarbageCollector(firstByte);
                     sendMessage(threadSocket, 200, "OK", 2, canKeepAlive);
                 } else {
                     sendMessage(threadSocket, 404, "Page not found", 14, canKeepAlive);
                 }
 
-                memset(fullMessage, 0, sizeof(fullMessage));
+                fullMessage = resetBlock(fullMessage);
 
                 if (canKeepAlive)
                     continue; // Connection: Keep-Alive
@@ -206,11 +197,13 @@ void *connection_handler(void *_args) {
         }
 
 
-        if (send_(threadSocket, readOneMessage, receiveBytesCount) < 0) {
+        if (send_(threadSocket, receivedMessage, receivedSize) < 0) {
             perror("Default message failed");
         }
-        DEBUG && printf("< %s", readOneMessage);
+        DEBUG && printf("< %s", receivedMessage);
     }
+
+    freeBlock(fullMessage);
 
     close(threadSocket);
 
@@ -220,11 +213,11 @@ void *connection_handler(void *_args) {
         rk_sema_post(sem);
     }
 
-    DEBUG && printf("Recv bytes: %d\n", receiveBytesCount);
+    DEBUG && printf("Recv bytes: %d\n", receivedSize);
 
-    if (receiveBytesCount == 0)
+    if (receivedSize == 0)
         DEBUG && puts("Client Disconnected");
-    else if (receiveBytesCount < 0) {
+    else if (receivedSize < 0) {
         if (DEBUG) perror("Recv failed");
     } else
         DEBUG && puts("I Disconnect Client");
