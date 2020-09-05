@@ -112,7 +112,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
         }
     }
 
-    printf("%.24s Garbage: "
+    printf("%.19s GRBG: "
            "%7d TP %7d TT "
            "%7d MP %7d MT "
            "%7d RP %7d RT "
