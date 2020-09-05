@@ -30,7 +30,7 @@ void *serverTcpHandler(void *args) {
     // Create socket
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1) {
-        perror("Could not create socket");
+        perror("Socket TCP creation failed");
 
         exit(2);
     }
@@ -55,7 +55,7 @@ void *serverTcpHandler(void *args) {
 
     // Bind
     if (bind(serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-        perror("Bind failed");
+        perror("Bind TCP failed");
 
         exit(4);
     }
@@ -65,7 +65,7 @@ void *serverTcpHandler(void *args) {
     listen(serverSocket, SOCKET_QUEUE_LENGTH);
 
     // Accept and incoming connection
-    puts("Waiting for incoming connections...");
+    puts("Waiting TCP for incoming connections...");
     sockAddrSize = sizeof(struct sockaddr_in);
 
     while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, (socklen_t *) &sockAddrSize))) {

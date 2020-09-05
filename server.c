@@ -16,6 +16,7 @@
 #include "thread.h"
 #include "data.h"
 #include "socket_tcp.h"
+#include "socket_udp.h"
 
 #define DEBUG 0
 
@@ -60,17 +61,29 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->firstByte = &firstByte;
     serverTcpArgs->stats = stats;
     serverTcpArgs->port = argv[1];
-
     if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
         perror("Could not create thread");
 
-        return 5;
+        return 101;
+    }
+    // Start TCP
+    pthread_t udpServerThread;
+    struct serverUdpArgs *serverUdpArgs = (struct serverUdpArgs *) c_malloc(sizeof(struct serverUdpArgs));
+    serverUdpArgs->firstByte = &firstByte;
+    serverUdpArgs->stats = stats;
+    serverUdpArgs->port = argv[1];
+    if (pthread_create(&udpServerThread, NULL, serverUdpHandler, (void *) serverUdpArgs) != 0) {
+        perror("Could not create thread");
+
+        return 102;
     }
 
     setNobody();
 
     printf("Join TCP Thread\n");
     pthread_join(tcpServerThread, NULL);
+    printf("Join UDP Thread\n");
+    pthread_join(udpServerThread, NULL);
 
     printf("Bye-Bye\n");
 

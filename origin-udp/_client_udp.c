@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define PORT        8080
+#define PORT        3000
 #define MAXLINE     1024
 #define MSG_CONFIRM 0
 
