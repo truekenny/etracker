@@ -2,23 +2,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <pthread.h>
 #include "socket_udp.h"
 #include "alloc.h"
+#include "thread_client_udp.h"
+#include "socket_udp_response_structure.h"
 
 #define DEBUG 1
 #define RECEIVED_UDP_MESSAGE_LENGTH 200
 #define MSG_CONFIRM 0
 
 #define PROTOCOL_ID 0x8019102717040000
-
-#define ACTION_CONNECT 0
-#define ACTION_ANNOUNCE 1
-
-#define EVENT_NONE 0
-#define EVENT_COMPLETED 1
-#define EVENT_STARTED 2
-#define EVENT_STOPPED 3
-#define EVENT_PAUSED 4
 
 /*
 0       64-bit integer  protocol_id     0x41727101980 // magic constant
@@ -67,8 +61,8 @@ struct announceRequest {
     unsigned long connection_id;
     unsigned int action;
     unsigned int transaction_id;
-    unsigned char info_hash[20];
-    unsigned char peer_id[20];
+    unsigned char info_hash[PARAM_VALUE_LENGTH];
+    unsigned char peer_id[PARAM_VALUE_LENGTH];
     unsigned long downloaded;
     unsigned long left;
     unsigned long uploaded;
@@ -76,30 +70,6 @@ struct announceRequest {
     unsigned int ip;
     unsigned int key;
     unsigned int num_want;
-    unsigned short port;
-};
-
-/*
-0           32-bit integer  action          1 // announce
-4           32-bit integer  transaction_id
-8           32-bit integer  interval
-12          32-bit integer  leechers
-16          32-bit integer  seeders
-20 + 6 * n  32-bit integer  IP address
-24 + 6 * n  16-bit integer  TCP port
-26
- */
-
-struct announceResponse {
-    unsigned int action;
-    unsigned int transaction_id;
-    unsigned int interval;
-    unsigned int leechers;
-    unsigned int seeders;
-};
-
-struct announcePeerResponse {
-    unsigned int ip;
     unsigned short port;
 };
 
@@ -143,7 +113,7 @@ void *serverUdpHandler(void *args) {
     unsigned char connectRequestSize = sizeof(struct connectRequest);
     unsigned char connectResponseSize = sizeof(struct connectResponse);
     unsigned char announceRequestSize = sizeof(struct announceRequest);
-    unsigned long connectionCount = 0;
+    unsigned long receiveCount = 0;
     struct connectResponse connectResponse = {0}; // ACTION_CONNECT = 0
 
     while ((receivedSize = recvfrom(serverSocket, (char *) receivedMessage, announceRequestSize,
@@ -153,11 +123,13 @@ void *serverUdpHandler(void *args) {
         // receivedMessage[receivedSize] = '\0';
         // printf("Client : %s\n", receivedMessage);
 
+        receiveCount++;
+
         if (receivedSize == connectRequestSize) {
             struct connectRequest *connectRequest = (struct connectRequest *) receivedMessage;
             if (connectRequest->protocol_id == PROTOCOL_ID && connectRequest->action == ACTION_CONNECT) {
                 connectResponse.transaction_id = connectRequest->transaction_id;
-                connectResponse.connection_id = ++connectionCount;
+                connectResponse.connection_id = receiveCount;
 
                 sendto(serverSocket, (const char *) &connectResponse, connectResponseSize,
                        MSG_CONFIRM, (const struct sockaddr *) &clientAddr,
@@ -167,11 +139,33 @@ void *serverUdpHandler(void *args) {
             struct announceRequest *announceRequest = (struct announceRequest *) receivedMessage;
             announceRequest->action = htonl(announceRequest->action);
             if (announceRequest->action == ACTION_ANNOUNCE) {
-                announceRequest->event = htonl(announceRequest->event);
-                announceRequest->num_want = htonl(announceRequest->num_want);
-                // announceRequest->port = htons(announceRequest->port);
 
                 // Аргументы потока
+                struct query *query = c_calloc(1, sizeof(struct query));
+                query->udp = 1;
+                query->port = announceRequest->port;
+                query->event = htonl(announceRequest->event);;
+                memcpy(query->info_hash, announceRequest->info_hash, PARAM_VALUE_LENGTH);
+                memcpy(query->peer_id, announceRequest->peer_id, PARAM_VALUE_LENGTH);
+                query->numwant = htonl(announceRequest->num_want);
+                query->ip = clientAddr.sin_addr.s_addr;
+
+                struct clientUdpArgs *clientUdpArgs = c_calloc(1, sizeof(struct clientUdpArgs));
+                clientUdpArgs->firstByte = firstByte;
+                clientUdpArgs->stats = stats;
+                clientUdpArgs->number = receiveCount;
+                clientUdpArgs->serverSocket = serverSocket;
+                clientUdpArgs->transaction_id = announceRequest->transaction_id;
+                clientUdpArgs->clientAddr = c_calloc(1, sizeof(struct sockaddr_in));
+                memcpy(clientUdpArgs->clientAddr, &clientAddr, sockAddrSize);
+
+                pthread_t udpClientThread;
+                if (pthread_create(&udpClientThread, NULL, clientUdpHandler, (void *) clientUdpArgs) != 0) {
+                    perror("Could not create UDP thread");
+
+                    exit(501);
+                }
+
                 // Поток
             }
         }

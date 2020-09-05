@@ -24,6 +24,7 @@ struct query {
     unsigned short port;
     unsigned int ip;
     unsigned char peer_id[PARAM_VALUE_LENGTH];
+    _Bool udp;
     _Bool compact;
     _Bool no_peer_id;
     unsigned int numwant;

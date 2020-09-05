@@ -2,12 +2,13 @@
 #include <ntsid.h>
 #include <stdio.h>
 #include "data_render.h"
+#include "socket_udp_response_structure.h"
 
 #define MAX_PEER_PER_RESULT 50
 
 void int2ip(char *dest, unsigned int source);
 
-void renderTorrent(struct block *block, struct torrent* torrent);
+void renderTorrent(struct block *block, struct torrent *torrent);
 
 void renderTorrents(struct block *block, struct firstByte *firstByte, struct block *hashes) {
     struct block *torrentBlock = initBlock();
@@ -45,7 +46,7 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
             struct torrent *currentTorrent = firstByte->secondByte[hash[0]].torrent[hash[1]];
 
             while (currentTorrent != NULL) {
-                if(memcmp(hash, currentTorrent->info_hash, PARAM_VALUE_LENGTH) == 0) {
+                if (memcmp(hash, currentTorrent->info_hash, PARAM_VALUE_LENGTH) == 0) {
                     renderTorrent(torrentBlock, currentTorrent);
 
                     break;
@@ -66,9 +67,7 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
     freeBlock(torrentBlock);
 }
 
-
-
-void renderTorrent(struct block *block, struct torrent* torrent) {
+void renderTorrent(struct block *block, struct torrent *torrent) {
     addStringBlock(block, "20:", 3);
     addStringBlock(block, torrent->info_hash, PARAM_VALUE_LENGTH);
     addFormatStringBlock(block, 1000, "d"
@@ -106,7 +105,7 @@ void renderPeers(struct block *block, struct torrent *torrent, struct query *que
         if (peerCounter > query->numwant || peerCounter > MAX_PEER_PER_RESULT)
             break;
 
-        if (query->compact) {
+        if (query->compact || query->udp) {
             addStringBlock(peerBlock, &currentPeer->ip, sizeof(int));
             addStringBlock(peerBlock, &currentPeer->port, sizeof(short));
         } else if (query->no_peer_id) {
@@ -143,7 +142,8 @@ void renderPeers(struct block *block, struct torrent *torrent, struct query *que
         currentPeer = currentPeer->next;
     }
 
-    if (query->compact) {
+    if (query->udp) {}
+    else if (query->compact) {
         addFormatStringBlock(block, 500,
                              "d"
                              "8:complete" "i%de"
@@ -176,11 +176,13 @@ void renderPeers(struct block *block, struct torrent *torrent, struct query *que
 
     addStringBlock(block, peerBlock->data, peerBlock->size);
 
-    if (!query->compact) {
+    if (!query->udp) {
+        if (!query->compact) {
+            addStringBlock(block, "e", sizeof(char));
+        }
+
         addStringBlock(block, "e", sizeof(char));
     }
-
-    addStringBlock(block, "e", sizeof(char));
 
     freeBlock(peerBlock);
 }

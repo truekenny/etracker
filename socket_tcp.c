@@ -96,7 +96,7 @@ void *serverTcpHandler(void *args) {
         DEBUG && printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
 
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
-            perror("Could not create thread");
+            perror("Could not create TCP thread");
 
             exit(5);
         }
