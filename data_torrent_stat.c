@@ -1,6 +1,6 @@
 #include "data_torrent_stat.h"
 
-#include "data.h"
+#include "data_change.h"
 
 /**
  * Меняет значение complete и incomplete торрента

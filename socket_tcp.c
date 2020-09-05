@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "socket_tcp.h"
-#include "thread.h"
+#include "thread_client_tcp.h"
 #include "socket.h"
 #include "alloc.h"
 

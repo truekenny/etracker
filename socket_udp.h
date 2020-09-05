@@ -2,7 +2,7 @@
 #define SC6_SOCKET_UDP_H
 
 #include "stats.h"
-#include "data.h"
+#include "data_change.h"
 #include "queue.h"
 
 struct serverUdpArgs {

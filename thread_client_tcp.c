@@ -4,13 +4,13 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <unistd.h>
-#include "thread.h"
+#include "thread_client_tcp.h"
 #include "sem.h"
 #include "alloc.h"
 #include "queue.h"
 #include "string.h"
 #include "uri.h"
-#include "data.h"
+#include "data_change.h"
 #include "data_sem.h"
 #include "data_garbage.h"
 #include "data_render.h"

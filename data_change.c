@@ -6,7 +6,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include "data.h"
+#include "data_change.h"
 #include "data_torrent_stat.h"
 #include "alloc.h"
 #include "uri.h"

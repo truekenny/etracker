@@ -1,7 +1,7 @@
-#ifndef SC6_THREAD_H
-#define SC6_THREAD_H
+#ifndef SC6_THREAD_CLIENT_TCP_H
+#define SC6_THREAD_CLIENT_TCP_H
 
-#include "data.h"
+#include "data_change.h"
 #include "stats.h"
 
 /**
@@ -19,4 +19,4 @@ struct clientTcpArgs {
 
 void *clientTcpHandler(void *);
 
-#endif //SC6_THREAD_H
+#endif //SC6_THREAD_CLIENT_TCP_H

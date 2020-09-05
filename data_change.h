@@ -1,5 +1,5 @@
-#ifndef SC6_DATA_H
-#define SC6_DATA_H
+#ifndef SC6_DATA_CHANGE_H
+#define SC6_DATA_CHANGE_H
 
 #include "uri.h"
 #include "sem.h"
@@ -9,4 +9,4 @@
 struct torrent *deletePeer(struct firstByte *firstByte, struct query *query);
 struct torrent *updatePeer(struct firstByte *firstByte, struct query *query);
 
-#endif //SC6_DATA_H
+#endif //SC6_DATA_CHANGE_H
