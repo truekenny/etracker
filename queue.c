@@ -4,7 +4,6 @@
 #include <time.h>
 #include "queue.h"
 #include "alloc.h"
-#include "block.h"
 
 #define DEBUG 0
 
@@ -57,12 +56,11 @@ struct queue *addToQueue(struct queue *first, int n) {
  * Распечатка очереди
  * @param first
  */
-struct block *printQueue(struct queue *first) {
+void printQueue(struct block *block, struct queue *first) {
     if (DEBUG) {
         printf("Start printing…\n");
     }
 
-    struct block *block = initBlock();
     long int t_time = time(NULL);
 
     addFormatStringBlock(block, 1000, "%.24s - now\n", ctime(&t_time));
@@ -79,12 +77,12 @@ struct block *printQueue(struct queue *first) {
     // End of result
     struct c_countChanges *countChanges = c_result();
     addFormatStringBlock(block, 2000,
-                         "Max concurrency connection: %d\n"
-                         "Total malloc: %d\n"
-                         "Total calloc: %d\n"
-                         "Total *alloc: %d\n"
-                         "Total free: %d\n"
-                         "Total *alloc - free: %d\n",
+                         "Max concurrency connection = %d\n"
+                         "Total malloc = %d\n"
+                         "Total calloc = %d\n"
+                         "Total *alloc = %d\n"
+                         "Total free = %d\n"
+                         "Total *alloc - free = %d\n\n",
                          maxQueueLength,
                          countChanges->countMalloc,
                          countChanges->countCalloc,
@@ -93,8 +91,6 @@ struct block *printQueue(struct queue *first) {
                          countChanges->countMalloc + countChanges->countCalloc - countChanges->countFree);
 
     DEBUG && puts("End of print");
-
-    return block;
 }
 
 /**

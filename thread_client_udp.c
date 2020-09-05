@@ -10,6 +10,7 @@
 #include "socket_udp_response_structure.h"
 #include "stats.h"
 
+#define DEBUG 0
 #define MSG_CONFIRM 0
 
 void *clientUdpHandler(void *args) {
@@ -22,8 +23,10 @@ void *clientUdpHandler(void *args) {
     waitSem(clientUdpArgs->firstByte, clientUdpArgs->query);
     if (clientUdpArgs->query->event == EVENT_ID_STOPPED) {
         torrent = deletePeer(clientUdpArgs->firstByte, clientUdpArgs->query);
+        DEBUG && printf("Delete UDP peer %s %s\n", clientUdpArgs->query->info_hash, clientUdpArgs->query->peer_id);
     } else {
         torrent = updatePeer(clientUdpArgs->firstByte, clientUdpArgs->query);
+        DEBUG && printf("Update UDP peer %s %s\n", clientUdpArgs->query->info_hash, clientUdpArgs->query->peer_id);
     }
 
     struct announceHeadResponse announceHeadResponse = {0};

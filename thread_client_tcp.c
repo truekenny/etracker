@@ -18,7 +18,7 @@
 #include "block.h"
 
 #define DEBUG 0
-#define QUEUE_ENABLE 0
+#define QUEUE_ENABLE 1
 #define KEEP_ALIVE 1
 #define RECEIVED_MESSAGE_LENGTH 2000
 
@@ -125,16 +125,14 @@ void *clientTcpHandler(void *args) {
                         freeBlock(block);
                     }
                 } else if (startsWith("GET /stats", fullMessage->data)) {
-                    struct block *block = {0};
+                    struct block *block = initBlock();
 
                     if (QUEUE_ENABLE) {
                         rk_sema_wait(sem);
-                        block = printQueue(*first);
+                        printQueue(block, *first);
                         rk_sema_post(sem);
-                    } else {
-                        block = initBlock();
-                        formatStats(threadNumber, block, stats);
                     }
+                    formatStats(threadNumber, block, stats);
 
                     sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive, stats);
                     freeBlock(block);

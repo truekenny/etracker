@@ -2,7 +2,6 @@
 
 void formatStats(int threadNumber, struct block *block, struct stats *stats) {
     addFormatStringBlock(block, 2500,
-                         "Stats Offline:\n"
                          "start_time = %.24s\n" "thread_number = %d\n\n"
 
                          "stats.http_200 = %d\n" "stats.http_400 = %d\n"

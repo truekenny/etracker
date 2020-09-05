@@ -1,6 +1,8 @@
 #ifndef SC6_QUEUE_H
 #define SC6_QUEUE_H
 
+#include "block.h"
+
 /**
  * Структура элемента очереди
  */
@@ -18,7 +20,7 @@ struct queue * addToQueue(struct queue *first, int n);
  * Распечатка очереди
  * @param first
  */
-struct block *printQueue(struct queue *first);
+void printQueue(struct block *block, struct queue *first);
 
 /**
  * Удаление элемента из очереди
