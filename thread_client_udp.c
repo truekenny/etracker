@@ -8,6 +8,7 @@
 #include "data_change.h"
 #include "data_render.h"
 #include "socket_udp_response_structure.h"
+#include "stats.h"
 
 #define MSG_CONFIRM 0
 
@@ -38,11 +39,15 @@ void *clientUdpHandler(void *args) {
     renderPeers(block, torrent, clientUdpArgs->query);
     postSem(clientUdpArgs->firstByte, clientUdpArgs->query);
 
+    clientUdpArgs->stats->sent_bytes_udp += block->size;
     if (sendto(clientUdpArgs->serverSocket, block->data, block->size,
                MSG_CONFIRM, (const struct sockaddr *) clientUdpArgs->clientAddr,
                sockAddrSize) == -1) {
         perror("Sendto failed");
-    };
+        clientUdpArgs->stats->send_failed_udp++;
+    } else {
+        clientUdpArgs->stats->send_pass_udp++;
+    }
 
     c_free(block);
     c_free(clientUdpArgs->clientAddr);

@@ -58,9 +58,13 @@ void *clientTcpHandler(void *args) {
     struct block *fullMessage = initBlock();
     char receivedMessage[RECEIVED_MESSAGE_LENGTH + 1] = {0};
 
+    _Bool onceReceiveSuccess = 0; // Однажды это соединение удачно выполнило фукнцию recv
+
     while (memset(receivedMessage, 0, sizeof(receivedMessage))
            && (receivedSize = recv(threadSocket, receivedMessage, RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL)) > 0) {
         DEBUG && printf("> %s", receivedMessage);
+
+        onceReceiveSuccess = 1;
 
         stats->recv_bytes += receivedSize;
         stats->recv_pass++;
@@ -129,27 +133,7 @@ void *clientTcpHandler(void *args) {
                         rk_sema_post(sem);
                     } else {
                         block = initBlock();
-                        addFormatStringBlock(block, 2500,
-                                             "Stats Offline:\n"
-                                             "start_time = %.24s\n" "thread_number = %d\n"
-                                             "stats.http_200 = %d\n" "stats.http_400 = %d\n"
-                                             "stats.http_403 = %d\n" "stats.http_404 = %d\n"
-                                             "stats.send_pass = %d\n" "stats.recv_pass = %d\n"
-                                             "stats.accept_pass = %d\n"
-                                             "stats.send_failed = %d\n" "stats.recv_failed = %d\n"
-                                             "stats.accept_failed = %d\n"
-                                             "stats.keep_alive = %d\n" "stats.no_keep_alive = %d\n"
-                                             "stats.sent_bytes = %llu\n" "stats.recv_bytes = %llu\n",
-                                             ctime(&stats->time), threadNumber,
-                                             stats->http_200, stats->http_400,
-                                             stats->http_403, stats->http_404,
-                                             stats->send_pass, stats->recv_pass,
-                                             stats->accept_pass,
-                                             stats->send_failed, stats->recv_failed,
-                                             stats->accept_failed,
-                                             stats->keep_alive, stats->no_keep_alive,
-                                             stats->sent_bytes, stats->recv_bytes
-                        );
+                        formatStats(threadNumber, block, stats);
                     }
 
                     sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive, stats);
@@ -211,6 +195,9 @@ void *clientTcpHandler(void *args) {
         DEBUG && puts("Client Disconnected");
     } else if (receivedSize < 0) {
         stats->recv_failed++;
+        if (onceReceiveSuccess) {
+            stats->recv_failed_after_success++;
+        }
         if (DEBUG) perror("Recv failed");
     } else {
         DEBUG && puts("I Disconnect Client");

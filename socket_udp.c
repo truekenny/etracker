@@ -119,9 +119,8 @@ void *serverUdpHandler(void *args) {
     while ((receivedSize = recvfrom(serverSocket, (char *) receivedMessage, announceRequestSize,
                                     MSG_WAITALL, (struct sockaddr *) &clientAddr,
                                     (socklen_t *) &sockAddrSize)) > 0) {
-
-        // receivedMessage[receivedSize] = '\0';
-        // printf("Client : %s\n", receivedMessage);
+        stats->recv_pass_udp++;
+        stats->recv_bytes_udp += receivedSize;
 
         receiveCount++;
 
@@ -131,9 +130,14 @@ void *serverUdpHandler(void *args) {
                 connectResponse.transaction_id = connectRequest->transaction_id;
                 connectResponse.connection_id = receiveCount;
 
-                sendto(serverSocket, (const char *) &connectResponse, connectResponseSize,
-                       MSG_CONFIRM, (const struct sockaddr *) &clientAddr,
-                       sockAddrSize);
+                stats->sent_bytes_udp += connectResponseSize;
+                if (sendto(serverSocket, (const char *) &connectResponse, connectResponseSize,
+                           MSG_CONFIRM, (const struct sockaddr *) &clientAddr,
+                           sockAddrSize) == -1) {
+                    stats->send_failed_udp++;
+                } else {
+                    stats->send_pass_udp++;
+                }
             }
         } else if (receivedSize == announceRequestSize) {
             struct announceRequest *announceRequest = (struct announceRequest *) receivedMessage;
@@ -181,7 +185,7 @@ void *serverUdpHandler(void *args) {
     if (receivedSize == 0) {
         DEBUG && puts("Client Disconnected");
     } else if (receivedSize < 0) {
-        stats->recv_failed++;
+        stats->recv_failed_udp++;
         if (DEBUG) perror("Recv failed");
     } else {
         DEBUG && puts("I Disconnect Client");
