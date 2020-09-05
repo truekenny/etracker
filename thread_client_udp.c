@@ -18,20 +18,23 @@ void *clientUdpHandler(void *args) {
     struct torrent *torrent = {0};
     struct block *block = initBlock();
 
-    struct announceHeadResponse announceHeadResponse = {0};
-    announceHeadResponse.action = ntohl(ACTION_ANNOUNCE);
-    announceHeadResponse.transaction_id = clientUdpArgs->transaction_id;
-    announceHeadResponse.interval = ntohl(INTERVAL);
-    announceHeadResponse.leechers = ntohl(torrent->incomplete);
-    announceHeadResponse.seeders = ntohl(torrent->complete);
-    addStringBlock(block, &announceHeadResponse, sizeof(struct announceHeadResponse));
-
     waitSem(clientUdpArgs->firstByte, clientUdpArgs->query);
     if (clientUdpArgs->query->event == EVENT_ID_STOPPED) {
         torrent = deletePeer(clientUdpArgs->firstByte, clientUdpArgs->query);
     } else {
         torrent = updatePeer(clientUdpArgs->firstByte, clientUdpArgs->query);
     }
+
+    struct announceHeadResponse announceHeadResponse = {0};
+    announceHeadResponse.action = ntohl(ACTION_ANNOUNCE);
+    announceHeadResponse.transaction_id = clientUdpArgs->transaction_id;
+    announceHeadResponse.interval = ntohl(INTERVAL);
+    if (torrent != NULL) {
+        announceHeadResponse.leechers = ntohl(torrent->incomplete);
+        announceHeadResponse.seeders = ntohl(torrent->complete);
+    }
+    addStringBlock(block, &announceHeadResponse, sizeof(struct announceHeadResponse));
+
     renderPeers(block, torrent, clientUdpArgs->query);
     postSem(clientUdpArgs->firstByte, clientUdpArgs->query);
 

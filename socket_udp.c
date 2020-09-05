@@ -156,6 +156,7 @@ void *serverUdpHandler(void *args) {
                 clientUdpArgs->number = receiveCount;
                 clientUdpArgs->serverSocket = serverSocket;
                 clientUdpArgs->transaction_id = announceRequest->transaction_id;
+                clientUdpArgs->query = query;
                 clientUdpArgs->clientAddr = c_calloc(1, sizeof(struct sockaddr_in));
                 memcpy(clientUdpArgs->clientAddr, &clientAddr, sockAddrSize);
 
