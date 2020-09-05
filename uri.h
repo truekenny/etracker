@@ -5,12 +5,12 @@
 
 #define RANDOM_DATA_INFO_HASH 0
 #define RANDOM_DATA_PEER_ID 0
-#define EVENT_ID_STARTED   1
-#define EVENT_ID_COMPLETED 2
+#define EVENT_ID_COMPLETED 1
+#define EVENT_ID_STARTED   2
 #define EVENT_ID_STOPPED   3
 #define EVENT_ID_PAUSED    4
-#define EVENT_STRING_STARTED   "started"
 #define EVENT_STRING_COMPLETED "completed"
+#define EVENT_STRING_STARTED   "started"
 #define EVENT_STRING_STOPPED   "stopped"
 #define EVENT_STRING_PAUSED    "paused"
 // Обязательно 20, очень большая связанность
