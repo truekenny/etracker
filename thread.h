@@ -7,7 +7,7 @@
 /**
  * Аргументы переданные в поток
  */
-struct args {
+struct clientTcpArgs {
     int sock;
     int number;
     struct rk_sema *sem;
@@ -19,6 +19,6 @@ struct args {
 
 void runGarbageCollectorThread(struct firstByte *firstByte);
 
-void *connection_handler(void *);
+void *clientTcpHandler(void *);
 
 #endif //SC6_THREAD_H

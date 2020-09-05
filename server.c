@@ -53,15 +53,15 @@ int main(int argc, char *argv[]) {
         printf("- Random data peer_id: %d\n", RANDOM_DATA_PEER_ID);
 
     // Start TCP
-    pthread_t tcp_thread;
-    struct server_tcp *server_tcp = (struct server_tcp *) c_malloc(sizeof(struct server_tcp));
-    server_tcp->sem = &sem;
-    server_tcp->first = &first;
-    server_tcp->firstByte = &firstByte;
-    server_tcp->stats = stats;
-    server_tcp->port = argv[1];
+    pthread_t tcpServerThread;
+    struct serverTcpArgs *serverTcpArgs = (struct serverTcpArgs *) c_malloc(sizeof(struct serverTcpArgs));
+    serverTcpArgs->sem = &sem;
+    serverTcpArgs->first = &first;
+    serverTcpArgs->firstByte = &firstByte;
+    serverTcpArgs->stats = stats;
+    serverTcpArgs->port = argv[1];
 
-    if (pthread_create(&tcp_thread, NULL, serverTcp, (void *) server_tcp) != 0) {
+    if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
         perror("Could not create thread");
 
         return 5;
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     setNobody();
 
     printf("Join TCP Thread\n");
-    pthread_join(tcp_thread, NULL);
+    pthread_join(tcpServerThread, NULL);
 
     printf("Bye-Bye\n");
 

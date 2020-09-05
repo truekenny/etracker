@@ -25,7 +25,7 @@ struct garbageCollectorArgs {
     struct firstByte *firstByte;
 };
 
-void *garbageCollectorThread(void *_args);
+void *garbageCollectorHandler(void *_args);
 
 void runGarbageCollectorThread(struct firstByte *firstByte) {
     pthread_attr_t tattr;
@@ -57,10 +57,10 @@ void runGarbageCollectorThread(struct firstByte *firstByte) {
     ret = pthread_attr_setschedparam(&tattr, &param);
 
     // with new priority specified
-    ret = pthread_create(&tid, &tattr, garbageCollectorThread, (void *) garbageCollectorArgs);
+    ret = pthread_create(&tid, &tattr, garbageCollectorHandler, (void *) garbageCollectorArgs);
 }
 
-void *garbageCollectorThread(void *_args) {
+void *garbageCollectorHandler(void *_args) {
     struct firstByte *firstByte = ((struct garbageCollectorArgs *) _args)->firstByte;
     c_free(_args);
 
@@ -74,29 +74,28 @@ void *garbageCollectorThread(void *_args) {
 
 /**
  * This will handle connection for each client
- * @param _args
+ * @param args
  * @return
  */
-void *connection_handler(void *_args) {
-    int threadSocket = ((struct args *) _args)->sock;
-    int threadNumber = ((struct args *) _args)->number;
-    struct rk_sema *sem = ((struct args *) _args)->sem;
-    struct queue **first = ((struct args *) _args)->first;
-    in_addr_t ip = ((struct args *) _args)->ip;
-    struct firstByte *firstByte = ((struct args *) _args)->firstByte;
-    struct stats *stats = ((struct args *) _args)->stats;
+void *clientTcpHandler(void *args) {
+    int threadSocket = ((struct clientTcpArgs *) args)->sock;
+    int threadNumber = ((struct clientTcpArgs *) args)->number;
+    struct rk_sema *sem = ((struct clientTcpArgs *) args)->sem;
+    struct queue **first = ((struct clientTcpArgs *) args)->first;
+    in_addr_t ip = ((struct clientTcpArgs *) args)->ip;
+    struct firstByte *firstByte = ((struct clientTcpArgs *) args)->firstByte;
+    struct stats *stats = ((struct clientTcpArgs *) args)->stats;
+    c_free(args);
 
     DEBUG && printf("first = %p\n", first);
     DEBUG && printf("*first = %p\n", *first);
 
-    c_free(_args);
-
     if (QUEUE_ENABLE) {
         rk_sema_wait(sem);
         if (CHECK_SEMAPHORE) {
-            printf("Check semaphore connection_handler begin = %d\n", threadNumber);
+            printf("Check semaphore clientTcpHandler begin = %d\n", threadNumber);
             usleep(rand() % 5000 + 5000); // проверка работы семафора
-            printf("Check semaphore connection_handler end = %d\n", threadNumber);
+            printf("Check semaphore clientTcpHandler end = %d\n", threadNumber);
         }
         *first = addToQueue(*first, threadNumber);
         rk_sema_post(sem);

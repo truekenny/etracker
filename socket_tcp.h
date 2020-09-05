@@ -6,7 +6,7 @@
 #include "data.h"
 #include "queue.h"
 
-struct server_tcp {
+struct serverTcpArgs {
     char *port;
     struct stats *stats;
     struct rk_sema *sem;
@@ -14,6 +14,6 @@ struct server_tcp {
     struct firstByte *firstByte;
 };
 
-void *serverTcp(void *args);
+void *serverTcpHandler(void *args);
 
 #endif //SC6_SOCKET_TCP_H

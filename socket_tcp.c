@@ -12,11 +12,13 @@
 #define DEBUG 0
 #define SOCKET_QUEUE_LENGTH 150
 
-void *serverTcp(void *args) {
-    struct stats *stats = ((struct server_tcp *) args)->stats;
-    struct rk_sema *sem = ((struct server_tcp *) args)->sem;
-    struct queue **first = ((struct server_tcp *) args)->first;
-    struct firstByte *firstByte = ((struct server_tcp *) args)->firstByte;
+void *serverTcpHandler(void *args) {
+    struct stats *stats = ((struct serverTcpArgs *) args)->stats;
+    struct rk_sema *sem = ((struct serverTcpArgs *) args)->sem;
+    struct queue **first = ((struct serverTcpArgs *) args)->first;
+    struct firstByte *firstByte = ((struct serverTcpArgs *) args)->firstByte;
+    char *serverPort = ((struct serverTcpArgs *) args)->port;
+    c_free(args);
 
     int serverSocket, clientSocket, sockAddrSize; // Сокеты и размер структуры sockaddr_in
     struct sockaddr_in serverAddr, clientAddr;
@@ -37,7 +39,7 @@ void *serverTcp(void *args) {
     //Prepare the sockaddr_in structure
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(atoi(((struct server_tcp *) args)->port));
+    serverAddr.sin_port = htons(atoi(serverPort));
 
     // Reuse
     int option = 1;
@@ -81,20 +83,19 @@ void *serverTcp(void *args) {
         inet_ntop(AF_INET, &(clientAddr.sin_addr), ip, INET_ADDRSTRLEN);
         port = ntohs(clientAddr.sin_port);
 
-        pthread_t sniffer_thread;
-
-        struct args *threadArguments = (struct args *) c_malloc(sizeof(struct args));
-        threadArguments->sock = clientSocket;
-        threadArguments->number = ++threadCounter;
-        threadArguments->sem = sem;
-        threadArguments->first = first;
-        threadArguments->ip = clientAddr.sin_addr.s_addr;
-        threadArguments->firstByte = firstByte;
-        threadArguments->stats = stats;
+        pthread_t tcpClientThread;
+        struct clientTcpArgs *clientTcpArgs = (struct clientTcpArgs *) c_malloc(sizeof(struct clientTcpArgs));
+        clientTcpArgs->sock = clientSocket;
+        clientTcpArgs->number = ++threadCounter;
+        clientTcpArgs->sem = sem;
+        clientTcpArgs->first = first;
+        clientTcpArgs->ip = clientAddr.sin_addr.s_addr;
+        clientTcpArgs->firstByte = firstByte;
+        clientTcpArgs->stats = stats;
 
         DEBUG && printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
 
-        if (pthread_create(&sniffer_thread, NULL, connection_handler, (void *) threadArguments) != 0) {
+        if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create thread");
 
             exit(5);
