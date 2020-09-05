@@ -52,7 +52,7 @@ void *clientUdpHandler(void *args) {
         clientUdpArgs->stats->send_pass_udp++;
     }
 
-    c_free(block);
+    freeBlock(block);
     c_free(clientUdpArgs->clientAddr);
     c_free(clientUdpArgs->query);
     c_free(clientUdpArgs);

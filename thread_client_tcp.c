@@ -18,7 +18,7 @@
 #include "block.h"
 
 #define DEBUG 0
-#define QUEUE_ENABLE 1
+#define QUEUE_ENABLE 0
 #define KEEP_ALIVE 1
 #define RECEIVED_MESSAGE_LENGTH 2000
 
