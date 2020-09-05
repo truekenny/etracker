@@ -2,6 +2,7 @@
 #include <printf.h>
 #include "thread_garbage.h"
 #include "alloc.h"
+#include "data_garbage.h"
 
 #define GARBAGE_COLLECTOR_TIME (15 * 60)
 

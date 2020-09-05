@@ -11,6 +11,9 @@
 #include "string.h"
 #include "uri.h"
 #include "data.h"
+#include "data_sem.h"
+#include "data_garbage.h"
+#include "data_render.h"
 #include "socket.h"
 #include "block.h"
 

@@ -1,5 +1,5 @@
 project(sc6)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
-add_executable(server server.c queue.c sem.c alloc.c uri.c socket.c string.c thread.c data.c time.c block.c stats.c socket_tcp.c socket_udp.c thread_garbage.c)
+add_executable(server server.c queue.c sem.c alloc.c uri.c socket.c string.c thread.c data.c time.c block.c stats.c socket_tcp.c socket_udp.c thread_garbage.c data_structure.c data_sem.c data_sem.h data_garbage.c data_torrent_stat.c data_render.c)
 add_executable(client client.c)

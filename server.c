@@ -13,6 +13,7 @@
 #include "socket.h"
 #include "uri.h"
 #include "data.h"
+#include "data_sem.h"
 #include "socket_tcp.h"
 #include "socket_udp.h"
 #include "thread_garbage.h"
