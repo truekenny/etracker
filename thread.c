@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <pthread.h>
-#include <sched.h>
 #include <unistd.h>
 #include "thread.h"
 #include "sem.h"
@@ -19,58 +18,6 @@
 #define QUEUE_ENABLE 0
 #define KEEP_ALIVE 1
 #define RECEIVED_MESSAGE_LENGTH 2000
-#define GARBAGE_COLLECTOR_TIME (15 * 60)
-
-struct garbageCollectorArgs {
-    struct firstByte *firstByte;
-};
-
-void *garbageCollectorHandler(void *_args);
-
-void runGarbageCollectorThread(struct firstByte *firstByte) {
-    pthread_attr_t tattr;
-    pthread_t tid;
-    int ret;
-    int newPriority = 5;
-    struct sched_param param;
-
-    struct garbageCollectorArgs *garbageCollectorArgs = c_calloc(1, sizeof(struct garbageCollectorArgs));
-    garbageCollectorArgs->firstByte = firstByte;
-
-    // initialized with default attributes
-    ret = pthread_attr_init(&tattr);
-
-    // safe to get existing scheduling param
-    ret = pthread_attr_getschedparam(&tattr, &param);
-
-    if (param.sched_priority > newPriority) {
-        printf("Garbage thread change priority %d -> %d\n", param.sched_priority, newPriority);
-
-        // set the priority; others are unchanged
-        param.sched_priority = newPriority;
-    } else {
-        printf("Garbage thread NO change priority %d -> %d\n", param.sched_priority, newPriority);
-    }
-
-
-    // setting the new scheduling param
-    ret = pthread_attr_setschedparam(&tattr, &param);
-
-    // with new priority specified
-    ret = pthread_create(&tid, &tattr, garbageCollectorHandler, (void *) garbageCollectorArgs);
-}
-
-void *garbageCollectorHandler(void *_args) {
-    struct firstByte *firstByte = ((struct garbageCollectorArgs *) _args)->firstByte;
-    c_free(_args);
-
-    while (1) {
-        runGarbageCollector(firstByte);
-        sleep(GARBAGE_COLLECTOR_TIME);
-    }
-
-    return 0;
-}
 
 /**
  * This will handle connection for each client

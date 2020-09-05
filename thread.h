@@ -17,8 +17,6 @@ struct clientTcpArgs {
     struct stats *stats;
 };
 
-void runGarbageCollectorThread(struct firstByte *firstByte);
-
 void *clientTcpHandler(void *);
 
 #endif //SC6_THREAD_H

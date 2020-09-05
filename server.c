@@ -12,11 +12,10 @@
 #include "alloc.h"
 #include "socket.h"
 #include "uri.h"
-#include "string.h"
-#include "thread.h"
 #include "data.h"
 #include "socket_tcp.h"
 #include "socket_udp.h"
+#include "thread_garbage.h"
 
 #define DEBUG 0
 
