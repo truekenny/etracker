@@ -1,7 +1,6 @@
 #ifndef SC6_THREAD_CLIENT_UDP_H
 #define SC6_THREAD_CLIENT_UDP_H
 
-#include <ntsid.h>
 #include <arpa/inet.h>
 
 struct clientUdpArgs {

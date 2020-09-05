@@ -10,7 +10,7 @@
 
 #define DEBUG 1
 #define RECEIVED_UDP_MESSAGE_LENGTH 200
-#define MSG_CONFIRM 0
+#define MSG_CONFIRM_ 0
 
 #define PROTOCOL_ID 0x8019102717040000
 
@@ -132,7 +132,7 @@ void *serverUdpHandler(void *args) {
 
                 stats->sent_bytes_udp += connectResponseSize;
                 if (sendto(serverSocket, (const char *) &connectResponse, connectResponseSize,
-                           MSG_CONFIRM, (const struct sockaddr *) &clientAddr,
+                           MSG_CONFIRM_, (const struct sockaddr *) &clientAddr,
                            sockAddrSize) == -1) {
                     stats->send_failed_udp++;
                 } else {

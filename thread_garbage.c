@@ -1,5 +1,6 @@
 #include <pthread.h>
-#include <printf.h>
+#include <stdio.h>
+#include <unistd.h>
 #include "thread_garbage.h"
 #include "alloc.h"
 #include "data_garbage.h"

@@ -1,6 +1,6 @@
 #include <memory.h>
-#include <ntsid.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 #include "data_render.h"
 #include "socket_udp_response_structure.h"
 

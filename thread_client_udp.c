@@ -11,7 +11,7 @@
 #include "stats.h"
 
 #define DEBUG 0
-#define MSG_CONFIRM 0
+#define MSG_CONFIRM_ 0
 
 void *clientUdpHandler(void *args) {
     int sockAddrSize = sizeof(struct sockaddr_in);
@@ -44,7 +44,7 @@ void *clientUdpHandler(void *args) {
 
     clientUdpArgs->stats->sent_bytes_udp += block->size;
     if (sendto(clientUdpArgs->serverSocket, block->data, block->size,
-               MSG_CONFIRM, (const struct sockaddr *) clientUdpArgs->clientAddr,
+               MSG_CONFIRM_, (const struct sockaddr *) clientUdpArgs->clientAddr,
                sockAddrSize) == -1) {
         perror("Sendto failed");
         clientUdpArgs->stats->send_failed_udp++;
