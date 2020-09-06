@@ -35,6 +35,12 @@ struct stats {
     unsigned long long recv_bytes_udp;
     unsigned long long sent_bytes_udp;
 
+    unsigned int announce;
+    unsigned int scrape;
+
+    unsigned int connect_udp;
+    unsigned int announce_udp;
+    unsigned int scrape_udp;
 };
 
 void formatStats(int threadNumber, struct block *block, struct stats *stats);

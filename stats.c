@@ -24,6 +24,10 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
                          "stats.sent_bytes = %llu\n" "stats.recv_bytes = %llu\n\n"
 
                          "stats.sent_bytes_udp = %llu\n" "stats.recv_bytes_udp = %llu\n\n"
+
+                         "stats.announce = %d\n" "stats.scrape = %d\n\n"
+
+                         "stats.connect_udp = %d\n" "stats.announce_udp = %d\n" "stats.scrape_udp = %d\n\n"
                          ,
                          ctime(&stats->time), threadNumber,
 
@@ -46,6 +50,10 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
 
                          stats->sent_bytes, stats->recv_bytes,
 
-                         stats->sent_bytes_udp, stats->recv_bytes_udp
+                         stats->sent_bytes_udp, stats->recv_bytes_udp,
+
+                         stats->announce, stats->scrape,
+
+                         stats->connect_udp, stats->announce_udp, stats->scrape_udp
     );
 }

@@ -176,6 +176,8 @@ void *serverUdpHandler(void *args) {
 
         if (receivedSize == connectRequestSize) {
             DEBUG && printf("UDP Connect\n");
+            stats->connect_udp++;
+
             struct connectRequest *connectRequest = (struct connectRequest *) receivedMessage;
             if (connectRequest->protocol_id == PROTOCOL_ID && connectRequest->action == ACTION_CONNECT) {
                 connectResponse.transaction_id = connectRequest->transaction_id;
@@ -193,6 +195,7 @@ void *serverUdpHandler(void *args) {
             }
         } else if (receivedSize >= announceRequestSize && htonl(announceRequest->action) == ACTION_ANNOUNCE) {
             DEBUG && printf("UDP Announce\n");
+            stats->announce_udp++;
 
             if (0 && DEBUG) {
                 printf("connection_id = %lu \n", announceRequest->connection_id);
@@ -238,6 +241,8 @@ void *serverUdpHandler(void *args) {
 
         } else if (receivedSize > scrapeRequestSize && htonl(scrapeRequest->action) == ACTION_SCRAPE) {
             DEBUG && printf("UDP Scrape\n");
+            stats->scrape_udp++;
+
             unsigned int hashCount = (receivedSize - sizeof(struct scrapeRequest)) / PARAM_VALUE_LENGTH;
             DEBUG && printf("Hashes = %d\n", hashCount);
 

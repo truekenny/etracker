@@ -90,6 +90,8 @@ void *clientTcpHandler(void *args) {
                                                   || (strstr(fullMessage->data, "Connection: Keep-Alive") != NULL));
 
                 if (startsWith("GET /announce", fullMessage->data)) {
+                    stats->announce++;
+
                     struct query query = {0};
                     query.ip = ip;
                     query.numwant = DEFAULT_NUM_WANT;
@@ -140,6 +142,8 @@ void *clientTcpHandler(void *args) {
                     runGarbageCollector(firstByte);
                     sendMessage(threadSocket, 200, "OK", 2, canKeepAlive, stats);
                 } else if (startsWith("GET /scrape", fullMessage->data)) {
+                    stats->scrape++;
+
                     struct query query = {0};
                     struct block *hashes = initBlock();
                     struct block *block = initBlock();
