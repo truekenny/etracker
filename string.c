@@ -16,7 +16,7 @@ _Bool startsWith(const char *start, const char *string) {
     return lenStr < lenPre ? 0 : memcmp(start, string, lenPre) == 0;
 }
 
-void printHex(char *string, unsigned int len) {
+int printHex(char *string, unsigned int len) {
     unsigned int ceilLen = (int) ceil((double) len / 16) * 16;
 
     printf("%4s | %2d %2d %2d %2d   %2d %2d %2d %2d   %2d %2d %2d %2d   %2d %2d %2d %2d | 0123 4567 8901 2345\n"
@@ -56,4 +56,6 @@ void printHex(char *string, unsigned int len) {
             printf("\n");
         }
     }
+
+    return 0;
 }

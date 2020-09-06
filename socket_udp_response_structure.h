@@ -21,11 +21,11 @@ struct announceHeadResponse {
     unsigned int interval;
     unsigned int leechers;
     unsigned int seeders;
-};
+} __attribute__((packed)); // 20
 
 struct announcePeerResponse {
     unsigned int ip;
     unsigned short port;
-};
+} __attribute__((packed)); // 6
 
 #endif //SC6_SOCKET_UDP_RESPONSE_STRUCTURE_H

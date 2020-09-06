@@ -7,8 +7,9 @@
 #include "alloc.h"
 #include "thread_client_udp.h"
 #include "socket_udp_response_structure.h"
+#include "string.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define RECEIVED_UDP_MESSAGE_LENGTH 200
 #define MSG_CONFIRM_ 0
 
@@ -25,7 +26,7 @@ struct connectRequest {
     unsigned long protocol_id;
     unsigned int action;
     unsigned int transaction_id;
-};
+} __attribute__((packed)); // 16
 
 /*
 0       32-bit integer  action          0 // connect
@@ -38,7 +39,7 @@ struct connectResponse {
     unsigned int action;
     unsigned int transaction_id;
     unsigned long connection_id;
-};
+} __attribute__((packed)); // 16
 
 /*
 0       64-bit integer  connection_id
@@ -71,9 +72,38 @@ struct announceRequest {
     unsigned int key;
     unsigned int num_want;
     unsigned short port;
-};
+} __attribute__((packed)); // 98
+
+void checkSize() {
+    if (sizeof(struct connectRequest) != 16) {
+        printf("Failed packed: sizeof(struct connectRequest) != 16\n");
+        exit(204);
+    }
+
+    if (sizeof(struct connectResponse) != 16) {
+        printf("Failed packed: sizeof(struct connectResponse) != 16\n");
+        exit(205);
+    }
+
+    if (sizeof(struct announceRequest) != 98) {
+        printf("Failed packed: sizeof(struct announceRequest) != 98\n");
+        exit(206);
+    }
+
+    if (sizeof(struct announceHeadResponse) != 20) {
+        printf("Failed packed: sizeof(struct announceHeadResponse) != 20\n");
+        exit(207);
+    }
+
+    if (sizeof(struct announcePeerResponse) != 6) {
+        printf("Failed packed: sizeof(struct announcePeerResponse) != 6\n");
+        exit(208);
+    }
+}
 
 void *serverUdpHandler(void *args) {
+    checkSize();
+
     struct stats *stats = ((struct serverUdpArgs *) args)->stats;
     struct firstByte *firstByte = ((struct serverUdpArgs *) args)->firstByte;
     char *serverPort = ((struct serverUdpArgs *) args)->port;
@@ -124,6 +154,8 @@ void *serverUdpHandler(void *args) {
 
         receiveCount++;
 
+        DEBUG && printHex(receivedMessage, receivedSize);
+
         if (receivedSize == connectRequestSize) {
             struct connectRequest *connectRequest = (struct connectRequest *) receivedMessage;
             if (connectRequest->protocol_id == PROTOCOL_ID && connectRequest->action == ACTION_CONNECT) {
@@ -168,7 +200,7 @@ void *serverUdpHandler(void *args) {
                 if (pthread_create(&udpClientThread, NULL, clientUdpHandler, (void *) clientUdpArgs) != 0) {
                     perror("Could not create UDP thread");
 
-                    exit(501);
+                    exit(203);
                 }
 
                 // Поток
