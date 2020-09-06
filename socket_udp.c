@@ -173,6 +173,19 @@ void *serverUdpHandler(void *args) {
             }
         } else if (receivedSize == announceRequestSize) {
             struct announceRequest *announceRequest = (struct announceRequest *) receivedMessage;
+
+            DEBUG && printf("connection_id = %lu \n", announceRequest->connection_id);
+            DEBUG && printf("action = %u \n", announceRequest->action);
+            DEBUG && printf("transaction_id = %u \n", announceRequest->transaction_id);
+            DEBUG && printf("downloaded = %lu \n", announceRequest->downloaded);
+            DEBUG && printf("left = %lu \n", announceRequest->left);
+            DEBUG && printf("uploaded = %lu \n", announceRequest->uploaded);
+            DEBUG && printf("event = %u \n", announceRequest->event);
+            DEBUG && printf("ip = %u \n", announceRequest->ip);
+            DEBUG && printf("key = %u \n", announceRequest->key);
+            DEBUG && printf("num_want = %u \n", announceRequest->num_want);
+            DEBUG && printf("port = %u \n", announceRequest->port);
+
             announceRequest->action = htonl(announceRequest->action);
             if (announceRequest->action == ACTION_ANNOUNCE) {
 
