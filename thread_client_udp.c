@@ -11,7 +11,7 @@
 #include "stats.h"
 #include "string.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define MSG_CONFIRM_ 0
 
 void *clientUdpHandler(void *args) {
@@ -58,6 +58,43 @@ void *clientUdpHandler(void *args) {
     freeBlock(block);
     c_free(clientUdpArgs->clientAddr);
     c_free(clientUdpArgs->query);
+    c_free(clientUdpArgs);
+
+    if (pthread_detach(pthread_self()) != 0) {
+        perror("Could not detach thread");
+    }
+
+    return 0;
+}
+
+void *clientUdpScrapeHandler(void *args) {
+    int sockAddrSize = sizeof(struct sockaddr_in);
+    struct clientUdpArgs *clientUdpArgs = (struct clientUdpArgs *) args;
+
+    struct block *block = initBlock();
+
+    struct scrapeHeadResponse scrapeHeadResponse = {0};
+    scrapeHeadResponse.action = htonl(ACTION_SCRAPE);
+    scrapeHeadResponse.transaction_id = clientUdpArgs->transaction_id;
+    addStringBlock(block, &scrapeHeadResponse, sizeof(struct scrapeHeadResponse));
+
+    renderTorrents(block, clientUdpArgs->firstByte, clientUdpArgs->hashes, 1);
+
+
+    DEBUG && printHex(block->data, block->size);
+    if (sendto(clientUdpArgs->serverSocket, block->data, block->size,
+               MSG_CONFIRM_, (const struct sockaddr *) clientUdpArgs->clientAddr,
+               sockAddrSize) == -1) {
+        perror("Sendto failed");
+        clientUdpArgs->stats->send_failed_udp++;
+    } else {
+        clientUdpArgs->stats->send_pass_udp++;
+    }
+
+
+    freeBlock(clientUdpArgs->hashes);
+    freeBlock(block);
+    c_free(clientUdpArgs->clientAddr);
     c_free(clientUdpArgs);
 
     if (pthread_detach(pthread_self()) != 0) {

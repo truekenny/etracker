@@ -148,7 +148,7 @@ void *clientTcpHandler(void *args) {
                     if (!hashes->size && !ENABLE_FULL_SCRAPE) {
                         sendMessage(threadSocket, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive, stats);
                     } else {
-                        renderTorrents(block, firstByte, hashes);
+                        renderTorrents(block, firstByte, hashes, 0);
                         sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive, stats);
                     }
 

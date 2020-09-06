@@ -9,13 +9,16 @@ struct clientUdpArgs {
     unsigned int transaction_id;
 
     unsigned long number;
-    struct rk_sema *sem;
+    // struct rk_sema *sem;
     // struct queue **first;
     struct firstByte *firstByte;
     struct stats *stats;
     struct query *query;
+    struct block *hashes;
 };
 
 void *clientUdpHandler(void *);
+
+void *clientUdpScrapeHandler(void *);
 
 #endif //SC6_THREAD_CLIENT_UDP_H

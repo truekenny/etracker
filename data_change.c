@@ -34,7 +34,7 @@ struct torrent *deletePeer(struct firstByte *firstByte, struct query *query) {
                     else {
                         previous->next = currentPeer->next;
                     }
-                    torrentChangeStats(currentTorrent, currentPeer->event, currentPeer->event, -1);
+                    torrentChangeStats(currentTorrent, currentPeer->event, query->event, -1);
                     c_free(currentPeer);
 
                     return currentTorrent;

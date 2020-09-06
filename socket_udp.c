@@ -9,7 +9,7 @@
 #include "socket_udp_response_structure.h"
 #include "string.h"
 
-#define DEBUG 1
+#define DEBUG 0
 // Размер заголовка пакета scrape + 74 x info_hash (по протоколу это максимальное кол-во)
 #define RECEIVED_UDP_MESSAGE_LENGTH 1496
 #define MSG_CONFIRM_ 0
@@ -87,30 +87,6 @@ struct scrapeRequest {
     unsigned int action;
     unsigned int transaction_id;
 } __attribute__ ((packed)); // 16
-
-/*
-0           32-bit integer  action          2 // scrape
-4           32-bit integer  transaction_id
-8
- */
-
-struct scrapeHeadResponse {
-    unsigned int action;
-    unsigned int transaction_id;
-} __attribute__ ((packed)); // 8
-
-/*
-0           32-bit integer  seeders
-4           32-bit integer  completed
-8           32-bit integer  leechers
-12
- */
-
-struct scrapeTorrentResponse {
-    unsigned int seeders;
-    unsigned int completed;
-    unsigned int leechers;
-};
 
 void checkSize() {
     if (sizeof(struct connectRequest) != 16) {
@@ -199,6 +175,7 @@ void *serverUdpHandler(void *args) {
         struct scrapeRequest *scrapeRequest = (struct scrapeRequest *) receivedMessage;
 
         if (receivedSize == connectRequestSize) {
+            DEBUG && printf("UDP Connect\n");
             struct connectRequest *connectRequest = (struct connectRequest *) receivedMessage;
             if (connectRequest->protocol_id == PROTOCOL_ID && connectRequest->action == ACTION_CONNECT) {
                 connectResponse.transaction_id = connectRequest->transaction_id;
@@ -215,6 +192,7 @@ void *serverUdpHandler(void *args) {
                 }
             }
         } else if (receivedSize >= announceRequestSize && htonl(announceRequest->action) == ACTION_ANNOUNCE) {
+            DEBUG && printf("UDP Announce\n");
 
             if (0 && DEBUG) {
                 printf("connection_id = %lu \n", announceRequest->connection_id);
@@ -253,13 +231,38 @@ void *serverUdpHandler(void *args) {
             // Поток
             pthread_t udpClientThread;
             if (pthread_create(&udpClientThread, NULL, clientUdpHandler, (void *) clientUdpArgs) != 0) {
-                perror("Could not create UDP thread");
+                perror("Could not create UDP announce thread");
 
                 exit(203);
             }
 
-        } else if (receivedSize >= scrapeRequestSize && htonl(scrapeRequest->action) == ACTION_SCRAPE) {
+        } else if (receivedSize > scrapeRequestSize && htonl(scrapeRequest->action) == ACTION_SCRAPE) {
+            DEBUG && printf("UDP Scrape\n");
+            unsigned int hashCount = (receivedSize - sizeof(struct scrapeRequest)) / PARAM_VALUE_LENGTH;
+            DEBUG && printf("Hashes = %d\n", hashCount);
 
+            struct block *hashes = initBlock();
+            addStringBlock(hashes,
+                           &((char *) scrapeRequest)[sizeof(struct scrapeRequest)],
+                           hashCount * PARAM_VALUE_LENGTH);
+
+            struct clientUdpArgs *clientUdpArgs = c_calloc(1, sizeof(struct clientUdpArgs));
+            clientUdpArgs->firstByte = firstByte;
+            clientUdpArgs->stats = stats;
+            clientUdpArgs->number = receiveCount;
+            clientUdpArgs->serverSocket = serverSocket;
+            clientUdpArgs->transaction_id = announceRequest->transaction_id;
+            clientUdpArgs->clientAddr = c_calloc(1, sizeof(struct sockaddr_in));
+            memcpy(clientUdpArgs->clientAddr, &clientAddr, sockAddrSize);
+            clientUdpArgs->hashes = hashes;
+
+            // Поток
+            pthread_t udpClientThread;
+            if (pthread_create(&udpClientThread, NULL, clientUdpScrapeHandler, (void *) clientUdpArgs) != 0) {
+                perror("Could not create UDP scrape thread");
+
+                exit(209);
+            }
         }
 
 /*

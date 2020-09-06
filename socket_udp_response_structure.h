@@ -30,4 +30,28 @@ struct announcePeerResponse {
     unsigned short port;
 } __attribute__((packed)); // 6
 
+/*
+0           32-bit integer  action          2 // scrape
+4           32-bit integer  transaction_id
+8
+ */
+
+struct scrapeHeadResponse {
+    unsigned int action;
+    unsigned int transaction_id;
+} __attribute__ ((packed)); // 8
+
+/*
+0           32-bit integer  seeders
+4           32-bit integer  completed
+8           32-bit integer  leechers
+12
+ */
+
+struct scrapeTorrentResponse {
+    unsigned int seeders;
+    unsigned int completed;
+    unsigned int leechers;
+};
+
 #endif //SC6_SOCKET_UDP_RESPONSE_STRUCTURE_H
