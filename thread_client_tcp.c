@@ -69,7 +69,7 @@ void *clientTcpHandler(void *args) {
         stats->recv_bytes += receivedSize;
         stats->recv_pass++;
 
-        if (startsWith("stop", receivedMessage)) {
+        if (DEBUG && startsWith("stop", receivedMessage)) {
             printf("STOP\n");
             exit(40);
         }
