@@ -8,7 +8,7 @@
 
 void int2ip(char *dest, unsigned int source);
 
-void renderTorrent(struct block *block, struct torrent *torrent);
+void renderTorrent(struct block *block, struct torrent *torrent, unsigned char *hash);
 
 void renderTorrents(struct block *block, struct firstByte *firstByte, struct block *hashes) {
     struct block *torrentBlock = initBlock();
@@ -27,7 +27,7 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
                 struct torrent *currentTorrent = firstByte->secondByte[i].torrent[j];
 
                 while (currentTorrent != NULL) {
-                    renderTorrent(torrentBlock, currentTorrent);
+                    renderTorrent(torrentBlock, currentTorrent, NULL);
 
                     currentTorrent = currentTorrent->next;
                 }
@@ -47,12 +47,17 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
 
             while (currentTorrent != NULL) {
                 if (memcmp(hash, currentTorrent->info_hash, PARAM_VALUE_LENGTH) == 0) {
-                    renderTorrent(torrentBlock, currentTorrent);
+                    renderTorrent(torrentBlock, currentTorrent, NULL);
 
                     break;
                 }
 
                 currentTorrent = currentTorrent->next;
+            }
+
+            // Торрент не нашелся - надо отбразить пустые данные
+            if(currentTorrent == NULL) {
+                renderTorrent(torrentBlock, NULL, hash);
             }
 
             rk_sema_post(&firstByte->secondByte[hash[0]].sem[hash[1]]);
@@ -67,14 +72,27 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
     freeBlock(torrentBlock);
 }
 
-void renderTorrent(struct block *block, struct torrent *torrent) {
+void renderTorrent(struct block *block, struct torrent *torrent, unsigned char *hash) {
+    unsigned int complete = 0;
+    unsigned int incomplete = 0;
+    unsigned int downloaded = 0;
+
     addStringBlock(block, "20:", 3);
-    addStringBlock(block, torrent->info_hash, PARAM_VALUE_LENGTH);
+
+    if(torrent == NULL) {
+        addStringBlock(block, hash, PARAM_VALUE_LENGTH);
+    } else {
+        addStringBlock(block, torrent->info_hash, PARAM_VALUE_LENGTH);
+        complete = torrent->complete;
+        incomplete = torrent->incomplete;
+        downloaded = torrent->downloaded;
+    }
+
     addFormatStringBlock(block, 1000, "d"
                                       "8:completei%de"
                                       "10:incompletei%de"
                                       "10:downloadedi%de"
-                                      "e", torrent->complete, torrent->incomplete, torrent->downloaded);
+                                      "e", complete, incomplete, downloaded);
 }
 
 void renderPeers(struct block *block, struct torrent *torrent, struct query *query) {
