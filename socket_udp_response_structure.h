@@ -1,8 +1,10 @@
 #ifndef SC6_SOCKET_UDP_RESPONSE_STRUCTURE_H
 #define SC6_SOCKET_UDP_RESPONSE_STRUCTURE_H
 
-#define ACTION_CONNECT 0
+#define ACTION_CONNECT  0
 #define ACTION_ANNOUNCE 1
+#define ACTION_SCRAPE   2
+#define ACTION_ERROR    3
 
 /*
 0           32-bit integer  action          1 // announce

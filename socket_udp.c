@@ -9,8 +9,9 @@
 #include "socket_udp_response_structure.h"
 #include "string.h"
 
-#define DEBUG 0
-#define RECEIVED_UDP_MESSAGE_LENGTH 200
+#define DEBUG 1
+// Размер заголовка пакета scrape + 74 x info_hash (по протоколу это максимальное кол-во)
+#define RECEIVED_UDP_MESSAGE_LENGTH 1496
 #define MSG_CONFIRM_ 0
 
 #define PROTOCOL_ID 0x8019102717040000
@@ -73,6 +74,43 @@ struct announceRequest {
     unsigned int num_want;
     unsigned short port;
 } __attribute__((packed)); // 98
+
+/*
+0               64-bit integer  connection_id
+8               32-bit integer  action          2 // scrape
+12              32-bit integer  transaction_id
+16
+ */
+
+struct scrapeRequest {
+    unsigned long connection_id;
+    unsigned int action;
+    unsigned int transaction_id;
+} __attribute__ ((packed)); // 16
+
+/*
+0           32-bit integer  action          2 // scrape
+4           32-bit integer  transaction_id
+8
+ */
+
+struct scrapeHeadResponse {
+    unsigned int action;
+    unsigned int transaction_id;
+} __attribute__ ((packed)); // 8
+
+/*
+0           32-bit integer  seeders
+4           32-bit integer  completed
+8           32-bit integer  leechers
+12
+ */
+
+struct scrapeTorrentResponse {
+    unsigned int seeders;
+    unsigned int completed;
+    unsigned int leechers;
+};
 
 void checkSize() {
     if (sizeof(struct connectRequest) != 16) {
@@ -143,10 +181,11 @@ void *serverUdpHandler(void *args) {
     unsigned char connectRequestSize = sizeof(struct connectRequest);
     unsigned char connectResponseSize = sizeof(struct connectResponse);
     unsigned char announceRequestSize = sizeof(struct announceRequest);
+    unsigned char scrapeRequestSize = sizeof(struct scrapeRequest);
     unsigned long receiveCount = 0;
     struct connectResponse connectResponse = {0}; // ACTION_CONNECT = 0
 
-    while ((receivedSize = recvfrom(serverSocket, (char *) receivedMessage, announceRequestSize,
+    while ((receivedSize = recvfrom(serverSocket, (char *) receivedMessage, RECEIVED_UDP_MESSAGE_LENGTH,
                                     MSG_WAITALL, (struct sockaddr *) &clientAddr,
                                     (socklen_t *) &sockAddrSize)) > 0) {
         stats->recv_pass_udp++;
@@ -156,6 +195,9 @@ void *serverUdpHandler(void *args) {
 
         DEBUG && printHex(receivedMessage, receivedSize);
 
+        struct announceRequest *announceRequest = (struct announceRequest *) receivedMessage;
+        struct scrapeRequest *scrapeRequest = (struct scrapeRequest *) receivedMessage;
+
         if (receivedSize == connectRequestSize) {
             struct connectRequest *connectRequest = (struct connectRequest *) receivedMessage;
             if (connectRequest->protocol_id == PROTOCOL_ID && connectRequest->action == ACTION_CONNECT) {
@@ -163,6 +205,7 @@ void *serverUdpHandler(void *args) {
                 connectResponse.connection_id = receiveCount;
 
                 stats->sent_bytes_udp += connectResponseSize;
+                DEBUG && printHex((char *) &connectResponse, connectResponseSize);
                 if (sendto(serverSocket, (const char *) &connectResponse, connectResponseSize,
                            MSG_CONFIRM_, (const struct sockaddr *) &clientAddr,
                            sockAddrSize) == -1) {
@@ -171,53 +214,52 @@ void *serverUdpHandler(void *args) {
                     stats->send_pass_udp++;
                 }
             }
-        } else if (receivedSize == announceRequestSize) {
-            struct announceRequest *announceRequest = (struct announceRequest *) receivedMessage;
+        } else if (receivedSize >= announceRequestSize && htonl(announceRequest->action) == ACTION_ANNOUNCE) {
 
-            DEBUG && printf("connection_id = %lu \n", announceRequest->connection_id);
-            DEBUG && printf("action = %u \n", announceRequest->action);
-            DEBUG && printf("transaction_id = %u \n", announceRequest->transaction_id);
-            DEBUG && printf("downloaded = %lu \n", announceRequest->downloaded);
-            DEBUG && printf("left = %lu \n", announceRequest->left);
-            DEBUG && printf("uploaded = %lu \n", announceRequest->uploaded);
-            DEBUG && printf("event = %u \n", announceRequest->event);
-            DEBUG && printf("ip = %u \n", announceRequest->ip);
-            DEBUG && printf("key = %u \n", announceRequest->key);
-            DEBUG && printf("num_want = %u \n", announceRequest->num_want);
-            DEBUG && printf("port = %u \n", announceRequest->port);
-
-            announceRequest->action = htonl(announceRequest->action);
-            if (announceRequest->action == ACTION_ANNOUNCE) {
-
-                // Аргументы потока
-                struct query *query = c_calloc(1, sizeof(struct query));
-                query->udp = 1;
-                query->port = announceRequest->port;
-                query->event = htonl(announceRequest->event);;
-                memcpy(query->info_hash, announceRequest->info_hash, PARAM_VALUE_LENGTH);
-                memcpy(query->peer_id, announceRequest->peer_id, PARAM_VALUE_LENGTH);
-                query->numwant = htonl(announceRequest->num_want);
-                query->ip = clientAddr.sin_addr.s_addr;
-
-                struct clientUdpArgs *clientUdpArgs = c_calloc(1, sizeof(struct clientUdpArgs));
-                clientUdpArgs->firstByte = firstByte;
-                clientUdpArgs->stats = stats;
-                clientUdpArgs->number = receiveCount;
-                clientUdpArgs->serverSocket = serverSocket;
-                clientUdpArgs->transaction_id = announceRequest->transaction_id;
-                clientUdpArgs->query = query;
-                clientUdpArgs->clientAddr = c_calloc(1, sizeof(struct sockaddr_in));
-                memcpy(clientUdpArgs->clientAddr, &clientAddr, sockAddrSize);
-
-                pthread_t udpClientThread;
-                if (pthread_create(&udpClientThread, NULL, clientUdpHandler, (void *) clientUdpArgs) != 0) {
-                    perror("Could not create UDP thread");
-
-                    exit(203);
-                }
-
-                // Поток
+            if (0 && DEBUG) {
+                printf("connection_id = %lu \n", announceRequest->connection_id);
+                printf("action = %u \n", announceRequest->action);
+                printf("transaction_id = %u \n", announceRequest->transaction_id);
+                printf("downloaded = %lu \n", announceRequest->downloaded);
+                printf("left = %lu \n", announceRequest->left);
+                printf("uploaded = %lu \n", announceRequest->uploaded);
+                printf("event = %u \n", announceRequest->event);
+                printf("ip = %u \n", announceRequest->ip);
+                printf("key = %u \n", announceRequest->key);
+                printf("num_want = %u \n", announceRequest->num_want);
+                printf("port = %u \n", announceRequest->port);
             }
+
+            // Аргументы потока
+            struct query *query = c_calloc(1, sizeof(struct query));
+            query->udp = 1;
+            query->port = announceRequest->port;
+            query->event = htonl(announceRequest->event);;
+            memcpy(query->info_hash, announceRequest->info_hash, PARAM_VALUE_LENGTH);
+            memcpy(query->peer_id, announceRequest->peer_id, PARAM_VALUE_LENGTH);
+            query->numwant = htonl(announceRequest->num_want);
+            query->ip = clientAddr.sin_addr.s_addr;
+
+            struct clientUdpArgs *clientUdpArgs = c_calloc(1, sizeof(struct clientUdpArgs));
+            clientUdpArgs->firstByte = firstByte;
+            clientUdpArgs->stats = stats;
+            clientUdpArgs->number = receiveCount;
+            clientUdpArgs->serverSocket = serverSocket;
+            clientUdpArgs->transaction_id = announceRequest->transaction_id;
+            clientUdpArgs->query = query;
+            clientUdpArgs->clientAddr = c_calloc(1, sizeof(struct sockaddr_in));
+            memcpy(clientUdpArgs->clientAddr, &clientAddr, sockAddrSize);
+
+            // Поток
+            pthread_t udpClientThread;
+            if (pthread_create(&udpClientThread, NULL, clientUdpHandler, (void *) clientUdpArgs) != 0) {
+                perror("Could not create UDP thread");
+
+                exit(203);
+            }
+
+        } else if (receivedSize >= scrapeRequestSize && htonl(scrapeRequest->action) == ACTION_SCRAPE) {
+
         }
 
 /*

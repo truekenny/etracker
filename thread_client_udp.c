@@ -9,8 +9,9 @@
 #include "data_render.h"
 #include "socket_udp_response_structure.h"
 #include "stats.h"
+#include "string.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #define MSG_CONFIRM_ 0
 
 void *clientUdpHandler(void *args) {
@@ -43,6 +44,8 @@ void *clientUdpHandler(void *args) {
     postSem(clientUdpArgs->firstByte, clientUdpArgs->query);
 
     clientUdpArgs->stats->sent_bytes_udp += block->size;
+
+    DEBUG && printHex(block->data, block->size);
     if (sendto(clientUdpArgs->serverSocket, block->data, block->size,
                MSG_CONFIRM_, (const struct sockaddr *) clientUdpArgs->clientAddr,
                sockAddrSize) == -1) {
