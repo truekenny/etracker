@@ -23,7 +23,7 @@ int printHex(char *string, unsigned int len) {
            "-----+-------------------------------------------------------+--------------------\n",
            " ", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 
-    int index;
+    unsigned int index;
     for (index = 0; index < ceilLen; ++index) {
         if (index % 16 == 0) {
             printf("%4d | ", index);
@@ -40,7 +40,7 @@ int printHex(char *string, unsigned int len) {
 
             printf("| ");
 
-            for (int j = index - 15; j <= index; ++j) {
+            for (unsigned int j = index - 15; j <= index; ++j) {
                 if (j < len) {
                     if (isprint(string[j])) {
                         printf("%c", string[j]);

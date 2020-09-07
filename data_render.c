@@ -42,7 +42,7 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
     } else {
         unsigned char hash[PARAM_VALUE_LENGTH];
 
-        for (int index = 0; index < hashes->size / PARAM_VALUE_LENGTH; ++index) {
+        for (unsigned int index = 0; index < hashes->size / PARAM_VALUE_LENGTH; ++index) {
             memcpy(&hash, &hashes->data[index * PARAM_VALUE_LENGTH], PARAM_VALUE_LENGTH);
 
             rk_sema_wait(&firstByte->secondByte[hash[0]].sem[hash[1]]);
@@ -68,7 +68,7 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
 
 void renderTorrent(struct block *block, struct torrent *torrent, unsigned char *hash, _Bool udp) {
     if (udp) {
-        struct scrapeTorrentResponse scrapeTorrentResponse = {0};
+        struct scrapeTorrentResponse scrapeTorrentResponse = {};
         if (torrent) {
             scrapeTorrentResponse.seeders = htonl(torrent->complete);
             scrapeTorrentResponse.completed = htonl(torrent->downloaded);
@@ -115,7 +115,7 @@ void renderPeers(struct block *block, struct torrent *torrent, struct query *que
         downloaded = torrent->downloaded;
     }
 
-    int peerCounter = 0;
+    unsigned int peerCounter = 0;
 
     struct block *peerBlock = initBlock();
 

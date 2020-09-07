@@ -93,7 +93,7 @@ void *clientTcpHandler(void *args) {
                 if (startsWith("GET /announce", fullMessage->data)) {
                     stats->announce++;
 
-                    struct query query = {0};
+                    struct query query = {};
                     query.ip = ip;
                     query.numwant = DEFAULT_NUM_WANT;
                     query.event = EVENT_ID_STARTED;
@@ -145,7 +145,7 @@ void *clientTcpHandler(void *args) {
                 } else if (startsWith("GET /scrape", fullMessage->data)) {
                     stats->scrape++;
 
-                    struct query query = {0};
+                    struct query query = {};
                     struct block *hashes = initBlock();
                     struct block *block = initBlock();
                     parseUri(&query, hashes, fullMessage->data);

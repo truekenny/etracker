@@ -39,7 +39,7 @@ void parseUri(struct query *query, struct block *block, char *message) {
     short percent = 0;
     char percentChars[3] = {0};
 
-    for (int i = strlen("GET "); i < strlen(message); i++) {
+    for (unsigned long i = strlen("GET "); i < strlen(message); i++) {
         char current = message[i];
         if (current == ' ') {
             DEBUG && printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
@@ -47,7 +47,7 @@ void parseUri(struct query *query, struct block *block, char *message) {
             getParam(query, block, &param[0], &value[0]);
             break;
         }
-        DEBUG && printf("%d=%c\n", i, current);
+        DEBUG && printf("%lu=%c\n", i, current);
         if (status == URI_PATH) {
             if (current == '?') {
                 status = QUERY_PARAM;

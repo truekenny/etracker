@@ -77,11 +77,7 @@ void *serverTcpHandler(void *args) {
         }
         stats->accept_pass++;
 
-        // fcntl(clientSocket, F_SETFL, O_NONBLOCK);
         setTimeout(clientSocket);
-
-        inet_ntop(AF_INET, &(clientAddr.sin_addr), ip, INET_ADDRSTRLEN);
-        port = ntohs(clientAddr.sin_port);
 
         pthread_t tcpClientThread;
         struct clientTcpArgs *clientTcpArgs = (struct clientTcpArgs *) c_malloc(sizeof(struct clientTcpArgs));
@@ -93,7 +89,12 @@ void *serverTcpHandler(void *args) {
         clientTcpArgs->firstByte = firstByte;
         clientTcpArgs->stats = stats;
 
-        DEBUG && printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
+        if (DEBUG) {
+            inet_ntop(AF_INET, &(clientAddr.sin_addr), ip, INET_ADDRSTRLEN);
+            port = ntohs(clientAddr.sin_port);
+
+            printf("Connection accepted: %s:%d sock:%d number:%d\n", ip, port, clientSocket, threadCounter);
+        }
 
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create TCP thread");

@@ -30,7 +30,7 @@ void *clientUdpHandler(void *args) {
         DEBUG && printf("Update UDP peer %s %s\n", clientUdpArgs->query->info_hash, clientUdpArgs->query->peer_id);
     }
 
-    struct announceHeadResponse announceHeadResponse = {0};
+    struct announceHeadResponse announceHeadResponse = {};
     announceHeadResponse.action = ntohl(ACTION_ANNOUNCE);
     announceHeadResponse.transaction_id = clientUdpArgs->transaction_id;
     announceHeadResponse.interval = ntohl(INTERVAL);
@@ -73,7 +73,7 @@ void *clientUdpScrapeHandler(void *args) {
 
     struct block *block = initBlock();
 
-    struct scrapeHeadResponse scrapeHeadResponse = {0};
+    struct scrapeHeadResponse scrapeHeadResponse = {};
     scrapeHeadResponse.action = htonl(ACTION_SCRAPE);
     scrapeHeadResponse.transaction_id = clientUdpArgs->transaction_id;
     addStringBlock(block, &scrapeHeadResponse, sizeof(struct scrapeHeadResponse));

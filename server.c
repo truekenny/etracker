@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     // Vars
     struct rk_sema sem = {0}; // Семафор
     struct queue *first = NULL; // Очередь
-    struct firstByte firstByte = {0}; // Торренты и пиры
+    struct firstByte firstByte = {}; // Торренты и пиры
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
 

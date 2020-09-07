@@ -159,7 +159,7 @@ void *serverUdpHandler(void *args) {
     unsigned char announceRequestSize = sizeof(struct announceRequest);
     unsigned char scrapeRequestSize = sizeof(struct scrapeRequest);
     unsigned long receiveCount = 0;
-    struct connectResponse connectResponse = {0}; // ACTION_CONNECT = 0
+    struct connectResponse connectResponse = {}; // ACTION_CONNECT = 0
 
     while ((receivedSize = recvfrom(serverSocket, (char *) receivedMessage, RECEIVED_UDP_MESSAGE_LENGTH,
                                     MSG_WAITALL, (struct sockaddr *) &clientAddr,

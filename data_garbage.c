@@ -16,8 +16,8 @@ void runGarbageCollector(struct firstByte *firstByte) {
             currentTorrentsInOneHash = 0,
             removedPeers = 0,
             removedTorrents = 0;
-    unsigned long now = time(NULL);
-    unsigned long limitTime = now - INTERVAL * 2;
+    long now = time(NULL);
+    long limitTime = now - INTERVAL * 2;
 
     unsigned long startTime = getStartTime();
 

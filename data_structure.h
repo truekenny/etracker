@@ -9,7 +9,7 @@ struct peer {
     unsigned short port;
     unsigned int ip;
     char peer_id[20];
-    long int updateTime;
+    long updateTime;
     unsigned char event;
 
     struct peer *next;
