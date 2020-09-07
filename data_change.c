@@ -11,157 +11,98 @@
 #include "alloc.h"
 #include "uri.h"
 #include "time.h"
+#include "data_get.h"
 
 int getPeerSize(struct peer *peer);
 
 struct torrent *deletePeer(struct firstByte *firstByte, struct query *query) {
-    struct torrent *currentTorrent = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
+    struct twoPointers *twoTorrents = getTorrent(firstByte, query->info_hash);
+    struct twoPointers *twoPeers = getPeer(twoTorrents->current, query->peer_id);
 
-    while (currentTorrent != NULL) {
-        // Торрент нашелся
-        if (memcmp(currentTorrent->info_hash, query->info_hash, PARAM_VALUE_LENGTH) == 0) {
-            struct peer *currentPeer = currentTorrent->peer;
-            struct peer *previous = {0};
+    // Есть такой торрент
+    if (twoPeers->current) {
+        struct peer *currentPeer = (struct peer *) twoPeers->current;
+        struct torrent *currentTorrent = (struct torrent *) twoTorrents->current;
 
-            while (currentPeer != NULL) {
-                // Пир нашелся
-                if (memcmp(currentPeer->peer_id, query->peer_id, PARAM_VALUE_LENGTH) == 0) {
-                    // Пир в списке первый
-                    if (previous == NULL) {
-                        currentTorrent->peer = currentPeer->next;
-                    }
-                        // Пир не первый
-                    else {
-                        previous->next = currentPeer->next;
-                    }
-                    torrentChangeStats(currentTorrent, currentPeer->event, query->event, -1);
-                    c_free(currentPeer);
+        torrentChangeStats(currentTorrent, currentPeer->event, query->event, -1);
 
-                    return currentTorrent;
-                }
+        // Есть предыдущий
+        if (twoPeers->previous) {
+            struct peer *previousPeer = (struct peer *) twoPeers->previous;
 
-                previous = currentPeer;
-                currentPeer = currentPeer->next;
-            }
-
-            // У торрента нет такого пира
-            return currentTorrent;
+            previousPeer->next = currentPeer->next;
+        }
+            // Найденный пир - первый в списке
+        else {
+            currentTorrent->peer = currentPeer->next;
         }
 
-        currentTorrent = currentTorrent->next;
+        c_free(currentPeer);
     }
 
-    if (currentTorrent == NULL) {
-        return NULL;
-    }
+    c_free(twoPeers);
+    c_free(twoTorrents);
 
-    // Нет такого торрента
-    return currentTorrent;
+    return twoTorrents->current;
 }
 
 struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
-    struct torrent *firstTorrent = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
-
-    // Торрентов нет - нужен новый торрент и пир
-    if (firstTorrent == NULL) {
-        if (CHECK_SEMAPHORE) {
-            printf("Check semaphore updatePeer(%d) begin = %d\n", 1, query->threadNumber);
-            usleep(rand() % 5000 + 5000); // проверка работы семафора
-            printf("Check semaphore updatePeer(%d) end = %d\n", 1, query->threadNumber);
-        }
-        firstTorrent = c_calloc(1, sizeof(struct torrent));
-        memcpy(firstTorrent->info_hash, query->info_hash, PARAM_VALUE_LENGTH);
-
-        struct peer *peer = c_calloc(1, sizeof(struct peer));
-        memcpy(peer->peer_id, query->peer_id, PARAM_VALUE_LENGTH);
-        peer->ip = query->ip;
-        peer->port = query->port;
-        peer->updateTime = time(NULL);
-        peer->event = query->event;
-        firstTorrent->peer = peer;
-
-        firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]] = firstTorrent;
-
-        torrentChangeStats(firstTorrent, peer->event, peer->event, 1);
-
-        return firstTorrent;
-    } else {
-        if (CHECK_SEMAPHORE) {
-            printf("Check semaphore updatePeer(%d) begin = %d\n", 2, query->threadNumber);
-            usleep(rand() % 5000 + 5000); // проверка работы семафора
-            printf("Check semaphore updatePeer(%d) end = %d\n", 2, query->threadNumber);
-        }
-        struct torrent *currentTorrent = firstTorrent;
-
-        while (currentTorrent != NULL) {
-            // Торрент нашелся
-            if (memcmp(currentTorrent->info_hash, query->info_hash, PARAM_VALUE_LENGTH) == 0) {
-                struct peer *currentPeer = currentTorrent->peer;
-                while (currentPeer != NULL) {
-                    // Пир нашелся
-                    if (memcmp(currentPeer->peer_id, query->peer_id, PARAM_VALUE_LENGTH) == 0) {
-                        // Самая первая строка, чтобы зафиксировать оба event
-                        // Если event не меняется, то значения complete и incomplete не меняются
-                        if (currentPeer->event != query->event)
-                            torrentChangeStats(currentTorrent, currentPeer->event, query->event, 1);
-
-                        currentPeer->ip = query->ip;
-                        currentPeer->port = query->port;
-                        currentPeer->updateTime = time(NULL);
-                        currentPeer->event = query->event;
-
-                        break;
-                    }
-
-                    currentPeer = currentPeer->next;
-                }
-
-                // Пир не найден - нужет новый пир
-                if (currentPeer == NULL) {
-                    struct peer *peer = c_calloc(1, sizeof(struct peer));
-                    memcpy(peer->peer_id, query->peer_id, PARAM_VALUE_LENGTH);
-                    peer->ip = query->ip;
-                    peer->port = query->port;
-                    peer->updateTime = time(NULL);
-                    peer->event = query->event;
-
-                    peer->next = currentTorrent->peer;
-                    currentTorrent->peer = peer;
-
-                    torrentChangeStats(currentTorrent, peer->event, peer->event, 1);
-                }
-
-                return currentTorrent;
-                // break;
-            }
-
-            currentTorrent = currentTorrent->next;
-        }
-
-        // Торрент не найден - нужен новый и новый пир
-        if (currentTorrent == NULL) {
-            struct torrent *torrent = c_calloc(1, sizeof(struct torrent));
-            memcpy(torrent->info_hash, query->info_hash, PARAM_VALUE_LENGTH);
-
-            struct peer *peer = c_calloc(1, sizeof(struct peer));
-            memcpy(peer->peer_id, query->peer_id, PARAM_VALUE_LENGTH);
-            peer->ip = query->ip;
-            peer->port = query->port;
-            peer->updateTime = time(NULL);
-            torrent->peer = peer;
-
-            torrent->next = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
-            firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]] = torrent;
-
-            torrentChangeStats(torrent, peer->event, peer->event, 1);
-
-            return torrent;
-        }
+    if (CHECK_SEMAPHORE) {
+        printf("Check semaphore updatePeer(%d) begin = %d\n", 1, query->threadNumber);
+        usleep(rand() % 5000 + 5000); // проверка работы семафора
+        printf("Check semaphore updatePeer(%d) end = %d\n", 1, query->threadNumber);
     }
 
-    // Эта строка недолжна быть достижима
-    printf("This should not be seen: updatePeer\n");
-    return NULL;
+    struct twoPointers *twoTorrents = getTorrent(firstByte, query->info_hash);
+    struct twoPointers *twoPeers = getPeer(twoTorrents->current, query->peer_id);
+
+    // Нашелся пир
+    if (twoPeers->current) {
+        struct peer *currentPeer = (struct peer *) twoPeers->current;
+        struct torrent *currentTorrent = (struct torrent *) twoTorrents->current;
+
+        /*
+         * Это должна быть самая первая строка, чтобы зафиксировать оба event;
+         * Если event не меняется, то значения complete и incomplete не меняются
+         */
+        if (currentPeer->event != query->event)
+            torrentChangeStats(currentTorrent, currentPeer->event, query->event, 1);
+
+        currentPeer->ip = query->ip;
+        currentPeer->port = query->port;
+        currentPeer->updateTime = time(NULL);
+        currentPeer->event = query->event;
+    }
+        // Нашелся только торрент
+    else if (twoTorrents->current) {
+        struct peer *peer = newPeer(query);
+        struct torrent *currentTorrent = (struct torrent *) twoTorrents->current;
+        // Подключаю пир
+        peer->next = currentTorrent->peer;
+        currentTorrent->peer = peer;
+
+        torrentChangeStats(currentTorrent, peer->event, peer->event, 1);
+    }
+        // Нет даже торрента
+    else {
+        struct torrent *torrent = newTorrent(query);
+        struct peer *peer = newPeer(query);
+        // Подключаю пир
+        torrent->peer = peer;
+        // Подключаю торрент
+        torrent->next = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
+        firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]] = torrent;
+
+        torrentChangeStats(torrent, peer->event, peer->event, 1);
+
+        // result
+        twoTorrents->current = torrent;
+    }
+
+    c_free(twoPeers);
+    c_free(twoTorrents);
+
+    return twoTorrents->current;
 }
 
 int getPeerSize(struct peer *peer) {

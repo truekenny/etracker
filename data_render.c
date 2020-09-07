@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include "data_render.h"
 #include "socket_udp_response_structure.h"
+#include "data_get.h"
 
 #define MAX_PEER_PER_RESULT 50
 
@@ -45,22 +46,8 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
 
             rk_sema_wait(&firstByte->secondByte[hash[0]].sem[hash[1]]);
 
-            struct torrent *currentTorrent = firstByte->secondByte[hash[0]].torrent[hash[1]];
-
-            while (currentTorrent != NULL) {
-                if (memcmp(hash, currentTorrent->info_hash, PARAM_VALUE_LENGTH) == 0) {
-                    renderTorrent(torrentBlock, currentTorrent, NULL, udp);
-
-                    break;
-                }
-
-                currentTorrent = currentTorrent->next;
-            }
-
-            // Торрент не нашелся - надо отбразить пустые данные
-            if (currentTorrent == NULL) {
-                renderTorrent(torrentBlock, NULL, hash, udp);
-            }
+            struct torrent *torrent = getTorrent(firstByte, hash)->current;
+            renderTorrent(torrentBlock, torrent, hash, udp);
 
             rk_sema_post(&firstByte->secondByte[hash[0]].sem[hash[1]]);
         }
