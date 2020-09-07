@@ -47,7 +47,7 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
 
             rk_sema_wait(&firstByte->secondByte[hash[0]].sem[hash[1]]);
 
-            struct twoPointers *twoPointers = getTorrent(firstByte, hash)->current;
+            struct twoPointers *twoPointers = getTorrent(firstByte, hash);
             struct torrent *torrent = twoPointers->current;
             c_free(twoPointers);
             renderTorrent(torrentBlock, torrent, hash, udp);

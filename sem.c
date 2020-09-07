@@ -8,7 +8,7 @@
  * @param s
  * @param value
  */
-void rk_sema_init(struct rk_sema *s, uint32_t value) {
+int rk_sema_init(struct rk_sema *s, uint32_t value) {
 #ifdef __APPLE__
     dispatch_semaphore_t *sem = &s->sem;
 
@@ -19,13 +19,14 @@ void rk_sema_init(struct rk_sema *s, uint32_t value) {
         exit(10);
     }
 #endif
+    return 0;
 }
 
 /**
  * Блокирование семафора
  * @param s
  */
-void rk_sema_wait(struct rk_sema *s) {
+int rk_sema_wait(struct rk_sema *s) {
 #ifdef __APPLE__
     dispatch_semaphore_wait(s->sem, DISPATCH_TIME_FOREVER);
 #else
@@ -38,13 +39,14 @@ void rk_sema_wait(struct rk_sema *s) {
         }
     } while (r == -1 && errno == EINTR);
 #endif
+    return 0;
 }
 
 /**
  * Освобождение семафора
  * @param s
  */
-void rk_sema_post(struct rk_sema *s) {
+int rk_sema_post(struct rk_sema *s) {
 #ifdef __APPLE__
     dispatch_semaphore_signal(s->sem);
 #else
@@ -53,4 +55,6 @@ void rk_sema_post(struct rk_sema *s) {
         exit(11);
     }
 #endif
+    return 0;
+
 }

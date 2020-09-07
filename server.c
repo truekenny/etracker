@@ -29,6 +29,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    c_initSem();
+
     // Vars
     struct rk_sema sem = {0}; // Семафор
     struct queue *first = NULL; // Очередь

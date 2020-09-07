@@ -8,6 +8,8 @@ struct c_countChanges {
     int countFree;
 };
 
+void c_initSem();
+
 void *c_malloc(int size);
 
 void *c_calloc(int count, int size);

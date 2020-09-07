@@ -26,18 +26,18 @@ struct rk_sema {
  * @param s
  * @param value
  */
-void rk_sema_init(struct rk_sema *s, uint32_t value);
+int rk_sema_init(struct rk_sema *s, uint32_t value);
 
 /**
  * Блокирование семафора
  * @param s
  */
-void rk_sema_wait(struct rk_sema *s);
+int rk_sema_wait(struct rk_sema *s);
 
 /**
  * Освобождение семафора
  * @param s
  */
-void rk_sema_post(struct rk_sema *s);
+int rk_sema_post(struct rk_sema *s);
 
 #endif //SC6_SEM_H
