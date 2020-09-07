@@ -12,7 +12,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
 
                          "stats.send_failed = %d\n"
                          "stats.recv_failed = %d\n"
-                         "stats.recv_failed_after_success = %d\n"
+                         "stats.recv_failed_failed = %d\n"
                          "stats.accept_failed = %d\n\n"
 
                          "stats.send_pass_udp = %d\n" "stats.recv_pass_udp = %d\n\n"
@@ -28,7 +28,8 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
                          "stats.announce = %d\n" "stats.scrape = %d\n\n"
 
                          "stats.connect_udp = %d\n" "stats.announce_udp = %d\n" "stats.scrape_udp = %d\n\n"
-                         ,
+
+                         "recv_failed_failed_errno[]:\n",
                          ctime(&stats->time), threadNumber,
 
                          stats->http_200, stats->http_400,
@@ -39,7 +40,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
 
                          stats->send_failed,
                          stats->recv_failed,
-                         stats->recv_failed_after_success,
+                         stats->recv_failed_failed,
                          stats->accept_failed,
 
                          stats->send_pass_udp, stats->recv_pass_udp,
@@ -56,4 +57,14 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
 
                          stats->connect_udp, stats->announce_udp, stats->scrape_udp
     );
+
+    for (unsigned int index = 0; index < 256; ++index) {
+        if (!stats->recv_failed_failed_errno[index])
+            continue;
+
+        addFormatStringBlock(block, 100, "recv_failed_failed_errno[%d] = %d\n",
+                             index, stats->recv_failed_failed_errno[index]);
+    }
+
+    addStringBlock(block, "End of recv_failed_failed_errno\n\n", 32);
 }

@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <errno.h>
 #include "thread_client_tcp.h"
 #include "sem.h"
 #include "alloc.h"
@@ -197,8 +198,13 @@ void *clientTcpHandler(void *args) {
         DEBUG && puts("Client Disconnected");
     } else if (receivedSize < 0) {
         stats->recv_failed++;
-        if (onceReceiveSuccess) {
-            stats->recv_failed_after_success++;
+        if (!onceReceiveSuccess) {
+            stats->recv_failed_failed++;
+            if (errno > 255) {
+                printf("recv_failed_failed errno = %d\n", errno);
+            } else {
+                stats->recv_failed_failed_errno[errno]++;
+            }
         }
         if (DEBUG) perror("Recv failed");
     } else {

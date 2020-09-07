@@ -13,7 +13,7 @@ struct stats {
 
     unsigned int send_failed;
     unsigned int recv_failed;
-    unsigned int recv_failed_after_success;
+    unsigned int recv_failed_failed;
     unsigned int accept_failed;
 
     unsigned int send_pass;
@@ -41,6 +41,8 @@ struct stats {
     unsigned int connect_udp;
     unsigned int announce_udp;
     unsigned int scrape_udp;
+
+    unsigned int recv_failed_failed_errno[256];
 };
 
 void formatStats(int threadNumber, struct block *block, struct stats *stats);
