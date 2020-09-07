@@ -80,8 +80,15 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
         struct peer *peer = newPeer(query);
         struct torrent *currentTorrent = (struct torrent *) twoTorrents->current;
         // Подключаю пир
-        peer->next = currentTorrent->peer;
-        currentTorrent->peer = peer;
+        if (twoPeers->previous == NULL) {
+            // Добавляю пир в начало, так как предыдущего нет
+            peer->next = currentTorrent->peer;
+            currentTorrent->peer = peer;
+        } else {
+            // Добавляю пир после previous
+            peer->next = ((struct peer *) twoPeers->previous)->next;
+            ((struct peer *) twoPeers->previous)->next = peer;
+        }
 
         torrentChangeStats(currentTorrent, peer->event, peer->event, 1);
     }
@@ -92,8 +99,15 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
         // Подключаю пир
         torrent->peer = peer;
         // Подключаю торрент
-        torrent->next = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
-        firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]] = torrent;
+        if (twoTorrents->previous == NULL) {
+            // Добавляю торрент в начало, так как предыдущего нет
+            torrent->next = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
+            firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]] = torrent;
+        } else {
+            // Добавляю торрент после previous
+            torrent->next = ((struct torrent *) twoTorrents->previous)->next;
+            ((struct torrent *) twoTorrents->previous)->next = torrent;
+        }
 
         torrentChangeStats(torrent, peer->event, peer->event, 1);
 
