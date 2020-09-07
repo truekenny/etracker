@@ -57,12 +57,11 @@ void *clientTcpHandler(void *args) {
     int receivedSize;
     _Bool isHttp = 0;
     struct block *fullMessage = initBlock();
-    char receivedMessage[RECEIVED_MESSAGE_LENGTH + 1] = {0};
+    char receivedMessage[RECEIVED_MESSAGE_LENGTH + 1];
 
     _Bool onceReceiveSuccess = 0; // Однажды это соединение удачно выполнило фукнцию recv
 
-    while (memset(receivedMessage, 0, sizeof(receivedMessage))
-           && (receivedSize = recv(threadSocket, receivedMessage, RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL)) > 0) {
+    while ((receivedSize = recv(threadSocket, receivedMessage, RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL)) > 0) {
         DEBUG && printf("> %s", receivedMessage);
 
         onceReceiveSuccess = 1;

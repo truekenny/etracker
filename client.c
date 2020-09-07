@@ -9,7 +9,7 @@
 #include <time.h>
 
 #define MAX_SIZE 100
-#define PAUSE_TIME 10
+#define PAUSE_TIME 1
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     printf("Connected successfully\n");
     while (1) {
         ttime = time(NULL);
-        sprintf(sbuff, "%s:%d %.24s\n", argv[1], ntohs(sin.sin_port), ctime(&ttime));
+        sprintf(sbuff, "%s:%d %.24s %d\n", argv[1], ntohs(sin.sin_port), ctime(&ttime), rand());
 
         if (send(sock_desc, sbuff, strlen(sbuff), 0) == -1) {
             perror("Send error");
