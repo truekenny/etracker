@@ -40,10 +40,12 @@ struct torrent *deletePeer(struct firstByte *firstByte, struct query *query) {
         c_free(currentPeer);
     }
 
+    struct torrent *torrent = twoTorrents->current;
+
     c_free(twoPeers);
     c_free(twoTorrents);
 
-    return twoTorrents->current;
+    return torrent;
 }
 
 struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
@@ -99,10 +101,12 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
         twoTorrents->current = torrent;
     }
 
+    struct torrent *torrent = twoTorrents->current;
+
     c_free(twoPeers);
     c_free(twoTorrents);
 
-    return twoTorrents->current;
+    return torrent;
 }
 
 int getPeerSize(struct peer *peer) {

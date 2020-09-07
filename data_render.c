@@ -4,6 +4,7 @@
 #include "data_render.h"
 #include "socket_udp_response_structure.h"
 #include "data_get.h"
+#include "alloc.h"
 
 #define MAX_PEER_PER_RESULT 50
 
@@ -46,7 +47,9 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
 
             rk_sema_wait(&firstByte->secondByte[hash[0]].sem[hash[1]]);
 
-            struct torrent *torrent = getTorrent(firstByte, hash)->current;
+            struct twoPointers *twoPointers = getTorrent(firstByte, hash)->current;
+            struct torrent *torrent = twoPointers->current;
+            c_free(twoPointers);
             renderTorrent(torrentBlock, torrent, hash, udp);
 
             rk_sema_post(&firstByte->secondByte[hash[0]].sem[hash[1]]);
