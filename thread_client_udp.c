@@ -21,12 +21,12 @@ void *clientUdpHandler(void *args) {
     struct torrent *torrent = {0};
     struct block *block = initBlock();
 
-    waitSem(clientUdpArgs->firstByte, clientUdpArgs->query);
+    waitSem(clientUdpArgs->firstByteData, clientUdpArgs->query);
     if (clientUdpArgs->query->event == EVENT_ID_STOPPED) {
-        torrent = deletePeer(clientUdpArgs->firstByte, clientUdpArgs->query);
+        torrent = deletePeer(clientUdpArgs->firstByteData, clientUdpArgs->query);
         DEBUG && printf("Delete UDP peer %s %s\n", clientUdpArgs->query->info_hash, clientUdpArgs->query->peer_id);
     } else {
-        torrent = updatePeer(clientUdpArgs->firstByte, clientUdpArgs->query);
+        torrent = updatePeer(clientUdpArgs->firstByteData, clientUdpArgs->query);
         DEBUG && printf("Update UDP peer %s %s\n", clientUdpArgs->query->info_hash, clientUdpArgs->query->peer_id);
     }
 
@@ -41,7 +41,7 @@ void *clientUdpHandler(void *args) {
     addStringBlock(block, &announceHeadResponse, sizeof(struct announceHeadResponse));
 
     renderPeers(block, torrent, clientUdpArgs->query);
-    postSem(clientUdpArgs->firstByte, clientUdpArgs->query);
+    postSem(clientUdpArgs->firstByteData, clientUdpArgs->query);
 
     clientUdpArgs->stats->sent_bytes_udp += block->size;
 
@@ -78,7 +78,7 @@ void *clientUdpScrapeHandler(void *args) {
     scrapeHeadResponse.transaction_id = clientUdpArgs->transaction_id;
     addStringBlock(block, &scrapeHeadResponse, sizeof(struct scrapeHeadResponse));
 
-    renderTorrents(block, clientUdpArgs->firstByte, clientUdpArgs->hashes, 1);
+    renderTorrents(block, clientUdpArgs->firstByteData, clientUdpArgs->hashes, 1);
 
 
     DEBUG && printHex(block->data, block->size);

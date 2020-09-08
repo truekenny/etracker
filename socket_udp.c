@@ -119,7 +119,7 @@ void *serverUdpHandler(void *args) {
     checkSize();
 
     struct stats *stats = ((struct serverUdpArgs *) args)->stats;
-    struct firstByte *firstByte = ((struct serverUdpArgs *) args)->firstByte;
+    struct firstByteData *firstByte = ((struct serverUdpArgs *) args)->firstByteData;
     char *serverPort = ((struct serverUdpArgs *) args)->port;
     c_free(args);
 
@@ -222,9 +222,9 @@ void *serverUdpHandler(void *args) {
             query->ip = clientAddr.sin_addr.s_addr;
 
             struct clientUdpArgs *clientUdpArgs = c_calloc(1, sizeof(struct clientUdpArgs));
-            clientUdpArgs->firstByte = firstByte;
+            clientUdpArgs->firstByteData = firstByte;
             clientUdpArgs->stats = stats;
-            clientUdpArgs->number = receiveCount;
+            clientUdpArgs->receiveCount = receiveCount;
             clientUdpArgs->serverSocket = serverSocket;
             clientUdpArgs->transaction_id = announceRequest->transaction_id;
             clientUdpArgs->query = query;
@@ -252,9 +252,9 @@ void *serverUdpHandler(void *args) {
                            hashCount * PARAM_VALUE_LENGTH);
 
             struct clientUdpArgs *clientUdpArgs = c_calloc(1, sizeof(struct clientUdpArgs));
-            clientUdpArgs->firstByte = firstByte;
+            clientUdpArgs->firstByteData = firstByte;
             clientUdpArgs->stats = stats;
-            clientUdpArgs->number = receiveCount;
+            clientUdpArgs->receiveCount = receiveCount;
             clientUdpArgs->serverSocket = serverSocket;
             clientUdpArgs->transaction_id = announceRequest->transaction_id;
             clientUdpArgs->clientAddr = c_calloc(1, sizeof(struct sockaddr_in));

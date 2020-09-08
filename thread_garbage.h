@@ -3,6 +3,6 @@
 
 #include "data_change.h"
 
-void runGarbageCollectorThread(struct firstByte *firstByte);
+void runGarbageCollectorThread(struct firstByteData *firstByte);
 
 #endif //SC6_THREAD_GARBAGE_H

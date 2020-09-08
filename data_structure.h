@@ -25,13 +25,13 @@ struct torrent {
     struct torrent *next;
 };
 
-struct secondByte {
+struct secondByteData {
     struct torrent *torrent[256];
-    struct rk_sema sem[256];
+    struct rk_sema semaphore[256];
 };
 
-struct firstByte {
-    struct secondByte secondByte[256];
+struct firstByteData {
+    struct secondByteData secondByteData[256];
 };
 
 #endif //SC6_DATA_STRUCTURE_H

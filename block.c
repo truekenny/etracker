@@ -24,7 +24,9 @@ struct block *initBlock() {
 
 void freeBlock(struct block *block) {
     c_free(block->data);
+    block->data = NULL;
     c_free(block);
+    block = NULL;
 }
 
 struct block *resetBlock(struct block * block) {

@@ -29,24 +29,29 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    printf("This system has %ld processors configured and "
+           "%ld processors available.\n",
+           sysconf(_SC_NPROCESSORS_CONF),
+           sysconf(_SC_NPROCESSORS_ONLN));
+
     c_initSem();
 
     // Vars
-    struct rk_sema sem = {0}; // Семафор
-    struct queue *first = NULL; // Очередь
-    struct firstByte firstByte = {}; // Торренты и пиры
+    struct rk_sema semaphoreQueue = {0}; // Семафор
+    struct queue *queue = NULL; // Очередь
+    struct firstByteData firstByteData = {}; // Торренты и пиры
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
 
-    initSem(&firstByte);
+    initSem(&firstByteData);
 
     // Инициализация семафора
-    rk_sema_init(&sem, 1);
+    rk_sema_init(&semaphoreQueue, 1);
 
-    runGarbageCollectorThread(&firstByte);
+    runGarbageCollectorThread(&firstByteData);
 
-    DEBUG && printf("first = %p\n", first);
-    DEBUG && printf("&first = %p\n", &first);
+    DEBUG && printf("first = %p\n", queue);
+    DEBUG && printf("&first = %p\n", &queue);
 
     if (INTERVAL < 100)
         printf("- Interval: %d\n", INTERVAL);
@@ -58,9 +63,9 @@ int main(int argc, char *argv[]) {
     // Start TCP
     pthread_t tcpServerThread;
     struct serverTcpArgs *serverTcpArgs = (struct serverTcpArgs *) c_malloc(sizeof(struct serverTcpArgs));
-    serverTcpArgs->sem = &sem;
-    serverTcpArgs->first = &first;
-    serverTcpArgs->firstByte = &firstByte;
+    serverTcpArgs->semaphoreQueue = &semaphoreQueue;
+    serverTcpArgs->queue = &queue;
+    serverTcpArgs->firstByteData = &firstByteData;
     serverTcpArgs->stats = stats;
     serverTcpArgs->port = argv[1];
     if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
@@ -71,7 +76,7 @@ int main(int argc, char *argv[]) {
     // Start TCP
     pthread_t udpServerThread;
     struct serverUdpArgs *serverUdpArgs = (struct serverUdpArgs *) c_malloc(sizeof(struct serverUdpArgs));
-    serverUdpArgs->firstByte = &firstByte;
+    serverUdpArgs->firstByteData = &firstByteData;
     serverUdpArgs->stats = stats;
     serverUdpArgs->port = argv[1];
     if (pthread_create(&udpServerThread, NULL, serverUdpHandler, (void *) serverUdpArgs) != 0) {

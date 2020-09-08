@@ -9,9 +9,9 @@
 struct serverTcpArgs {
     char *port;
     struct stats *stats;
-    struct rk_sema *sem;
-    struct queue **first;
-    struct firstByte *firstByte;
+    struct rk_sema *semaphoreQueue;
+    struct queue **queue;
+    struct firstByteData *firstByteData;
 };
 
 void *serverTcpHandler(void *args);

@@ -12,7 +12,7 @@ void int2ip(char *dest, unsigned int source);
 
 void renderTorrent(struct block *block, struct torrent *torrent, unsigned char *hash, _Bool udp);
 
-void renderTorrents(struct block *block, struct firstByte *firstByte, struct block *hashes, _Bool udp) {
+void renderTorrents(struct block *block, struct firstByteData *firstByte, struct block *hashes, _Bool udp) {
     struct block *torrentBlock = initBlock();
 
     if (!udp) {
@@ -26,9 +26,9 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
 
         for (i = 0; i < 256; i++) {
             for (j = 0; j < 256; j++) {
-                rk_sema_wait(&firstByte->secondByte[i].sem[j]);
+                rk_sema_wait(&firstByte->secondByteData[i].semaphore[j]);
 
-                struct torrent *currentTorrent = firstByte->secondByte[i].torrent[j];
+                struct torrent *currentTorrent = firstByte->secondByteData[i].torrent[j];
 
                 while (currentTorrent != NULL) {
                     renderTorrent(torrentBlock, currentTorrent, NULL, udp);
@@ -36,7 +36,7 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
                     currentTorrent = currentTorrent->next;
                 }
 
-                rk_sema_post(&firstByte->secondByte[i].sem[j]);
+                rk_sema_post(&firstByte->secondByteData[i].semaphore[j]);
             }
         }
     } else {
@@ -45,14 +45,14 @@ void renderTorrents(struct block *block, struct firstByte *firstByte, struct blo
         for (unsigned int index = 0; index < hashes->size / PARAM_VALUE_LENGTH; ++index) {
             memcpy(&hash, &hashes->data[index * PARAM_VALUE_LENGTH], PARAM_VALUE_LENGTH);
 
-            rk_sema_wait(&firstByte->secondByte[hash[0]].sem[hash[1]]);
+            rk_sema_wait(&firstByte->secondByteData[hash[0]].semaphore[hash[1]]);
 
             struct twoPointers *twoPointers = getTorrent(firstByte, hash);
             struct torrent *torrent = twoPointers->current;
             c_free(twoPointers);
             renderTorrent(torrentBlock, torrent, hash, udp);
 
-            rk_sema_post(&firstByte->secondByte[hash[0]].sem[hash[1]]);
+            rk_sema_post(&firstByte->secondByteData[hash[0]].semaphore[hash[1]]);
         }
     }
 

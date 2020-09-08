@@ -9,7 +9,7 @@ struct twoPointers {
     void *current;
 };
 
-struct twoPointers *getTorrent(struct firstByte *firstByte, unsigned char *hash);
+struct twoPointers *getTorrent(struct firstByteData *firstByte, unsigned char *hash);
 
 struct twoPointers *getPeer(struct torrent *torrent, unsigned char *peer_id);
 

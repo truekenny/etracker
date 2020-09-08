@@ -8,12 +8,12 @@
 #define GARBAGE_COLLECTOR_TIME (15 * 60)
 
 struct garbageCollectorArgs {
-    struct firstByte *firstByte;
+    struct firstByteData *firstByte;
 };
 
 void *garbageCollectorHandler(void *_args);
 
-void runGarbageCollectorThread(struct firstByte *firstByte) {
+void runGarbageCollectorThread(struct firstByteData *firstByte) {
     pthread_attr_t tattr;
     pthread_t tid;
     int ret;
@@ -47,7 +47,7 @@ void runGarbageCollectorThread(struct firstByte *firstByte) {
 }
 
 void *garbageCollectorHandler(void *_args) {
-    struct firstByte *firstByte = ((struct garbageCollectorArgs *) _args)->firstByte;
+    struct firstByteData *firstByte = ((struct garbageCollectorArgs *) _args)->firstByte;
     c_free(_args);
 
     while (1) {

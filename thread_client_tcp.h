@@ -3,18 +3,23 @@
 
 #include "data_change.h"
 #include "stats.h"
+#include "request.h"
 
 /**
  * Аргументы переданные в поток
  */
 struct clientTcpArgs {
-    int sock;
-    int number;
-    struct rk_sema *sem;
-    struct queue **first;
-    in_addr_t ip;
-    struct firstByte *firstByte;
+    int threadNumber;
+    struct rk_sema *semaphoreQueue;
+    struct queue **queue;
+    struct firstByteData *firstByteData;
     struct stats *stats;
+
+    pthread_cond_t *signalRequest;
+    pthread_mutex_t *mutexSignalRequest;
+    struct request **firstRequest;
+    struct request **lastRequest;
+    struct rk_sema *semaphoreRequest;
 };
 
 void *clientTcpHandler(void *);

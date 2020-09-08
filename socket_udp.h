@@ -8,7 +8,7 @@
 struct serverUdpArgs {
     char *port;
     struct stats *stats;
-    struct firstByte *firstByte;
+    struct firstByteData *firstByteData;
 };
 
 void *serverUdpHandler(void *args);

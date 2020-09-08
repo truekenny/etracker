@@ -29,14 +29,13 @@ void setTimeout(int socket) {
 }
 
 /**
- * Отправка сообщения по сокету
- * @param socket
+ * Рендер сообщения по сокету
+ * @param request
  * @param code
  * @param message
  * @param size
  */
-ssize_t sendMessage(int socket, int code, char *message, size_t size, int canKeepAlive, struct stats *stats) {
-    struct block *block = initBlock();
+void sendMessage(struct block *block, int code, char *message, size_t size, int canKeepAlive, struct stats *stats) {
     struct block *body = {0};
 
     // First line headers
@@ -93,12 +92,10 @@ ssize_t sendMessage(int socket, int code, char *message, size_t size, int canKee
         freeBlock(body);
     }
 
-    ssize_t result = send_(socket, block->data, block->size, stats);
+    // ssize_t result = send_(socket, block->data, block->size, stats);
 
     DEBUG && printf("%s\n", message);
-    freeBlock(block);
-
-    return result;
+    //freeBlock(block);
 }
 
 ssize_t send_(int socket, void *message, size_t size, struct stats *stats) {

@@ -8,11 +8,11 @@
 
 #define DEBUG 0
 
-struct twoPointers *getTorrent(struct firstByte *firstByte, unsigned char *hash) {
+struct twoPointers *getTorrent(struct firstByteData *firstByte, unsigned char *hash) {
     struct twoPointers *twoPointers = c_calloc(1, sizeof(struct twoPointers));
 
     struct torrent *previous = {0};
-    struct torrent *currentTorrent = firstByte->secondByte[hash[0]].torrent[hash[1]];
+    struct torrent *currentTorrent = firstByte->secondByteData[hash[0]].torrent[hash[1]];
 
     int compareValue;
     while (currentTorrent != NULL) {

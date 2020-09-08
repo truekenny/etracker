@@ -8,10 +8,10 @@ struct clientUdpArgs {
     struct sockaddr_in * clientAddr;
     unsigned int transaction_id;
 
-    unsigned long number;
+    unsigned long receiveCount;
     // struct rk_sema *sem;
     // struct queue **first;
-    struct firstByte *firstByte;
+    struct firstByteData *firstByteData;
     struct stats *stats;
     struct query *query;
     struct block *hashes;

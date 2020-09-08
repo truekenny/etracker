@@ -6,7 +6,7 @@
 #include "time.h"
 #include "alloc.h"
 
-void runGarbageCollector(struct firstByte *firstByte) {
+void runGarbageCollector(struct firstByteData *firstByte) {
     int i, j;
     unsigned int totalPeers = 0,
             totalTorrents = 0,
@@ -23,9 +23,9 @@ void runGarbageCollector(struct firstByte *firstByte) {
 
     for (i = 0; i < 256; i++) {
         for (j = 0; j < 256; j++) {
-            rk_sema_wait(&firstByte->secondByte[i].sem[j]);
+            rk_sema_wait(&firstByte->secondByteData[i].semaphore[j]);
 
-            struct torrent *currentTorrent = firstByte->secondByte[i].torrent[j];
+            struct torrent *currentTorrent = firstByte->secondByteData[i].torrent[j];
             struct torrent *previousTorrent = NULL;
 
             currentTorrentsInOneHash = 0;
@@ -72,9 +72,9 @@ void runGarbageCollector(struct firstByte *firstByte) {
                 if (currentTorrent->peer == NULL) {
                     // Надо удалить торрент, так как нет пиров
                     if (previousTorrent == NULL) {
-                        firstByte->secondByte[i].torrent[j] = currentTorrent->next;
+                        firstByte->secondByteData[i].torrent[j] = currentTorrent->next;
                         c_free(currentTorrent);
-                        currentTorrent = firstByte->secondByte[i].torrent[j];
+                        currentTorrent = firstByte->secondByteData[i].torrent[j];
                     } else {
                         previousTorrent->next = currentTorrent->next;
                         c_free(currentTorrent);
@@ -93,7 +93,7 @@ void runGarbageCollector(struct firstByte *firstByte) {
             if (currentTorrentsInOneHash > maxTorrentsInOneHash)
                 maxTorrentsInOneHash = currentTorrentsInOneHash;
 
-            rk_sema_post(&firstByte->secondByte[i].sem[j]);
+            rk_sema_post(&firstByte->secondByteData[i].semaphore[j]);
         }
     }
 

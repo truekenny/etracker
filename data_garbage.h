@@ -3,6 +3,6 @@
 
 #include "data_structure.h"
 
-void runGarbageCollector(struct firstByte *firstByte);
+void runGarbageCollector(struct firstByteData *firstByte);
 
 #endif //SC6_DATA_GARBAGE_H

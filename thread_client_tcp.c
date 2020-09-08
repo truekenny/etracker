@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/event.h>
 #include "thread_client_tcp.h"
 #include "sem.h"
 #include "alloc.h"
@@ -17,9 +18,11 @@
 #include "data_render.h"
 #include "socket.h"
 #include "block.h"
+#include "request.h"
 
 #define DEBUG 0
-#define QUEUE_ENABLE 0
+#define DEBUG_KQUEUE 0
+#define QUEUE_ENABLE 1
 #define KEEP_ALIVE 1
 #define RECEIVED_MESSAGE_LENGTH 2000
 
@@ -29,186 +32,194 @@
  * @return
  */
 void *clientTcpHandler(void *args) {
-    int threadSocket = ((struct clientTcpArgs *) args)->sock;
-    int threadNumber = ((struct clientTcpArgs *) args)->number;
-    struct rk_sema *sem = ((struct clientTcpArgs *) args)->sem;
-    struct queue **first = ((struct clientTcpArgs *) args)->first;
-    in_addr_t ip = ((struct clientTcpArgs *) args)->ip;
-    struct firstByte *firstByte = ((struct clientTcpArgs *) args)->firstByte;
+    int threadNumber = ((struct clientTcpArgs *) args)->threadNumber;
+    struct rk_sema *semaphoreQueue = ((struct clientTcpArgs *) args)->semaphoreQueue;
+    struct queue **queue = ((struct clientTcpArgs *) args)->queue;
+    struct firstByteData *firstByteData = ((struct clientTcpArgs *) args)->firstByteData;
     struct stats *stats = ((struct clientTcpArgs *) args)->stats;
+
+    pthread_cond_t *signalRequest = ((struct clientTcpArgs *) args)->signalRequest;
+    pthread_mutex_t *mutexSignalRequest = ((struct clientTcpArgs *) args)->mutexSignalRequest;
+    struct request **firstRequest = ((struct clientTcpArgs *) args)->firstRequest;
+    struct request **lastRequest = ((struct clientTcpArgs *) args)->lastRequest;
+    struct rk_sema *semaphoreRequest = ((struct clientTcpArgs *) args)->semaphoreRequest;
     c_free(args);
 
-    DEBUG && printf("first = %p\n", first);
-    DEBUG && printf("*first = %p\n", *first);
+    // todo delete
+    sleep(1);
 
-    if (QUEUE_ENABLE) {
-        rk_sema_wait(sem);
-        if (CHECK_SEMAPHORE) {
-            printf("Check semaphore clientTcpHandler begin = %d\n", threadNumber);
-            usleep(rand() % 5000 + 5000); // проверка работы семафора
-            printf("Check semaphore clientTcpHandler end = %d\n", threadNumber);
+    while (1) {
+        rk_sema_wait(semaphoreRequest);
+        struct request *request = pullRequest(firstRequest, lastRequest);
+        rk_sema_post(semaphoreRequest);
+
+        if (request == NULL) {
+            DEBUG_KQUEUE && printf("thread_client_tcp.c: Before signal %d\n", threadNumber);
+            pthread_mutex_lock(mutexSignalRequest);
+            pthread_cond_wait(signalRequest, mutexSignalRequest);
+            pthread_mutex_unlock(mutexSignalRequest);
+            DEBUG_KQUEUE && printf("thread_client_tcp.c: After signal %d\n", threadNumber);
+
+            continue;
+        } else {
+            DEBUG_KQUEUE &&
+            printf("thread_client_tcp.c: Ready request found %d, sock = %d\n", threadNumber, request->socket);
         }
-        *first = addToQueue(*first, threadNumber);
-        rk_sema_post(sem);
-    }
 
-    DEBUG && printf("Handler: sock:%d number:%d\n", threadSocket, threadNumber);
+        DEBUG_KQUEUE && printf("thread_client_tcp.c: IN %d", threadNumber);
 
-    int receivedSize;
-    _Bool isHttp = 0;
-    struct block *fullMessage = initBlock();
-    char receivedMessage[RECEIVED_MESSAGE_LENGTH + 1];
+        DEBUG && printf("first = %p\n", queue);
+        DEBUG && printf("*first = %p\n", *queue);
 
-    _Bool onceReceiveSuccess = 0; // Однажды это соединение удачно выполнило фукнцию recv
+        if (QUEUE_ENABLE) {
+            rk_sema_wait(semaphoreQueue);
+            if (CHECK_SEMAPHORE) {
+                printf("Check semaphore clientTcpHandler begin = %d\n", threadNumber);
+                usleep(rand() % 5000 + 5000); // проверка работы семафора
+                printf("Check semaphore clientTcpHandler end = %d\n", threadNumber);
+            }
+            *queue = addToQueue(*queue, threadNumber);
+            rk_sema_post(semaphoreQueue);
+        }
 
-    while ((receivedSize = recv(threadSocket, receivedMessage, RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL)) > 0) {
-        DEBUG && printf("> %s", receivedMessage);
+        DEBUG && printf("Handler: sock:%d number:%d\n", request->socket, threadNumber);
 
-        onceReceiveSuccess = 1;
+        _Bool isHttp = 0;
+        int canKeepAlive = 0;
+        struct block *writeBlock = initBlock();
 
-        stats->recv_bytes += receivedSize;
+        DEBUG && printf("> %s", request->block->data);
+
+        stats->recv_bytes += request->block->size;
         stats->recv_pass++;
 
-        if (DEBUG && startsWith("stop", receivedMessage)) {
+        if (DEBUG && startsWith("stop", request->block->data)) {
             printf("STOP\n");
             exit(40);
         }
 
-        if (!isHttp && startsWith("GET ", receivedMessage)) {
+        if (startsWith("GET ", request->block->data)) {
             isHttp = 1;
             DEBUG && printf("isHttp = 1\n");
         }
 
         if (isHttp) {
-            addStringBlock(fullMessage, receivedMessage, receivedSize);
-            DEBUG && printf("message = %s", fullMessage->data);
+            DEBUG && printf("Message complete\n");
 
-            if (strstr(fullMessage->data, "\r\n\r\n") != NULL) {
-                DEBUG && printf("Message complete\n");
+            canKeepAlive = KEEP_ALIVE && ((strstr(request->block->data, "HTTP/1.1") != NULL)
+                                          || (strstr(request->block->data, "Connection: Keep-Alive") != NULL));
 
-                int canKeepAlive = KEEP_ALIVE && ((strstr(fullMessage->data, "HTTP/1.1") != NULL)
-                                                  || (strstr(fullMessage->data, "Connection: Keep-Alive") != NULL));
+            if (startsWith("GET /announce", request->block->data)) {
+                stats->announce++;
 
-                if (startsWith("GET /announce", fullMessage->data)) {
-                    stats->announce++;
+                struct query query = {};
 
-                    struct query query = {};
-                    query.ip = ip;
-                    query.numwant = DEFAULT_NUM_WANT;
-                    query.event = EVENT_ID_STARTED;
-                    query.threadNumber = threadNumber;
+                struct sockaddr_in peer = {};
+                socklen_t socklen = sizeof(peer);
+                getpeername(request->socket, (struct sockaddr *) &peer, &socklen); // client
+                query.ip = peer.sin_addr.s_addr;
 
-                    parseUri(&query, NULL, fullMessage->data);
+                query.numwant = DEFAULT_NUM_WANT;
+                query.event = EVENT_ID_STARTED;
+                query.threadNumber = threadNumber;
 
-                    if (!query.has_info_hash) {
-                        sendMessage(threadSocket, 400, "Field 'info_hash' must be filled", 25, canKeepAlive, stats);
-                    } else if (!query.port) {
-                        sendMessage(threadSocket, 400, "Field 'port' must be filled", 25, canKeepAlive, stats);
-                    } else {
-                        struct torrent *torrent;
-                        struct block *block = initBlock();
+                parseUri(&query, NULL, request->block->data);
 
-                        switch (query.event) {
-                            case EVENT_ID_STOPPED:
-                                waitSem(firstByte, &query);
-                                torrent = deletePeer(firstByte, &query);
-                                renderPeers(block, torrent, &query);
-                                postSem(firstByte, &query);
-                                break;
-                            default:
-                                waitSem(firstByte, &query);
-                                torrent = updatePeer(firstByte, &query);
-                                renderPeers(block, torrent, &query);
-                                postSem(firstByte, &query);
-                                break;
-                        } // End of switch
-
-                        sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive, stats);
-                        freeBlock(block);
-                    }
-                } else if (startsWith("GET /stats", fullMessage->data)) {
+                if (!query.has_info_hash) {
+                    sendMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive, stats);
+                } else if (!query.port) {
+                    sendMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive, stats);
+                } else {
+                    struct torrent *torrent;
                     struct block *block = initBlock();
 
-                    if (QUEUE_ENABLE) {
-                        rk_sema_wait(sem);
-                        printQueue(block, *first);
-                        rk_sema_post(sem);
-                    }
-                    formatStats(threadNumber, block, stats);
+                    switch (query.event) {
+                        case EVENT_ID_STOPPED:
+                            waitSem(firstByteData, &query);
+                            torrent = deletePeer(firstByteData, &query);
+                            renderPeers(block, torrent, &query);
+                            postSem(firstByteData, &query);
+                            break;
+                        default:
+                            waitSem(firstByteData, &query);
+                            torrent = updatePeer(firstByteData, &query);
+                            renderPeers(block, torrent, &query);
+                            postSem(firstByteData, &query);
+                            break;
+                    } // End of switch
 
-                    sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive, stats);
+                    sendMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                     freeBlock(block);
-                } else if (startsWith("GET /garbage", fullMessage->data)) {
-                    runGarbageCollector(firstByte);
-                    sendMessage(threadSocket, 200, "OK", 2, canKeepAlive, stats);
-                } else if (startsWith("GET /scrape", fullMessage->data)) {
-                    stats->scrape++;
+                }
+            } else if (startsWith("GET /stats", request->block->data)) {
+                struct block *block = initBlock();
 
-                    struct query query = {};
-                    struct block *hashes = initBlock();
-                    struct block *block = initBlock();
-                    parseUri(&query, hashes, fullMessage->data);
+                if (QUEUE_ENABLE) {
+                    rk_sema_wait(semaphoreQueue);
+                    printQueue(block, *queue);
+                    rk_sema_post(semaphoreQueue);
+                }
+                formatStats(threadNumber, block, stats);
 
-                    if (!hashes->size && !ENABLE_FULL_SCRAPE) {
-                        sendMessage(threadSocket, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive, stats);
-                    } else {
-                        renderTorrents(block, firstByte, hashes, 0);
-                        sendMessage(threadSocket, 200, block->data, block->size, canKeepAlive, stats);
-                    }
+                sendMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
+                freeBlock(block);
+            } else if (startsWith("GET /garbage", request->block->data)) {
+                runGarbageCollector(firstByteData);
+                sendMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
+            } else if (startsWith("GET /scrape", request->block->data)) {
+                stats->scrape++;
 
-                    freeBlock(hashes);
-                    freeBlock(block);
+                struct query query = {};
+                struct block *hashes = initBlock();
+                struct block *block = initBlock();
+                parseUri(&query, hashes, request->block->data);
+
+                if (!hashes->size && !ENABLE_FULL_SCRAPE) {
+                    sendMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive, stats);
                 } else {
-                    sendMessage(threadSocket, 404, "Page not found", 14, canKeepAlive, stats);
+                    renderTorrents(block, firstByteData, hashes, 0);
+                    sendMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                 }
 
-                fullMessage = resetBlock(fullMessage);
-
-                if (canKeepAlive) {
-                    stats->keep_alive++;
-                    continue; // Connection: Keep-Alive
-                } else {
-                    stats->no_keep_alive++;
-                    break;
-                }
-            } // fullMessage
-
-            continue;
-        } // isHttp
-
-
-        send_(threadSocket, receivedMessage, receivedSize, stats);
-        DEBUG && printf("< %s", receivedMessage);
-    }
-
-    freeBlock(fullMessage);
-
-    close(threadSocket);
-
-    if (QUEUE_ENABLE) {
-        rk_sema_wait(sem);
-        *first = deleteFromQueue(*first, threadNumber);
-        rk_sema_post(sem);
-    }
-
-    DEBUG && printf("Recv bytes: %d\n", receivedSize);
-
-    if (receivedSize == 0) {
-        DEBUG && puts("Client Disconnected");
-    } else if (receivedSize < 0) {
-        stats->recv_failed++;
-        if (!onceReceiveSuccess) {
-            stats->recv_failed_failed++;
-            if (errno > 255) {
-                printf("recv_failed_failed errno = %d\n", errno);
+                freeBlock(hashes);
+                freeBlock(block);
             } else {
-                stats->recv_failed_failed_errno[errno]++;
+                sendMessage(writeBlock, 404, "Page not found", 14, canKeepAlive, stats);
             }
+
+            if (canKeepAlive) {
+                stats->keep_alive++;
+            } else {
+                stats->no_keep_alive++;
+            }
+        } // isHttp
+        else {
+            sendMessage(writeBlock, 200, request->block->data, request->block->size, canKeepAlive, stats);
+            DEBUG && printf("< %s", request->block->data);
         }
-        if (DEBUG) perror("Recv failed");
-    } else {
-        DEBUG && puts("I Disconnect Client");
-    }
+
+        if (QUEUE_ENABLE) {
+            rk_sema_wait(semaphoreQueue);
+            *queue = deleteFromQueue(*queue, threadNumber);
+            rk_sema_post(semaphoreQueue);
+        }
+
+        DEBUG && printf("Recv bytes: %d\n", request->block->size);
+        DEBUG_KQUEUE && printf("thread_client_tcp.c: Write %d, keep=%d\n", threadNumber, canKeepAlive);
+
+        send_(request->socket, writeBlock->data, writeBlock->size, stats);
+        // Ответ дан - удаляю
+        freeBlock(writeBlock);
+
+        if (!canKeepAlive)
+            close(request->socket);
+
+        // Обработан – удаляю
+        freeRequest(request);
+
+        // Чтобы нормально работала подсветка кода в IDE
+        if (rand() % 2 == 3) break;
+    } // while 1
 
     if (pthread_detach(pthread_self()) != 0) {
         perror("Could not detach thread");

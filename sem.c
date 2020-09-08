@@ -10,11 +10,11 @@
  */
 int rk_sema_init(struct rk_sema *s, uint32_t value) {
 #ifdef __APPLE__
-    dispatch_semaphore_t *sem = &s->sem;
+    dispatch_semaphore_t *sem = &s->semaphoreQueue;
 
     *sem = dispatch_semaphore_create(value);
 #else
-    if (sem_init(&s->sem, 0, value)) {
+    if (sem_init(&s->semaphoreQueue, 0, value)) {
         perror("Sem_init failed");
         exit(10);
     }
@@ -28,12 +28,12 @@ int rk_sema_init(struct rk_sema *s, uint32_t value) {
  */
 int rk_sema_wait(struct rk_sema *s) {
 #ifdef __APPLE__
-    dispatch_semaphore_wait(s->sem, DISPATCH_TIME_FOREVER);
+    dispatch_semaphore_wait(s->semaphoreQueue, DISPATCH_TIME_FOREVER);
 #else
     int r;
 
     do {
-        r = sem_wait(&s->sem);
+        r = sem_wait(&s->semaphoreQueue);
         if (r) {
             perror("Sem_wait failed");
         }
@@ -48,9 +48,9 @@ int rk_sema_wait(struct rk_sema *s) {
  */
 int rk_sema_post(struct rk_sema *s) {
 #ifdef __APPLE__
-    dispatch_semaphore_signal(s->sem);
+    dispatch_semaphore_signal(s->semaphoreQueue);
 #else
-    if (sem_post(&s->sem)) {
+    if (sem_post(&s->semaphoreQueue)) {
         perror("Sem_post failed");
         exit(11);
     }

@@ -15,7 +15,7 @@
 
 int getPeerSize(struct peer *peer);
 
-struct torrent *deletePeer(struct firstByte *firstByte, struct query *query) {
+struct torrent *deletePeer(struct firstByteData *firstByte, struct query *query) {
     struct twoPointers *twoTorrents = getTorrent(firstByte, query->info_hash);
     struct twoPointers *twoPeers = getPeer(twoTorrents->current, query->peer_id);
 
@@ -48,7 +48,7 @@ struct torrent *deletePeer(struct firstByte *firstByte, struct query *query) {
     return torrent;
 }
 
-struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
+struct torrent *updatePeer(struct firstByteData *firstByte, struct query *query) {
     if (CHECK_SEMAPHORE) {
         printf("Check semaphore updatePeer(%d) begin = %d\n", 1, query->threadNumber);
         usleep(rand() % 5000 + 5000); // проверка работы семафора
@@ -101,8 +101,8 @@ struct torrent *updatePeer(struct firstByte *firstByte, struct query *query) {
         // Подключаю торрент
         if (twoTorrents->previous == NULL) {
             // Добавляю торрент в начало, так как предыдущего нет
-            torrent->next = firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]];
-            firstByte->secondByte[query->info_hash[0]].torrent[query->info_hash[1]] = torrent;
+            torrent->next = firstByte->secondByteData[query->info_hash[0]].torrent[query->info_hash[1]];
+            firstByte->secondByteData[query->info_hash[0]].torrent[query->info_hash[1]] = torrent;
         } else {
             // Добавляю торрент после previous
             torrent->next = ((struct torrent *) twoTorrents->previous)->next;

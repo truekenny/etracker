@@ -14,9 +14,9 @@
  */
 struct rk_sema {
 #ifdef __APPLE__
-    dispatch_semaphore_t    sem;
+    dispatch_semaphore_t    semaphoreQueue;
 #else
-    sem_t sem;
+    sem_t semaphoreQueue;
     #define uint32_t u_int32_t
 #endif
 };
