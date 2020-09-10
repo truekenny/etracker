@@ -5,7 +5,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/event.h>
 #include "thread_client_tcp.h"
 #include "sem.h"
 #include "alloc.h"
