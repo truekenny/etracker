@@ -35,7 +35,7 @@ void setTimeout(int socket) {
  * @param message
  * @param size
  */
-void sendMessage(struct block *block, int code, char *message, size_t size, int canKeepAlive, struct stats *stats) {
+void renderHttpMessage(struct block *block, int code, char *message, size_t size, int canKeepAlive, struct stats *stats) {
     struct block *body = {0};
 
     // First line headers

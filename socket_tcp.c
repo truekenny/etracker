@@ -19,10 +19,6 @@
 #define SOCKET_QUEUE_LENGTH 150
 #define EVENTS_EACH_LOOP 32
 
-struct request
-        *firstRequest = {0},
-        *lastRequest = {0};
-
 void *serverTcpHandler(void *args) {
     struct stats *stats = ((struct serverTcpArgs *) args)->stats;
     struct rk_sema *semaphoreQueue = ((struct serverTcpArgs *) args)->semaphoreQueue;
@@ -30,6 +26,10 @@ void *serverTcpHandler(void *args) {
     struct firstByteData *firstByteData = ((struct serverTcpArgs *) args)->firstByteData;
     char *port = ((struct serverTcpArgs *) args)->port;
     c_free(args);
+
+    struct request
+            *firstRequest = {0},
+            *lastRequest = {0};
 
     pthread_cond_t signalRequest = PTHREAD_COND_INITIALIZER;
     pthread_mutex_t mutexSignalRequest = PTHREAD_MUTEX_INITIALIZER;

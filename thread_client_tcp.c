@@ -126,9 +126,9 @@ void *clientTcpHandler(void *args) {
                 parseUri(&query, NULL, request->block->data);
 
                 if (!query.has_info_hash) {
-                    sendMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive, stats);
+                    renderHttpMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive, stats);
                 } else if (!query.port) {
-                    sendMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive, stats);
+                    renderHttpMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive, stats);
                 } else {
                     struct torrent *torrent;
                     struct block *block = initBlock();
@@ -148,7 +148,7 @@ void *clientTcpHandler(void *args) {
                             break;
                     } // End of switch
 
-                    sendMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
+                    renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                     freeBlock(block);
                 }
             } else if (startsWith("GET /stats", request->block->data)) {
@@ -161,11 +161,11 @@ void *clientTcpHandler(void *args) {
                 }
                 formatStats(threadNumber, block, stats);
 
-                sendMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
+                renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                 freeBlock(block);
             } else if (startsWith("GET /garbage", request->block->data)) {
                 runGarbageCollector(firstByteData);
-                sendMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
+                renderHttpMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
             } else if (startsWith("GET /scrape", request->block->data)) {
                 stats->scrape++;
 
@@ -175,16 +175,16 @@ void *clientTcpHandler(void *args) {
                 parseUri(&query, hashes, request->block->data);
 
                 if (!hashes->size && !ENABLE_FULL_SCRAPE) {
-                    sendMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive, stats);
+                    renderHttpMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive, stats);
                 } else {
                     renderTorrents(block, firstByteData, hashes, 0);
-                    sendMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
+                    renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                 }
 
                 freeBlock(hashes);
                 freeBlock(block);
             } else {
-                sendMessage(writeBlock, 404, "Page not found", 14, canKeepAlive, stats);
+                renderHttpMessage(writeBlock, 404, "Page not found", 14, canKeepAlive, stats);
             }
 
             if (canKeepAlive) {
@@ -194,7 +194,7 @@ void *clientTcpHandler(void *args) {
             }
         } // isHttp
         else {
-            sendMessage(writeBlock, 200, request->block->data, request->block->size, canKeepAlive, stats);
+            renderHttpMessage(writeBlock, 200, request->block->data, request->block->size, canKeepAlive, stats);
             DEBUG && printf("< %s", request->block->data);
         }
 
