@@ -11,8 +11,6 @@
 #include "thread_client_tcp.h"
 #include "socket.h"
 #include "alloc.h"
-#include "request.h"
-#include "string.h"
 
 #define DEBUG 0
 #define DEBUG_KQUEUE 0
@@ -27,15 +25,7 @@ void *serverTcpHandler(void *args) {
     char *port = ((struct serverTcpArgs *) args)->port;
     c_free(args);
 
-    struct request
-            *firstRequest = {0},
-            *lastRequest = {0};
-
-    pthread_cond_t signalRequest = PTHREAD_COND_INITIALIZER;
-    pthread_mutex_t mutexSignalRequest = PTHREAD_MUTEX_INITIALIZER;
-    struct rk_sema semaphoreRequest = {0};
-    rk_sema_init(&semaphoreRequest, 1);
-
+    long coreCount = sysconf(_SC_NPROCESSORS_ONLN);
 
     int serverSocket;
     struct sockaddr_in serverAddr;
@@ -70,11 +60,13 @@ void *serverTcpHandler(void *args) {
     }
     DEBUG && puts("Bind done");
 
-    int kQueue = kqueue();
+    int *kQueue = c_calloc(coreCount + 1, sizeof(int));
+
+    kQueue[coreCount] = kqueue();
 
     pthread_t tcpClientThread;
     // Кол-во воркеров = кол-ву ядер
-    for (int threadNumber = 0; threadNumber < sysconf(_SC_NPROCESSORS_ONLN); threadNumber++) {
+    for (int threadNumber = 0; threadNumber < coreCount; threadNumber++) {
         struct clientTcpArgs *clientTcpArgs = (struct clientTcpArgs *) c_malloc(sizeof(struct clientTcpArgs));
         clientTcpArgs->threadNumber = threadNumber;
         clientTcpArgs->semaphoreQueue = semaphoreQueue;
@@ -82,11 +74,7 @@ void *serverTcpHandler(void *args) {
         clientTcpArgs->firstByteData = firstByteData;
         clientTcpArgs->stats = stats;
 
-        clientTcpArgs->signalRequest = &signalRequest;
-        clientTcpArgs->mutexSignalRequest = &mutexSignalRequest;
-        clientTcpArgs->firstRequest = &firstRequest;
-        clientTcpArgs->lastRequest = &lastRequest;
-        clientTcpArgs->semaphoreRequest = &semaphoreRequest;
+        clientTcpArgs->kQueue = kQueue[threadNumber] = kqueue();
 
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create TCP thread");
@@ -102,24 +90,20 @@ void *serverTcpHandler(void *args) {
 
     struct kevent kEvent;
     EV_SET(&kEvent, serverSocket, EVFILT_READ, EV_ADD, 0, 0, NULL);
-    assert(-1 != kevent(kQueue, &kEvent, 1, NULL, 0, NULL));
+    assert(-1 != kevent(kQueue[coreCount], &kEvent, 1, NULL, 0, NULL));
 
     struct kevent evList[EVENTS_EACH_LOOP];
+    unsigned long currentThread = 0;
 
     while (1) {
-        int nev = kevent(kQueue, NULL, 0, evList, EVENTS_EACH_LOOP, NULL);
+        int nev = kevent(kQueue[coreCount], NULL, 0, evList, EVENTS_EACH_LOOP, NULL);
 
         DEBUG_KQUEUE && printf("socket_tcp.c: go nev=%d\n", nev);
 
         for (int index = 0; index < nev; index++) {
             int currentSocket = (int) evList[index].ident;
 
-            if (evList[index].flags & EV_EOF) {
-                DEBUG_KQUEUE && printf("socket_tcp.c: Disconnect\n");
-
-                close(currentSocket);
-                // Socket is automatically removed from the kq by the kernel.
-            } else if (currentSocket == serverSocket) {
+            if (currentSocket == serverSocket) {
                 struct sockaddr_in addr;
                 socklen_t socklen = sizeof(addr);
                 int connfd = accept(currentSocket, (struct sockaddr *) &addr, &socklen);
@@ -131,45 +115,19 @@ void *serverTcpHandler(void *args) {
 
                 // Listen on the new socket
                 EV_SET(&kEvent, connfd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
-                kevent(kQueue, &kEvent, 1, NULL, 0, NULL);
+                kevent(kQueue[(currentThread++) % coreCount], &kEvent, 1, NULL, 0, NULL);
                 DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");
 
                 int flags = fcntl(connfd, F_GETFL, 0);
                 if (flags < 0)
                     perror("Flags failed");
                 fcntl(connfd, F_SETFL, flags | O_NONBLOCK);
-            } else if (evList[index].filter == EVFILT_READ) {
-                DEBUG_KQUEUE && printf("socket_tcp.c: Read %d\n", currentSocket);
-                // Read from socket.
-                char readBuffer[1024];
-                memset(readBuffer, 0, sizeof(readBuffer));
-                size_t readSize = recv(currentSocket, readBuffer, sizeof(readBuffer), MSG_NOSIGNAL | MSG_PEEK);
-                DEBUG_KQUEUE && printf("socket_tcp.c: read %zu bytes fd=%d \n", readSize, currentSocket);
-
-                if (strstr(readBuffer, "\r\n\r\n") != NULL) {
-                    struct block *readBlock = initBlock();
-                    addStringBlock(readBlock, readBuffer, readSize);
-
-                    rk_sema_wait(&semaphoreRequest);
-                    addRequest(&firstRequest, &lastRequest, currentSocket, readBlock);
-                    rk_sema_post(&semaphoreRequest);
-
-                    // Сброс буфера, поскольку запрос полный, прочитать столько сколько было пикнуто
-                    recv(currentSocket, readBuffer, readSize, MSG_NOSIGNAL);
-
-                    // SIGNAL
-                    DEBUG_KQUEUE && printf("socket_tcp.c: Signal Read %d\n", currentSocket);
-                    pthread_mutex_lock(&mutexSignalRequest);
-                    pthread_cond_signal(&signalRequest);
-                    pthread_mutex_unlock(&mutexSignalRequest);
-                }
-
             }
         }
 
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;
-    }
+    } // white 1
 
     puts("TCP server socket finished");
 
