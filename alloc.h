@@ -1,11 +1,12 @@
 #ifndef SC6_ALLOC_H
 #define SC6_ALLOC_H
 
-//struct c_countChanges;
+#include <stdatomic.h>
+
 struct c_countChanges {
-    int countMalloc;
-    int countCalloc;
-    int countFree;
+    atomic_int countMalloc;
+    atomic_int countCalloc;
+    atomic_int countFree;
 };
 
 void c_initSem();

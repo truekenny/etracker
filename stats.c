@@ -1,6 +1,21 @@
 #include "stats.h"
+#include "alloc.h"
 
 void formatStats(int threadNumber, struct block *block, struct stats *stats) {
+    struct c_countChanges * countChanges = c_result();
+
+    addFormatStringBlock(block, 2000,
+                         "Total malloc = %d\n"
+                         "Total calloc = %d\n"
+                         "Total *alloc = %d\n"
+                         "Total free = %d\n"
+                         "Total *alloc - free = %d\n\n",
+                         countChanges->countMalloc,
+                         countChanges->countCalloc,
+                         countChanges->countMalloc + countChanges->countCalloc,
+                         countChanges->countFree,
+                         countChanges->countMalloc + countChanges->countCalloc - countChanges->countFree);
+
     addFormatStringBlock(block, 2500,
                          "start_time = %.24s\n" "thread_number = %d\n\n"
 

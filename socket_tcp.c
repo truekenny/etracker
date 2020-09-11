@@ -103,16 +103,17 @@ void *serverTcpHandler(void *args) {
         }
         stats->accept_pass++;
 
-        setTimeout(clientSocket);
+        //setTimeout(clientSocket);
 
         EV_SET(&kEvent, clientSocket, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
         kevent(kQueue[(currentThread++) % coreCount], &kEvent, 1, NULL, 0, NULL);
         DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");
 
         int flags = fcntl(clientSocket, F_GETFL, 0);
-        if (flags < 0)
-            perror("Flags failed");
-        else
+        if (flags < 0) {
+            if (DEBUG)
+                perror("Flags failed");
+        } else
             fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK);
 
         DEBUG && puts("Handler assigned");
