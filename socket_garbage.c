@@ -4,7 +4,7 @@
 #include "alloc.h"
 
 #define DEBUG 0
-#define TIMEOUT 5
+#define TIMEOUT 3
 
 void updateSocket(struct socketPool **socketPool, int socket) {
     struct socketPool *currentSocketPool = *socketPool;
@@ -59,10 +59,12 @@ void deleteSocket(struct socketPool **socketPool, int socket) {
     printf("Socket #%d not found for delete\n", socket);
 }
 
-void runCollectSocket(struct socketPool **socketPool) {
+unsigned int runCollectSocket(struct socketPool **socketPool) {
     struct socketPool *currentSocketPool = *socketPool;
     struct socketPool *previous = NULL;
     long diffTime = time(NULL) - TIMEOUT;
+
+    unsigned int removed = 0;
 
     while (currentSocketPool != NULL) {
         if (currentSocketPool->time <= diffTime) {
@@ -80,10 +82,14 @@ void runCollectSocket(struct socketPool **socketPool) {
             close(delete->socket);
             c_free(delete);
 
+            removed++;
+
             continue;
         }
 
         previous = currentSocketPool;
         currentSocketPool = currentSocketPool->next;
     }
+
+    return removed;
 }

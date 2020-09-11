@@ -15,6 +15,6 @@ void updateSocket(struct socketPool **socketPool, int socket);
 
 void deleteSocket(struct socketPool **socketPool, int socket);
 
-void runCollectSocket(struct socketPool **socketPool);
+unsigned int runCollectSocket(struct socketPool **socketPool);
 
 #endif //SC6_SOCKET_GARBAGE_H

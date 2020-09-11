@@ -105,7 +105,10 @@ void *serverTcpHandler(void *args) {
     while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &sockAddrSize))) {
         if (clientSocket == -1) {
             stats->accept_failed++;
-            perror("Accept failed"); // Timeout
+            /*
+             * Отображает слишком много ошибок
+             * perror("Accept failed");
+             */
 
             continue;
         }

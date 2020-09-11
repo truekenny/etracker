@@ -5,6 +5,7 @@
 #include "alloc.h"
 #include "data_garbage.h"
 
+#define DEBUG 0
 #define GARBAGE_DATA_TIME (15 * 60)
 #define GARBAGE_SOCKET_POOL_TIME 1
 
@@ -107,8 +108,10 @@ void *garbageSocketPoolHandler(void *_args) {
 
     while (1) {
         rk_sema_wait(semaphoreSocketPool);
-        runCollectSocket(socketPool);
+        unsigned int removed = runCollectSocket(socketPool);
         rk_sema_post(semaphoreSocketPool);
+
+        DEBUG && printf("thread_garbage.c: runCollectSocket: removed=%d\n", removed);
 
         sleep(GARBAGE_SOCKET_POOL_TIME);
     }
