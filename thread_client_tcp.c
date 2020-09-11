@@ -38,6 +38,9 @@ void *clientTcpHandler(void *args) {
     struct stats *stats = ((struct clientTcpArgs *) args)->stats;
 
     int equeue = ((struct clientTcpArgs *) args)->equeue;
+
+    struct rk_sema *semaphoreSocketPool = ((struct clientTcpArgs *) args)->semaphoreSocketPool;
+    struct socketPool **socketPool = ((struct clientTcpArgs *) args)->socketPool;
     c_free(args);
 
     // todo delete
@@ -66,10 +69,24 @@ void *clientTcpHandler(void *args) {
                 size_t readSize = recv(currentSocket, readBuffer, sizeof(readBuffer), MSG_NOSIGNAL | MSG_PEEK);
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: read %zu bytes fd=%d \n", readSize, currentSocket);
 
+                // Запрос превышает лимит, прерываю такие сокеты
+                if (readSize == RECEIVED_MESSAGE_LENGTH) {
+                    printf("recv has full buffer\n");
+
+                    rk_sema_wait(semaphoreSocketPool);
+                    deleteSocket(socketPool, currentSocket);
+                    rk_sema_post(semaphoreSocketPool);
+
+                    continue;
+                }
+
                 if (strstr(readBuffer, "\r\n\r\n") != NULL) {
+                    rk_sema_wait(semaphoreSocketPool);
+                    updateSocket(socketPool, currentSocket);
+                    rk_sema_post(semaphoreSocketPool);
+
                     // Сброс буфера, поскольку запрос полный, прочитать столько сколько было пикнуто
                     recv(currentSocket, readBuffer, readSize, MSG_NOSIGNAL);
-
 
 
                     DEBUG_KQUEUE && printf("thread_client_tcp.c: IN %d", threadNumber);
@@ -132,9 +149,11 @@ void *clientTcpHandler(void *args) {
                             parseUri(&query, NULL, readBuffer);
 
                             if (!query.has_info_hash) {
-                                renderHttpMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive, stats);
+                                renderHttpMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive,
+                                                  stats);
                             } else if (!query.port) {
-                                renderHttpMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive, stats);
+                                renderHttpMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
+                                                  stats);
                             } else {
                                 struct torrent *torrent;
                                 struct block *block = initBlock();
@@ -181,7 +200,8 @@ void *clientTcpHandler(void *args) {
                             parseUri(&query, hashes, readBuffer);
 
                             if (!hashes->size && !ENABLE_FULL_SCRAPE) {
-                                renderHttpMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive, stats);
+                                renderHttpMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
+                                                  stats);
                             } else {
                                 renderTorrents(block, firstByteData, hashes, 0);
                                 renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
@@ -217,8 +237,12 @@ void *clientTcpHandler(void *args) {
                     // Ответ дан - удаляю
                     freeBlock(writeBlock);
 
-                    if (!canKeepAlive)
-                        close(currentSocket);
+                    if (!canKeepAlive) {
+                        rk_sema_wait(semaphoreSocketPool);
+                        deleteSocket(socketPool, currentSocket);
+                        rk_sema_post(semaphoreSocketPool);
+                        // close(currentSocket);
+                    }
                 } // "\r\n\r\n"
             } // EVFILT_READ
         } // for

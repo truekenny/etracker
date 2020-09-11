@@ -3,6 +3,7 @@
 
 #include "data_change.h"
 #include "stats.h"
+#include "socket_garbage.h"
 
 /**
  * Аргументы переданные в поток
@@ -15,6 +16,9 @@ struct clientTcpArgs {
     struct stats *stats;
 
     int equeue;
+
+    struct rk_sema *semaphoreSocketPool;
+    struct socketPool **socketPool;
 };
 
 void *clientTcpHandler(void *);

@@ -13,6 +13,7 @@
 #include "socket.h"
 #include "alloc.h"
 #include "equeue.h"
+#include "socket_garbage.h"
 
 #define DEBUG 0
 #define DEBUG_KQUEUE 0
@@ -25,6 +26,9 @@ void *serverTcpHandler(void *args) {
     struct queue **queue = ((struct serverTcpArgs *) args)->queue;
     struct firstByteData *firstByteData = ((struct serverTcpArgs *) args)->firstByteData;
     char *port = ((struct serverTcpArgs *) args)->port;
+
+    struct rk_sema *semaphoreSocketPool = ((struct serverTcpArgs *) args)->semaphoreSocketPool;
+    struct socketPool **socketPool = ((struct serverTcpArgs *) args)->socketPool;
     c_free(args);
 
     long coreCount = sysconf(_SC_NPROCESSORS_ONLN);
@@ -76,6 +80,9 @@ void *serverTcpHandler(void *args) {
 
         clientTcpArgs->equeue = equeue[threadNumber] = initEqueue();
 
+        clientTcpArgs->semaphoreSocketPool = semaphoreSocketPool;
+        clientTcpArgs->socketPool = socketPool;
+
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create TCP thread");
 
@@ -104,7 +111,9 @@ void *serverTcpHandler(void *args) {
         }
         stats->accept_pass++;
 
-        //setTimeout(clientSocket);
+        rk_sema_wait(semaphoreSocketPool);
+        updateSocket(socketPool, clientSocket);
+        rk_sema_post(semaphoreSocketPool);
 
         addClientEqueue(equeue[(currentThread++) % coreCount], clientSocket);
         DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");

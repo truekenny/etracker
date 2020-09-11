@@ -5,6 +5,7 @@
 #include "sem.h"
 #include "data_change.h"
 #include "queue.h"
+#include "socket_garbage.h"
 
 struct serverTcpArgs {
     char *port;
@@ -12,6 +13,9 @@ struct serverTcpArgs {
     struct rk_sema *semaphoreQueue;
     struct queue **queue;
     struct firstByteData *firstByteData;
+
+    struct rk_sema *semaphoreSocketPool;
+    struct socketPool **socketPool;
 };
 
 void *serverTcpHandler(void *args);

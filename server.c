@@ -17,6 +17,7 @@
 #include "socket_tcp.h"
 #include "socket_udp.h"
 #include "thread_garbage.h"
+#include "socket_garbage.h"
 
 #define DEBUG 0
 
@@ -37,18 +38,24 @@ int main(int argc, char *argv[]) {
     c_initSem();
 
     // Vars
-    struct rk_sema semaphoreQueue = {0}; // Семафор
+    struct rk_sema semaphoreQueue = {0}; // Семафор для очереди
     struct queue *queue = NULL; // Очередь
+
+    struct rk_sema semaphoreSocketPool = {0};
+    struct socketPool *socketPool = NULL;
+
     struct firstByteData firstByteData = {}; // Торренты и пиры
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
 
     initSem(&firstByteData);
 
-    // Инициализация семафора
+    // Инициализация семафоров
     rk_sema_init(&semaphoreQueue, 1);
+    rk_sema_init(&semaphoreSocketPool, 1);
 
-    runGarbageCollectorThread(&firstByteData);
+    runGarbageDataThread(&firstByteData);
+    runGarbageSocketPoolThread(&socketPool, &semaphoreSocketPool);
 
     DEBUG && printf("first = %p\n", queue);
     DEBUG && printf("&first = %p\n", &queue);
@@ -68,12 +75,15 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->firstByteData = &firstByteData;
     serverTcpArgs->stats = stats;
     serverTcpArgs->port = argv[1];
+
+    serverTcpArgs->semaphoreSocketPool = &semaphoreSocketPool;
+    serverTcpArgs->socketPool = &socketPool;
     if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
         perror("Could not create thread");
 
         return 101;
     }
-    // Start TCP
+    // Start UDP
     pthread_t udpServerThread;
     struct serverUdpArgs *serverUdpArgs = (struct serverUdpArgs *) c_malloc(sizeof(struct serverUdpArgs));
     serverUdpArgs->firstByteData = &firstByteData;
