@@ -22,7 +22,11 @@
 #define DEBUG 0
 #define DEBUG_KQUEUE 0
 #define QUEUE_ENABLE 0
-#define KEEP_ALIVE 1
+/*
+ * Если включить, это влияет очень сильно на CPU
+ * Возможно из-за роста sockPool
+ */
+#define KEEP_ALIVE 0
 #define RECEIVED_MESSAGE_LENGTH 2000
 
 /**
