@@ -6,6 +6,8 @@
 #include <pthread.h>
 #include <assert.h>
 #include <memory.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include "socket_tcp.h"
 #include "thread_client_tcp.h"
 #include "socket.h"
