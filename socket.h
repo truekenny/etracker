@@ -2,7 +2,6 @@
 #define SC6_SOCKET_H
 
 #include "stats.h"
-#include "request.h"
 
 #ifdef __APPLE__
 #define MSG_NOSIGNAL 0

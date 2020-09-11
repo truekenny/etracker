@@ -220,14 +220,9 @@ void *clientTcpHandler(void *args) {
 
                     if (!canKeepAlive)
                         close(currentSocket);
-
-                    // Чтобы нормально работала подсветка кода в IDE
-                    if (rand() % 2 == 3) break;
-
-                }
-
-            }
-        }
+                } // "\r\n\r\n"
+            } // EVFILT_READ
+        } // for
 
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;

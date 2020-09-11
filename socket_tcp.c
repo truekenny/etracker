@@ -60,9 +60,7 @@ void *serverTcpHandler(void *args) {
     }
     DEBUG && puts("Bind done");
 
-    int *kQueue = c_calloc(coreCount + 1, sizeof(int));
-
-    kQueue[coreCount] = kqueue();
+    int *kQueue = c_calloc(coreCount, sizeof(int));
 
     pthread_t tcpClientThread;
     // Кол-во воркеров = кол-ву ядер
@@ -88,48 +86,40 @@ void *serverTcpHandler(void *args) {
 
     puts("Waiting TCP for incoming connections...");
 
-    struct kevent kEvent;
-    EV_SET(&kEvent, serverSocket, EVFILT_READ, EV_ADD, 0, 0, NULL);
-    assert(-1 != kevent(kQueue[coreCount], &kEvent, 1, NULL, 0, NULL));
 
-    struct kevent evList[EVENTS_EACH_LOOP];
+    int clientSocket;
+
+    struct sockaddr_in clientAddr;
+    socklen_t sockAddrSize = sizeof(struct sockaddr_in);
+    struct kevent kEvent;
     unsigned long currentThread = 0;
 
-    while (1) {
-        int nev = kevent(kQueue[coreCount], NULL, 0, evList, EVENTS_EACH_LOOP, NULL);
+    while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &sockAddrSize))) {
+        if (clientSocket == -1) {
+            stats->accept_failed++;
+            perror("Accept failed"); // Timeout
 
-        DEBUG_KQUEUE && printf("socket_tcp.c: go nev=%d\n", nev);
-
-        for (int index = 0; index < nev; index++) {
-            int currentSocket = (int) evList[index].ident;
-
-            if (currentSocket == serverSocket) {
-                struct sockaddr_in addr;
-                socklen_t socklen = sizeof(addr);
-                int connfd = accept(currentSocket, (struct sockaddr *) &addr, &socklen);
-                if (connfd == -1) {
-                    printf("Socket %d\n", currentSocket);
-                    perror("Accept error");
-                    continue;
-                }
-
-                // Listen on the new socket
-                EV_SET(&kEvent, connfd, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
-                kevent(kQueue[(currentThread++) % coreCount], &kEvent, 1, NULL, 0, NULL);
-                DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");
-
-                int flags = fcntl(connfd, F_GETFL, 0);
-                if (flags < 0)
-                    perror("Flags failed");
-                fcntl(connfd, F_SETFL, flags | O_NONBLOCK);
-            }
+            continue;
         }
+        stats->accept_pass++;
 
-        // Чтобы нормально работала подсветка кода в IDE
-        if (rand() % 2 == 3) break;
-    } // white 1
+        setTimeout(clientSocket);
+
+        EV_SET(&kEvent, clientSocket, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
+        kevent(kQueue[(currentThread++) % coreCount], &kEvent, 1, NULL, 0, NULL);
+        DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");
+
+        int flags = fcntl(clientSocket, F_GETFL, 0);
+        if (flags < 0)
+            perror("Flags failed");
+        else
+            fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK);
+
+        DEBUG && puts("Handler assigned");
+    }
 
     puts("TCP server socket finished");
+    exit(6);
 
     return NULL;
 }
