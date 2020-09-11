@@ -4,13 +4,13 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <pthread.h>
-#include <sys/event.h>
 #include <assert.h>
 #include <memory.h>
 #include "socket_tcp.h"
 #include "thread_client_tcp.h"
 #include "socket.h"
 #include "alloc.h"
+#include "equeue.h"
 
 #define DEBUG 0
 #define DEBUG_KQUEUE 0
@@ -60,7 +60,7 @@ void *serverTcpHandler(void *args) {
     }
     DEBUG && puts("Bind done");
 
-    int *kQueue = c_calloc(coreCount, sizeof(int));
+    int *equeue = c_calloc(coreCount, sizeof(int));
 
     pthread_t tcpClientThread;
     // Кол-во воркеров = кол-ву ядер
@@ -72,7 +72,7 @@ void *serverTcpHandler(void *args) {
         clientTcpArgs->firstByteData = firstByteData;
         clientTcpArgs->stats = stats;
 
-        clientTcpArgs->kQueue = kQueue[threadNumber] = kqueue();
+        clientTcpArgs->equeue = equeue[threadNumber] = initEqueue();
 
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create TCP thread");
@@ -91,7 +91,6 @@ void *serverTcpHandler(void *args) {
 
     struct sockaddr_in clientAddr;
     socklen_t sockAddrSize = sizeof(struct sockaddr_in);
-    struct kevent kEvent;
     unsigned long currentThread = 0;
 
     while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &sockAddrSize))) {
@@ -105,8 +104,7 @@ void *serverTcpHandler(void *args) {
 
         //setTimeout(clientSocket);
 
-        EV_SET(&kEvent, clientSocket, EVFILT_READ, EV_ADD | EV_CLEAR, 0, 0, NULL);
-        kevent(kQueue[(currentThread++) % coreCount], &kEvent, 1, NULL, 0, NULL);
+        addClientEqueue(equeue[(currentThread++) % coreCount], clientSocket);
         DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");
 
         int flags = fcntl(clientSocket, F_GETFL, 0);

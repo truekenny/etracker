@@ -14,7 +14,7 @@ struct clientTcpArgs {
     struct firstByteData *firstByteData;
     struct stats *stats;
 
-    int kQueue;
+    int equeue;
 };
 
 void *clientTcpHandler(void *);

@@ -5,7 +5,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/event.h>
 #include "thread_client_tcp.h"
 #include "sem.h"
 #include "alloc.h"
@@ -18,13 +17,13 @@
 #include "data_render.h"
 #include "socket.h"
 #include "block.h"
+#include "equeue.h"
 
 #define DEBUG 0
 #define DEBUG_KQUEUE 0
 #define QUEUE_ENABLE 0
 #define KEEP_ALIVE 1
 #define RECEIVED_MESSAGE_LENGTH 2000
-#define EVENTS_EACH_LOOP 32
 
 /**
  * This will handle connection for each client
@@ -38,28 +37,28 @@ void *clientTcpHandler(void *args) {
     struct firstByteData *firstByteData = ((struct clientTcpArgs *) args)->firstByteData;
     struct stats *stats = ((struct clientTcpArgs *) args)->stats;
 
-    int kQueue = ((struct clientTcpArgs *) args)->kQueue;
+    int equeue = ((struct clientTcpArgs *) args)->equeue;
     c_free(args);
 
     // todo delete
     sleep(1);
 
-    struct kevent evList[EVENTS_EACH_LOOP];
+    struct Eevent eevent;
 
     while (1) {
-        int nev = kevent(kQueue, NULL, 0, evList, EVENTS_EACH_LOOP, NULL);
+        int nev = checkEqueue(equeue, &eevent);
 
         DEBUG_KQUEUE && printf("thread_client_tcp.c: go nev=%d\n", nev);
 
         for (int index = 0; index < nev; index++) {
-            int currentSocket = (int) evList[index].ident;
+            int currentSocket = getSocketEqueue(&eevent, index);
 
-            if (evList[index].flags & EV_EOF) {
+            if (isEof(&eevent, index)) {
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: Disconnect\n");
 
                 close(currentSocket);
                 // Socket is automatically removed from the kq by the kernel.
-            } else if (evList[index].filter == EVFILT_READ) {
+            } else if (isRead(&eevent, index)) {
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: Read %d\n", currentSocket);
                 // Read from socket.
                 char readBuffer[RECEIVED_MESSAGE_LENGTH + 1];
