@@ -31,7 +31,7 @@ void updateSocket(struct socketPool **socketPool, int socket) {
     DEBUG && printf("socketPool #%d new\n", socket);
 }
 
-void deleteSocket(struct socketPool **socketPool, int socket) {
+void deleteSocket(struct socketPool **socketPool, int socket, struct stats *stats) {
     struct socketPool *currentSocketPool = *socketPool;
     struct socketPool *previous = NULL;
 
@@ -44,7 +44,13 @@ void deleteSocket(struct socketPool **socketPool, int socket) {
                 previous->next = currentSocketPool->next;
             }
 
-            close(currentSocketPool->socket);
+            int status = close(currentSocketPool->socket);
+            if (status) {
+                stats->close_failed++;
+            } else {
+                stats->close_pass++;
+            }
+            DEBUG && printf("Close socket=%d, status=%d\n", currentSocketPool->socket, status);
             c_free(currentSocketPool);
 
             DEBUG && printf("socketPool #%d delete\n", socket);
@@ -59,7 +65,7 @@ void deleteSocket(struct socketPool **socketPool, int socket) {
     printf("Socket #%d not found for delete\n", socket);
 }
 
-unsigned int runCollectSocket(struct socketPool **socketPool) {
+unsigned int runCollectSocket(struct socketPool **socketPool, struct stats *stats) {
     struct socketPool *currentSocketPool = *socketPool;
     struct socketPool *previous = NULL;
     long diffTime = time(NULL) - TIMEOUT;
@@ -74,12 +80,18 @@ unsigned int runCollectSocket(struct socketPool **socketPool) {
                 previous->next = currentSocketPool->next;
             }
 
-            DEBUG && printf("socketPool #%d collect\n", currentSocketPool->socket);
-
             struct socketPool *delete = currentSocketPool;
             currentSocketPool = currentSocketPool->next;
 
-            close(delete->socket);
+            int status = close(delete->socket);
+            if (status) {
+                stats->close_failed++;
+            } else {
+                stats->close_pass++;
+            }
+
+            DEBUG && printf("Close socket=%d, status=%d\n", delete->socket, status);
+            DEBUG && printf("socketPool #%d collect\n", delete->socket);
             c_free(delete);
 
             removed++;

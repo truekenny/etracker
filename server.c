@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     rk_sema_init(&semaphoreSocketPool, 1);
 
     runGarbageDataThread(&firstByteData);
-    runGarbageSocketPoolThread(&socketPool, &semaphoreSocketPool);
+    runGarbageSocketPoolThread(&socketPool, &semaphoreSocketPool, stats);
 
     DEBUG && printf("first = %p\n", queue);
     DEBUG && printf("&first = %p\n", &queue);

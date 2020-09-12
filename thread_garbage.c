@@ -4,6 +4,7 @@
 #include "thread_garbage.h"
 #include "alloc.h"
 #include "data_garbage.h"
+#include "stats.h"
 
 #define DEBUG 0
 #define GARBAGE_DATA_TIME (15 * 60)
@@ -16,6 +17,7 @@ struct garbageDataArgs {
 struct garbageSocketPoolArgs {
     struct socketPool **socketPool;
     struct rk_sema *semaphoreSocketPool;
+    struct stats *stats;
 };
 
 void *garbageDataHandler(void *_args);
@@ -67,7 +69,8 @@ void *garbageDataHandler(void *_args) {
     return 0;
 }
 
-void runGarbageSocketPoolThread(struct socketPool ** socketPool, struct rk_sema *semaphoreSocketPool) {
+void
+runGarbageSocketPoolThread(struct socketPool **socketPool, struct rk_sema *semaphoreSocketPool, struct stats *stats) {
     pthread_attr_t tattr;
     pthread_t tid;
     int ret;
@@ -77,6 +80,7 @@ void runGarbageSocketPoolThread(struct socketPool ** socketPool, struct rk_sema 
     struct garbageSocketPoolArgs *garbageSocketPoolArgs = c_calloc(1, sizeof(struct garbageSocketPoolArgs));
     garbageSocketPoolArgs->socketPool = socketPool;
     garbageSocketPoolArgs->semaphoreSocketPool = semaphoreSocketPool;
+    garbageSocketPoolArgs->stats = stats;
 
     // initialized with default attributes
     ret = pthread_attr_init(&tattr);
@@ -104,11 +108,12 @@ void runGarbageSocketPoolThread(struct socketPool ** socketPool, struct rk_sema 
 void *garbageSocketPoolHandler(void *_args) {
     struct socketPool **socketPool = ((struct garbageSocketPoolArgs *) _args)->socketPool;
     struct rk_sema *semaphoreSocketPool = ((struct garbageSocketPoolArgs *) _args)->semaphoreSocketPool;
+    struct stats *stats = ((struct garbageSocketPoolArgs *) _args)->stats;
     c_free(_args);
 
     while (1) {
         rk_sema_wait(semaphoreSocketPool);
-        unsigned int removed = runCollectSocket(socketPool);
+        unsigned int removed = runCollectSocket(socketPool, stats);
         rk_sema_post(semaphoreSocketPool);
 
         DEBUG && printf("thread_garbage.c: runCollectSocket: removed=%d\n", removed);

@@ -22,9 +22,12 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
                          "stats.http_200 = %d\n" "stats.http_400 = %d\n"
                          "stats.http_403 = %d\n" "stats.http_404 = %d\n\n"
 
-                         "stats.send_pass = %d\n" "stats.recv_pass = %d\n"
+                         "stats.close_pass = %d\n"
+                         "stats.send_pass = %d\n"
+                         "stats.recv_pass = %d\n"
                          "stats.accept_pass = %d\n\n"
 
+                         "stats.close_failed = %d\n"
                          "stats.send_failed = %d\n"
                          "stats.recv_failed = %d\n"
                          "stats.accept_failed = %d\n\n"
@@ -47,9 +50,12 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
                          stats->http_200, stats->http_400,
                          stats->http_403, stats->http_404,
 
-                         stats->send_pass, stats->recv_pass,
+                         stats->close_pass,
+                         stats->send_pass,
+                         stats->recv_pass,
                          stats->accept_pass,
 
+                         stats->close_failed,
                          stats->send_failed,
                          stats->recv_failed,
                          stats->accept_failed,

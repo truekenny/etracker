@@ -11,10 +11,12 @@ struct stats {
     unsigned int http_403;
     unsigned int http_404;
 
+    unsigned int close_failed;
     unsigned int send_failed;
     unsigned int recv_failed;
     unsigned int accept_failed;
 
+    unsigned int close_pass;
     unsigned int send_pass;
     unsigned int recv_pass;
     unsigned int accept_pass;
@@ -40,8 +42,6 @@ struct stats {
     unsigned int connect_udp;
     unsigned int announce_udp;
     unsigned int scrape_udp;
-
-    unsigned int recv_failed_failed_errno[256];
 };
 
 void formatStats(int threadNumber, struct block *block, struct stats *stats);
