@@ -27,6 +27,23 @@ void addClientEqueue(int equeue, int clientSocket) {
 #endif
 }
 
+/**
+ * @param equeue
+ * @param clientSocket
+ * @warning Нельзя добавлять serverSocket
+ */
+void deleteClientEqueue(int equeue, int clientSocket) {
+#ifdef __APPLE__
+    // Автоматическое удаление
+    struct kevent kEvent;
+    EV_SET(&kEvent, clientSocket, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+    kevent(equeue, &kEvent, 1, NULL, 0, NULL);
+#else
+    struct epoll_event ev;
+    epoll_ctl(equeue, EPOLL_CTL_DEL, clientSocket, &ev);
+#endif
+}
+
 int checkEqueue(int equeue, struct Eevent *eevent) {
 #ifdef __APPLE__
     return kevent(equeue, NULL, 0, eevent->evList, EVENTS_EACH_LOOP, NULL);

@@ -23,6 +23,8 @@ int initEqueue();
 
 void addClientEqueue(int equeue, int clientSocket);
 
+void deleteClientEqueue(int equeue, int clientSocket);
+
 int checkEqueue(int equeue, struct Eevent *eevent);
 
 int getSocketEqueue(struct Eevent *eevent, int index);

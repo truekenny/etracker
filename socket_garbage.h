@@ -6,13 +6,14 @@
 
 struct socketPool {
     int socket;
+    int equeue;
     long time;
 
     struct socketPool *next;
 };
 
 
-void updateSocket(struct socketPool **socketPool, int socket);
+void updateSocket(struct socketPool **socketPool, int socket, int equeue);
 
 void deleteSocket(struct socketPool **socketPool, int socket, struct stats *stats);
 

@@ -3,11 +3,12 @@
 #include "socket_garbage.h"
 #include "alloc.h"
 #include "socket.h"
+#include "equeue.h"
 
 #define DEBUG 0
 #define TIMEOUT 3
 
-void updateSocket(struct socketPool **socketPool, int socket) {
+void updateSocket(struct socketPool **socketPool, int socket, int equeue) {
     struct socketPool *currentSocketPool = *socketPool;
 
     while (currentSocketPool != NULL) {
@@ -26,6 +27,7 @@ void updateSocket(struct socketPool **socketPool, int socket) {
     currentSocketPool->socket = socket;
     currentSocketPool->time = time(NULL);
     currentSocketPool->next = *socketPool;
+    currentSocketPool->equeue = equeue;
 
     *socketPool = currentSocketPool;
 
@@ -45,6 +47,7 @@ void deleteSocket(struct socketPool **socketPool, int socket, struct stats *stat
                 previous->next = currentSocketPool->next;
             }
 
+            deleteClientEqueue(currentSocketPool->equeue, currentSocketPool->socket);
             int status = close(currentSocketPool->socket);
             if (status) {
                 stats->close_failed++;
@@ -88,6 +91,7 @@ unsigned int runCollectSocket(struct socketPool **socketPool, struct stats *stat
             renderHttpMessage(block, 408, "Request Timeout", 15, 0, stats);
             send_(delete->socket, block->data, block->size, stats);
 
+            deleteClientEqueue(delete->equeue, delete->socket);
             int status = close(delete->socket);
             if (status) {
                 stats->close_failed++;

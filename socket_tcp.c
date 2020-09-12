@@ -118,11 +118,13 @@ void *serverTcpHandler(void *args) {
         }
         stats->accept_pass++;
 
+        int equeueThread = equeue[(currentThread++) % coreCount];
+
         rk_sema_wait(semaphoreSocketPool);
-        updateSocket(socketPool, clientSocket);
+        updateSocket(socketPool, clientSocket, equeueThread);
         rk_sema_post(semaphoreSocketPool);
 
-        addClientEqueue(equeue[(currentThread++) % coreCount], clientSocket);
+        addClientEqueue(equeueThread, clientSocket);
         DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");
 
         int flags = fcntl(clientSocket, F_GETFL, 0);

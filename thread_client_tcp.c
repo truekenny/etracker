@@ -93,7 +93,7 @@ void *clientTcpHandler(void *args) {
 
                 if (strstr(readBuffer, "\r\n\r\n") != NULL) {
                     rk_sema_wait(semaphoreSocketPool);
-                    updateSocket(socketPool, currentSocket);
+                    updateSocket(socketPool, currentSocket, equeue);
                     rk_sema_post(semaphoreSocketPool);
 
                     // Сброс буфера, поскольку запрос полный, прочитать столько сколько было пикнуто
