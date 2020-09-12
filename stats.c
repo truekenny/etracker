@@ -19,8 +19,13 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
     addFormatStringBlock(block, 2500,
                          "start_time = %.24s\n" "thread_number = %d\n\n"
 
-                         "stats.http_200 = %d\n" "stats.http_400 = %d\n"
-                         "stats.http_403 = %d\n" "stats.http_404 = %d\n\n"
+                         "stats.http_200 = %d\n"
+                         "stats.http_400 = %d\n"
+                         "stats.http_403 = %d (Full Scrape)\n"
+                         "stats.http_404 = %d\n"
+                         "stats.http_405 = %d (Not GET)\n"
+                         "stats.http_408 = %d (Timeout)\n"
+                         "stats.http_413 = %d (Oversize)\n\n"
 
                          "stats.close_pass = %d\n"
                          "stats.send_pass = %d\n"
@@ -47,8 +52,13 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
                          "stats.connect_udp = %d\n" "stats.announce_udp = %d\n" "stats.scrape_udp = %d\n\n",
                          ctime(&stats->time), threadNumber,
 
-                         stats->http_200, stats->http_400,
-                         stats->http_403, stats->http_404,
+                         stats->http_200,
+                         stats->http_400,
+                         stats->http_403,
+                         stats->http_404,
+                         stats->http_405,
+                         stats->http_408,
+                         stats->http_413,
 
                          stats->close_pass,
                          stats->send_pass,

@@ -74,7 +74,11 @@ void *clientTcpHandler(void *args) {
 
                 // Запрос превышает лимит, прерываю такие сокеты
                 if (readSize == RECEIVED_MESSAGE_LENGTH) {
-                    printf("recv has full buffer\n");
+                    // printf("recv has full buffer\n");
+
+                    struct block *block = initBlock();
+                    renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, stats);
+                    send_(currentSocket, block->data, block->size, stats);
 
                     rk_sema_wait(semaphoreSocketPool);
                     deleteSocket(socketPool, currentSocket, stats);
@@ -225,7 +229,7 @@ void *clientTcpHandler(void *args) {
                         }
                     } // isHttp
                     else {
-                        renderHttpMessage(writeBlock, 200, readBuffer, readSize, canKeepAlive, stats);
+                        renderHttpMessage(writeBlock, 405, readBuffer, readSize, canKeepAlive, stats);
                         DEBUG && printf("< %s", readBuffer);
                     }
 

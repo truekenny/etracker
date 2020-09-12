@@ -10,6 +10,9 @@ struct stats {
     unsigned int http_400;
     unsigned int http_403;
     unsigned int http_404;
+    unsigned int http_405;
+    unsigned int http_408;
+    unsigned int http_413;
 
     unsigned int close_failed;
     unsigned int send_failed;

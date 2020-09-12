@@ -31,6 +31,18 @@ void renderHttpMessage(struct block *block, int code, char *message, size_t size
             stats->http_404++;
             addStringBlock(block, "HTTP/1.0 404 Not Found\r\n", 24);
             break;
+        case 405:
+            stats->http_405++;
+            addStringBlock(block, "HTTP/1.0 405 Method Not Allowed\r\n", 33);
+            break;
+        case 408:
+            stats->http_408++;
+            addStringBlock(block, "HTTP/1.0 408 Request Timeout\r\n", 30);
+            break;
+        case 413:
+            stats->http_413++;
+            addStringBlock(block, "HTTP/1.0 413 Request Entity Too Large\r\n", 39);
+            break;
         case 200:
         default:
             stats->http_200++;

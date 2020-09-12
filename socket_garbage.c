@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "socket_garbage.h"
 #include "alloc.h"
+#include "socket.h"
 
 #define DEBUG 0
 #define TIMEOUT 3
@@ -82,6 +83,10 @@ unsigned int runCollectSocket(struct socketPool **socketPool, struct stats *stat
 
             struct socketPool *delete = currentSocketPool;
             currentSocketPool = currentSocketPool->next;
+
+            struct block *block = initBlock();
+            renderHttpMessage(block, 408, "Request Timeout", 15, 0, stats);
+            send_(delete->socket, block->data, block->size, stats);
 
             int status = close(delete->socket);
             if (status) {
