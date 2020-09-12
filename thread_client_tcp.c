@@ -63,7 +63,9 @@ void *clientTcpHandler(void *args) {
             if (isEof(&eevent, index)) {
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: Disconnect\n");
 
-                close(currentSocket);
+                rk_sema_wait(semaphoreSocketPool);
+                deleteSocket(socketPool, currentSocket);
+                rk_sema_post(semaphoreSocketPool);
                 // Socket is automatically removed from the kq by the kernel.
             } else if (isRead(&eevent, index)) {
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: Read %d\n", currentSocket);
@@ -80,6 +82,8 @@ void *clientTcpHandler(void *args) {
                     rk_sema_wait(semaphoreSocketPool);
                     deleteSocket(socketPool, currentSocket);
                     rk_sema_post(semaphoreSocketPool);
+
+                    stats->recv_failed++;
 
                     continue;
                 }

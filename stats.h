@@ -13,7 +13,6 @@ struct stats {
 
     unsigned int send_failed;
     unsigned int recv_failed;
-    unsigned int recv_failed_failed;
     unsigned int accept_failed;
 
     unsigned int send_pass;
