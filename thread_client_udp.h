@@ -15,6 +15,8 @@ struct clientUdpArgs {
     struct stats *stats;
     struct query *query;
     struct block *hashes;
+
+    unsigned int *interval;
 };
 
 void *clientUdpHandler(void *);

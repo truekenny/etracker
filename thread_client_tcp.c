@@ -45,6 +45,8 @@ void *clientTcpHandler(void *args) {
 
     struct rk_sema *semaphoreSocketPool = ((struct clientTcpArgs *) args)->semaphoreSocketPool;
     struct socketPool **socketPool = ((struct clientTcpArgs *) args)->socketPool;
+
+    unsigned int *interval =  ((struct clientTcpArgs *) args)->interval;
     c_free(args);
 
     struct Eevent eevent;
@@ -171,13 +173,13 @@ void *clientTcpHandler(void *args) {
                                     case EVENT_ID_STOPPED:
                                         waitSem(firstByteData, &query);
                                         torrent = deletePeer(firstByteData, &query);
-                                        renderPeers(block, torrent, &query);
+                                        renderPeers(block, torrent, &query, interval);
                                         postSem(firstByteData, &query);
                                         break;
                                     default:
                                         waitSem(firstByteData, &query);
                                         torrent = updatePeer(firstByteData, &query);
-                                        renderPeers(block, torrent, &query);
+                                        renderPeers(block, torrent, &query, interval);
                                         postSem(firstByteData, &query);
                                         break;
                                 } // End of switch

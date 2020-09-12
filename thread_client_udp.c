@@ -33,14 +33,14 @@ void *clientUdpHandler(void *args) {
     struct announceHeadResponse announceHeadResponse = {};
     announceHeadResponse.action = ntohl(ACTION_ANNOUNCE);
     announceHeadResponse.transaction_id = clientUdpArgs->transaction_id;
-    announceHeadResponse.interval = ntohl(INTERVAL);
+    announceHeadResponse.interval = ntohl(*clientUdpArgs->interval);
     if (torrent != NULL) {
         announceHeadResponse.leechers = ntohl(torrent->incomplete);
         announceHeadResponse.seeders = ntohl(torrent->complete);
     }
     addStringBlock(block, &announceHeadResponse, sizeof(struct announceHeadResponse));
 
-    renderPeers(block, torrent, clientUdpArgs->query);
+    renderPeers(block, torrent, clientUdpArgs->query, clientUdpArgs->interval);
     postSem(clientUdpArgs->firstByteData, clientUdpArgs->query);
 
     clientUdpArgs->stats->sent_bytes_udp += block->size;

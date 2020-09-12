@@ -99,7 +99,7 @@ void renderTorrent(struct block *block, struct torrent *torrent, unsigned char *
     }
 }
 
-void renderPeers(struct block *block, struct torrent *torrent, struct query *query) {
+void renderPeers(struct block *block, struct torrent *torrent, struct query *query, unsigned int *interval) {
     struct peer *peer = {0};
     unsigned int complete = 0;
     unsigned int incomplete = 0;
@@ -177,7 +177,7 @@ void renderPeers(struct block *block, struct torrent *torrent, struct query *que
                              complete,
                              incomplete,
                              downloaded,
-                             INTERVAL,
+                             *interval,
                              peerBlock->size
         );
     } else {
@@ -192,7 +192,7 @@ void renderPeers(struct block *block, struct torrent *torrent, struct query *que
                              complete,
                              incomplete,
                              downloaded,
-                             INTERVAL
+                             *interval
         );
     }
 

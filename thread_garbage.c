@@ -5,13 +5,15 @@
 #include "alloc.h"
 #include "data_garbage.h"
 #include "stats.h"
+#include "interval.h"
 
 #define DEBUG 0
-#define GARBAGE_DATA_TIME (15 * 60)
+#define I_15_MINUTES_TIME (15 * 60)
 #define GARBAGE_SOCKET_POOL_TIME 1
 
-struct garbageDataArgs {
+struct i15MinutesArgs {
     struct firstByteData *firstByte;
+    unsigned int *interval;
 };
 
 struct garbageSocketPoolArgs {
@@ -20,19 +22,20 @@ struct garbageSocketPoolArgs {
     struct stats *stats;
 };
 
-void *garbageDataHandler(void *_args);
+void *i15MinutesHandler(void *_args);
 
 void *garbageSocketPoolHandler(void *_args);
 
-void runGarbageDataThread(struct firstByteData *firstByte) {
+void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval) {
     pthread_attr_t tattr;
     pthread_t tid;
     int ret;
     int newPriority = 5;
     struct sched_param param;
 
-    struct garbageDataArgs *garbageDataArgs = c_calloc(1, sizeof(struct garbageDataArgs));
-    garbageDataArgs->firstByte = firstByte;
+    struct i15MinutesArgs *i15MinutesArgs = c_calloc(1, sizeof(struct i15MinutesArgs));
+    i15MinutesArgs->firstByte = firstByte;
+    i15MinutesArgs->interval = interval;
 
     // initialized with default attributes
     ret = pthread_attr_init(&tattr);
@@ -54,16 +57,18 @@ void runGarbageDataThread(struct firstByteData *firstByte) {
     ret = pthread_attr_setschedparam(&tattr, &param);
 
     // with new priority specified
-    ret = pthread_create(&tid, &tattr, garbageDataHandler, (void *) garbageDataArgs);
+    ret = pthread_create(&tid, &tattr, i15MinutesHandler, (void *) i15MinutesArgs);
 }
 
-void *garbageDataHandler(void *_args) {
-    struct firstByteData *firstByte = ((struct garbageDataArgs *) _args)->firstByte;
+void *i15MinutesHandler(void *_args) {
+    struct firstByteData *firstByte = ((struct i15MinutesArgs *) _args)->firstByte;
+    unsigned int *interval = ((struct i15MinutesArgs *) _args)->interval;
     c_free(_args);
 
     while (1) {
         runGarbageCollector(firstByte);
-        sleep(GARBAGE_DATA_TIME);
+        updateInterval(interval);
+        sleep(I_15_MINUTES_TIME);
     }
 
     return 0;

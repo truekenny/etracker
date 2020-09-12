@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include "../string.h"
 
 #define PORT        3000
 #define MAXLINE     1024
@@ -16,6 +17,8 @@
 int main() {
     int sockfd;
     char buffer[MAXLINE];
+    // scrape
+/*
     char *hello = "\x11\x00\x00\x00\x00\x00\x00\x22"
                   "\x00\x00\x00\x02"
                   "\x33\x00\x00\x44"
@@ -23,6 +26,23 @@ int main() {
                   "66667777888899990000"
                   ;
     int helloSize = 56;
+*/
+    // announce
+    char *hello = "12345678" // con_id
+                  "\x00\x00\x00\x01" // action
+                  "aaaa" // trans_id
+                  "11112222333344445555" // info
+                  "66667777888899990000" // peer
+                  "\x00\x00\x00\x00\x00\x00\x00\x00" // down
+                  "\x00\x00\x00\x00\x00\x00\x00\x00" // left
+                  "\x00\x00\x00\x00\x00\x00\x00\x00" // up
+                  "\x00\x00\x00\x02" // event
+                  "bbbb" // ip
+                  "cccc" // key
+                  "\x00\x00\x00\x20" // num
+                  "\x10\x10" // port
+                  ;
+    int helloSize = 98;
     struct sockaddr_in servaddr;
 
     // Creating socket file descriptor
@@ -50,6 +70,8 @@ int main() {
                  (unsigned int *) &len);
     buffer[n] = '\0';
     printf("Server : %s\n", buffer);
+
+    printHex(buffer, n);
 
     close(sockfd);
     return 0;

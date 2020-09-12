@@ -29,6 +29,8 @@ void *serverTcpHandler(void *args) {
 
     struct rk_sema *semaphoreSocketPool = ((struct serverTcpArgs *) args)->semaphoreSocketPool;
     struct socketPool **socketPool = ((struct serverTcpArgs *) args)->socketPool;
+
+    unsigned int *interval =  ((struct serverTcpArgs *) args)->interval;
     c_free(args);
 
     long coreCount = sysconf(_SC_NPROCESSORS_ONLN);
@@ -82,6 +84,8 @@ void *serverTcpHandler(void *args) {
 
         clientTcpArgs->semaphoreSocketPool = semaphoreSocketPool;
         clientTcpArgs->socketPool = socketPool;
+
+        clientTcpArgs->interval = interval;
 
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create TCP thread");

@@ -18,6 +18,7 @@
 #include "socket_udp.h"
 #include "thread_garbage.h"
 #include "socket_garbage.h"
+#include "interval.h"
 
 #define DEBUG 0
 
@@ -48,13 +49,15 @@ int main(int argc, char *argv[]) {
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
 
+    unsigned int interval = MAX_INTERVAL;
+
     initSem(&firstByteData);
 
     // Инициализация семафоров
     rk_sema_init(&semaphoreQueue, 1);
     rk_sema_init(&semaphoreSocketPool, 1);
 
-    runGarbageDataThread(&firstByteData);
+    run15MinutesThread(&firstByteData, &interval);
     runGarbageSocketPoolThread(&socketPool, &semaphoreSocketPool, stats);
 
     DEBUG && printf("first = %p\n", queue);
@@ -78,6 +81,8 @@ int main(int argc, char *argv[]) {
 
     serverTcpArgs->semaphoreSocketPool = &semaphoreSocketPool;
     serverTcpArgs->socketPool = &socketPool;
+
+    serverTcpArgs->interval = &interval;
     if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
         perror("Could not create thread");
 
@@ -89,6 +94,7 @@ int main(int argc, char *argv[]) {
     serverUdpArgs->firstByteData = &firstByteData;
     serverUdpArgs->stats = stats;
     serverUdpArgs->port = argv[1];
+    serverUdpArgs->interval = &interval;
     if (pthread_create(&udpServerThread, NULL, serverUdpHandler, (void *) serverUdpArgs) != 0) {
         perror("Could not create thread");
 

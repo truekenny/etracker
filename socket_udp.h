@@ -9,6 +9,7 @@ struct serverUdpArgs {
     char *port;
     struct stats *stats;
     struct firstByteData *firstByteData;
+    unsigned int  *interval;
 };
 
 void *serverUdpHandler(void *args);

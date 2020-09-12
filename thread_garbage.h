@@ -5,7 +5,7 @@
 #include "socket_garbage.h"
 #include "stats.h"
 
-void runGarbageDataThread(struct firstByteData *firstByte);
+void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval);
 
 void runGarbageSocketPoolThread(struct socketPool ** socketPool, struct rk_sema *semaphoreSocketPool, struct stats *stats);
 

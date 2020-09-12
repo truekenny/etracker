@@ -121,6 +121,7 @@ void *serverUdpHandler(void *args) {
     struct stats *stats = ((struct serverUdpArgs *) args)->stats;
     struct firstByteData *firstByte = ((struct serverUdpArgs *) args)->firstByteData;
     char *serverPort = ((struct serverUdpArgs *) args)->port;
+    unsigned int *interval = ((struct serverUdpArgs *) args)->interval;
     c_free(args);
 
     int serverSocket;
@@ -230,6 +231,7 @@ void *serverUdpHandler(void *args) {
             clientUdpArgs->query = query;
             clientUdpArgs->clientAddr = c_calloc(1, sizeof(struct sockaddr_in));
             memcpy(clientUdpArgs->clientAddr, &clientAddr, sockAddrSize);
+            clientUdpArgs->interval = interval;
 
             // Поток
             pthread_t udpClientThread;

@@ -19,6 +19,8 @@ struct clientTcpArgs {
 
     struct rk_sema *semaphoreSocketPool;
     struct socketPool **socketPool;
+
+    unsigned int *interval;
 };
 
 void *clientTcpHandler(void *);

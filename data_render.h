@@ -7,7 +7,7 @@
 
 #define ENABLE_FULL_SCRAPE 0
 
-void renderPeers(struct block *block, struct torrent *torrent, struct query *query);
+void renderPeers(struct block *block, struct torrent *torrent, struct query *query, unsigned int *interval);
 void renderTorrents(struct block *block, struct firstByteData *firstByte, struct block *hashes, _Bool udp);
 
 #endif //SC6_DATA_RENDER_H
