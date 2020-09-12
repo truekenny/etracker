@@ -47,9 +47,6 @@ void *clientTcpHandler(void *args) {
     struct socketPool **socketPool = ((struct clientTcpArgs *) args)->socketPool;
     c_free(args);
 
-    // todo delete
-    sleep(1);
-
     struct Eevent eevent;
 
     while (1) {
