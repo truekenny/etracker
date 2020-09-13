@@ -90,6 +90,8 @@ unsigned int runCollectSocket(struct socketPool **socketPool, struct stats *stat
             struct block *block = initBlock();
             renderHttpMessage(block, 408, "Request Timeout", 15, 0, stats);
             send_(delete->socket, block->data, block->size, stats);
+            freeBlock(block);
+
 
             deleteClientEqueue(delete->equeue, delete->socket);
             int status = close(delete->socket);

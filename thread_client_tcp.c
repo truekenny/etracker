@@ -81,6 +81,7 @@ void *clientTcpHandler(void *args) {
                     struct block *block = initBlock();
                     renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, stats);
                     send_(currentSocket, block->data, block->size, stats);
+                    freeBlock(block);
 
                     rk_sema_wait(semaphoreSocketPool);
                     deleteSocket(socketPool, currentSocket, stats);
