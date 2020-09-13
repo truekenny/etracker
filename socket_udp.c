@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <pthread.h>
+#include <unistd.h>
 #include "socket_udp.h"
 #include "alloc.h"
 #include "thread_client_udp.h"
