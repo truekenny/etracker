@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 #include "data_render.h"
-#include "socket_udp_response_structure.h"
+#include "socket_udp_structure.h"
 #include "data_get.h"
 #include "alloc.h"
 

@@ -73,6 +73,8 @@ void *serverTcpHandler(void *args) {
     pthread_t tcpClientThread;
     // Кол-во воркеров = кол-ву ядер
     for (int threadNumber = 0; threadNumber < coreCount; threadNumber++) {
+        printf("Starting TCP worker %d/%ld\n", threadNumber, coreCount - 1);
+
         struct clientTcpArgs *clientTcpArgs = (struct clientTcpArgs *) c_malloc(sizeof(struct clientTcpArgs));
         clientTcpArgs->threadNumber = threadNumber;
         clientTcpArgs->semaphoreQueue = semaphoreQueue;

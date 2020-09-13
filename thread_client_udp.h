@@ -2,25 +2,23 @@
 #define SC6_THREAD_CLIENT_UDP_H
 
 #include <arpa/inet.h>
+#include "udp_request.h"
 
 struct clientUdpArgs {
     int serverSocket;
-    struct sockaddr_in * clientAddr;
-    unsigned int transaction_id;
-
-    unsigned long receiveCount;
-    // struct rk_sema *sem;
-    // struct queue **first;
     struct firstByteData *firstByteData;
     struct stats *stats;
-    struct query *query;
-    struct block *hashes;
-
     unsigned int *interval;
+
+    unsigned int threadNumber;
+
+    pthread_cond_t *signalRequest;
+    pthread_mutex_t *mutexSignalRequest;
+    struct udpRequest **firstRequest;
+    struct udpRequest **lastRequest;
+    struct rk_sema *semaphoreRequest;
 };
 
 void *clientUdpHandler(void *);
-
-void *clientUdpScrapeHandler(void *);
 
 #endif //SC6_THREAD_CLIENT_UDP_H
