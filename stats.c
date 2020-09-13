@@ -22,14 +22,14 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
 
                          "Load Avg = %.2f %.2f %.2f\n"
                          "Interval = %'d\n"
-                         "Active sockets: %'d (rlimit %'lld/%'lld)\n\n"
+                         "Active sockets: %'d (rlimit %'llu/%'llu)\n\n"
 
                          "Request per second ~ %.2f\n\n"
 
-                         "rusage.ru_maxrss = %'12d\n"
-                         "rusage.ru_ixrss  = %'12d\n"
-                         "rusage.ru_idrss  = %'12d\n"
-                         "rusage.ru_isrss  = %'12d\n\n"
+                         "rusage.ru_maxrss = %'12ld\n"
+                         "rusage.ru_ixrss  = %'12ld\n"
+                         "rusage.ru_idrss  = %'12ld\n"
+                         "rusage.ru_isrss  = %'12ld\n\n"
 
                          "Malloc = %'12d\n"
                          "Calloc = %'12d\n"
