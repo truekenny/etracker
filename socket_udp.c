@@ -57,7 +57,7 @@ void *serverUdpHandler(void *args) {
 
     struct stats *stats = ((struct serverUdpArgs *) args)->stats;
     struct firstByteData *firstByte = ((struct serverUdpArgs *) args)->firstByteData;
-    char *serverPort = ((struct serverUdpArgs *) args)->port;
+    unsigned short serverPort = ((struct serverUdpArgs *) args)->port;
     unsigned int *interval = ((struct serverUdpArgs *) args)->interval;
     c_free(args);
 
@@ -78,7 +78,7 @@ void *serverUdpHandler(void *args) {
     // Filling server information
     serverAddr.sin_family = AF_INET; // IPv4
     serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(atoi(serverPort));
+    serverAddr.sin_port = htons(serverPort);
 
     // Bind the socket with the server address
     if (bind(serverSocket, (const struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {

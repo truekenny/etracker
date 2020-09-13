@@ -21,15 +21,21 @@
 #include "interval.h"
 
 #define DEBUG 0
+#define DEFAULT_PORT 3000
 
 void setNobody();
 
 int main(int argc, char *argv[]) {
-    // Check program's arguments
-    if (argc < 2) {
-        printf("./server port\n");
-        return 1;
+    unsigned short port = (argc < 2) ? DEFAULT_PORT : atoi(argv[1]);
+    unsigned int interval = (argc < 3) ? MAX_INTERVAL : atoi(argv[2]);
+
+    if(!port || !interval) {
+        printf("./server.o [port] [interval]\n");
+
+        exit(1);
     }
+
+    printf("Starting configuration: port = %d, interval = %d\n", port, interval);
 
     printf("This system has %ld processors configured and "
            "%ld processors available.\n",
@@ -48,8 +54,6 @@ int main(int argc, char *argv[]) {
     struct firstByteData firstByteData = {}; // Торренты и пиры
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
-
-    unsigned int interval = MAX_INTERVAL;
 
     initSem(&firstByteData);
 
@@ -77,7 +81,7 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->queue = &queue;
     serverTcpArgs->firstByteData = &firstByteData;
     serverTcpArgs->stats = stats;
-    serverTcpArgs->port = argv[1];
+    serverTcpArgs->port = port;
 
     serverTcpArgs->semaphoreSocketPool = &semaphoreSocketPool;
     serverTcpArgs->socketPool = &socketPool;
@@ -93,7 +97,7 @@ int main(int argc, char *argv[]) {
     struct serverUdpArgs *serverUdpArgs = (struct serverUdpArgs *) c_malloc(sizeof(struct serverUdpArgs));
     serverUdpArgs->firstByteData = &firstByteData;
     serverUdpArgs->stats = stats;
-    serverUdpArgs->port = argv[1];
+    serverUdpArgs->port = port;
     serverUdpArgs->interval = &interval;
     if (pthread_create(&udpServerThread, NULL, serverUdpHandler, (void *) serverUdpArgs) != 0) {
         perror("Could not create thread");

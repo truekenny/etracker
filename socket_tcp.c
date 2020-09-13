@@ -25,7 +25,7 @@ void *serverTcpHandler(void *args) {
     struct rk_sema *semaphoreQueue = ((struct serverTcpArgs *) args)->semaphoreQueue;
     struct queue **queue = ((struct serverTcpArgs *) args)->queue;
     struct firstByteData *firstByteData = ((struct serverTcpArgs *) args)->firstByteData;
-    char *port = ((struct serverTcpArgs *) args)->port;
+    unsigned short port = ((struct serverTcpArgs *) args)->port;
 
     struct rk_sema *semaphoreSocketPool = ((struct serverTcpArgs *) args)->semaphoreSocketPool;
     struct socketPool **socketPool = ((struct serverTcpArgs *) args)->socketPool;
@@ -50,7 +50,7 @@ void *serverTcpHandler(void *args) {
     //Prepare the sockaddr_in structure
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(atoi(port));
+    serverAddr.sin_port = htons(port);
 
     // Reuse
     int option = 1;

@@ -8,7 +8,7 @@
 #include "socket_garbage.h"
 
 struct serverTcpArgs {
-    char *port;
+    unsigned short port;
     struct stats *stats;
     struct rk_sema *semaphoreQueue;
     struct queue **queue;

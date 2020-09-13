@@ -6,7 +6,7 @@
 #include "queue.h"
 
 struct serverUdpArgs {
-    char *port;
+    unsigned short port;
     struct stats *stats;
     struct firstByteData *firstByteData;
     unsigned int  *interval;
