@@ -4,6 +4,7 @@
 #include "data_change.h"
 #include "stats.h"
 #include "socket_garbage.h"
+#include "rps.h"
 
 /**
  * Аргументы переданные в поток
@@ -21,6 +22,7 @@ struct clientTcpArgs {
     struct socketPool **socketPool;
 
     unsigned int *interval;
+    struct rps *rps;
 };
 
 void *clientTcpHandler(void *);

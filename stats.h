@@ -3,6 +3,7 @@
 
 #include <time.h>
 #include "block.h"
+#include "rps.h"
 
 struct stats {
     time_t time;
@@ -47,6 +48,6 @@ struct stats {
     unsigned int scrape_udp;
 };
 
-void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval);
+void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval, struct rps *rps);
 
 #endif //SC6_STATS_H

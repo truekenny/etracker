@@ -32,6 +32,8 @@ void *clientUdpHandler(void *args) {
     struct rk_sema *semaphoreRequest = clientUdpArgs->semaphoreRequest;
     unsigned int threadNumber = clientUdpArgs->threadNumber;
 
+    // struct rps *rps = clientUdpArgs->rps;
+
     c_free(args);
 
 

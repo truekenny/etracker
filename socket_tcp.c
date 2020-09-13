@@ -31,6 +31,7 @@ void *serverTcpHandler(void *args) {
     struct socketPool **socketPool = ((struct serverTcpArgs *) args)->socketPool;
 
     unsigned int *interval =  ((struct serverTcpArgs *) args)->interval;
+    struct rps *rps = ((struct serverTcpArgs *) args)->rps;
     c_free(args);
 
     long coreCount = sysconf(_SC_NPROCESSORS_ONLN);
@@ -88,6 +89,7 @@ void *serverTcpHandler(void *args) {
         clientTcpArgs->socketPool = socketPool;
 
         clientTcpArgs->interval = interval;
+        clientTcpArgs->rps = rps;
 
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create TCP thread");
@@ -118,6 +120,8 @@ void *serverTcpHandler(void *args) {
 
             continue;
         }
+
+        updateRps(rps);
         stats->accept_pass++;
 
         int equeueThread = equeue[(currentThread++) % coreCount];

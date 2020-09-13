@@ -5,66 +5,87 @@
 #include "stats.h"
 #include "alloc.h"
 
-void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval) {
+void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval, struct rps *rps) {
     struct c_countChanges *countChanges = c_result();
-    double load[3] = {0};
 
+    double load[3] = {0};
     getloadavg(load, 3);
 
     struct rlimit rlimit;
-
     getrlimit(RLIMIT_NOFILE, &rlimit);
+
+    struct rusage rusage;
+    getrusage(RUSAGE_SELF, &rusage);
 
     addFormatStringBlock(block, 4500,
                          "start_time = %.24s\n" "thread_number = %d\n\n"
 
                          "Load Avg = %.2f %.2f %.2f\n"
-                         "Interval = %d\n"
-                         "Active sockets: %d (rlimit %lld/%lld)\n\n"
+                         "Interval = %'d\n"
+                         "Active sockets: %'d (rlimit %'lld/%'lld)\n\n"
 
-                         "Malloc = %d\n"
-                         "Calloc = %d\n"
-                         "*alloc = %d\n"
-                         "free = %d\n"
-                         "*alloc - free = %d\n\n"
+                         "Request per second ~ %.2f\n\n"
 
-                         "stats.http_200 = %d\n"
-                         "stats.http_400 = %d\n"
-                         "stats.http_403 = %d (Full Scrape)\n"
-                         "stats.http_404 = %d\n"
-                         "stats.http_405 = %d (Not GET)\n"
-                         "stats.http_408 = %d (Timeout)\n"
-                         "stats.http_413 = %d (Oversize)\n\n"
+                         "rusage.ru_maxrss = %'12d\n"
+                         "rusage.ru_ixrss  = %'12d\n"
+                         "rusage.ru_idrss  = %'12d\n"
+                         "rusage.ru_isrss  = %'12d\n\n"
 
-                         "stats.close_pass = %d\n"
-                         "stats.send_pass = %d\n"
-                         "stats.recv_pass = %d\n"
-                         "stats.accept_pass = %d\n\n"
+                         "Malloc = %'12d\n"
+                         "Calloc = %'12d\n"
+                         "*alloc = %'12d\n"
+                         "free   = %'12d\n"
+                         "*alloc - free = %'12d\n\n"
 
-                         "stats.close_failed = %d\n"
-                         "stats.send_failed = %d\n"
-                         "stats.recv_failed = %d\n"
-                         "stats.accept_failed = %d\n\n"
+                         "stats.http_200 = %'12d\n"
+                         "stats.http_400 = %'12d\n"
+                         "stats.http_403 = %'12d (Full Scrape)\n"
+                         "stats.http_404 = %'12d\n"
+                         "stats.http_405 = %'12d (Not GET)\n"
+                         "stats.http_408 = %'12d (Timeout)\n"
+                         "stats.http_413 = %'12d (Oversize)\n\n"
 
-                         "stats.send_pass_udp = %d\n" "stats.recv_pass_udp = %d\n\n"
+                         "stats.close_pass  = %'12d\n"
+                         "stats.send_pass   = %'12d\n"
+                         "stats.recv_pass   = %'12d\n"
+                         "stats.accept_pass = %'12d\n\n"
 
-                         "stats.send_failed_udp = %d\n" "stats.recv_failed_udp = %d\n\n"
+                         "stats.close_failed  = %'12d\n"
+                         "stats.send_failed   = %'12d\n"
+                         "stats.recv_failed   = %'12d\n"
+                         "stats.accept_failed = %'12d\n\n"
 
-                         "stats.keep_alive = %d\n" "stats.no_keep_alive = %d\n\n"
+                         "stats.send_pass_udp = %'12d\n"
+                         "stats.recv_pass_udp = %'12d\n\n"
 
-                         "stats.sent_bytes = %llu\n" "stats.recv_bytes = %llu\n\n"
+                         "stats.send_failed_udp = %'12d\n"
+                         "stats.recv_failed_udp = %'12d\n\n"
 
-                         "stats.sent_bytes_udp = %llu\n" "stats.recv_bytes_udp = %llu\n\n"
+                         "stats.keep_alive    = %'12d\n"
+                         "stats.no_keep_alive = %'12d\n\n"
 
-                         "stats.announce = %d\n" "stats.scrape = %d\n\n"
+                         "stats.sent_bytes = %'15llu\n"
+                         "stats.recv_bytes = %'15llu\n\n"
 
-                         "stats.connect_udp = %d\n" "stats.announce_udp = %d\n" "stats.scrape_udp = %d\n\n",
+                         "stats.sent_bytes_udp = %'15llu\n"
+                         "stats.recv_bytes_udp = %'15llu\n\n"
+
+                         "stats.announce = %'12d\n"
+                         "stats.scrape   = %'12d\n\n"
+
+                         "stats.connect_udp  = %'12d\n"
+                         "stats.announce_udp = %'12d\n"
+                         "stats.scrape_udp   = %'12d\n\n",
                          ctime(&stats->time), threadNumber,
 
                          load[0], load[1], load[2],
                          interval,
                          stats->accept_pass - stats->close_pass - stats->close_failed,
                          rlimit.rlim_cur, rlimit.rlim_max,
+
+                         getRps(rps),
+
+                         rusage.ru_maxrss, rusage.ru_ixrss, rusage.ru_idrss, rusage.ru_isrss,
 
                          countChanges->countMalloc,
                          countChanges->countCalloc,

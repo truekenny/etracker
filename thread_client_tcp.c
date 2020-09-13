@@ -47,6 +47,7 @@ void *clientTcpHandler(void *args) {
     struct socketPool **socketPool = ((struct clientTcpArgs *) args)->socketPool;
 
     unsigned int *interval =  ((struct clientTcpArgs *) args)->interval;
+    struct rps *rps = ((struct clientTcpArgs *) args)->rps;
     c_free(args);
 
     struct Eevent eevent;
@@ -196,7 +197,7 @@ void *clientTcpHandler(void *args) {
                                 printQueue(block, *queue);
                                 rk_sema_post(semaphoreQueue);
                             }
-                            formatStats(threadNumber, block, stats, *interval);
+                            formatStats(threadNumber, block, stats, *interval, rps);
 
                             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                             freeBlock(block);

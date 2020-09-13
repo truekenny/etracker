@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <pwd.h>
+#include <locale.h>
 #include "queue.h"
 #include "sem.h"
 #include "alloc.h"
@@ -19,6 +20,7 @@
 #include "thread_garbage.h"
 #include "socket_garbage.h"
 #include "interval.h"
+#include "rps.h"
 
 #define DEBUG 0
 #define DEFAULT_PORT 3000
@@ -26,6 +28,8 @@
 void setNobody();
 
 int main(int argc, char *argv[]) {
+    setlocale(LC_NUMERIC, "");
+
     unsigned short port = (argc < 2) ? DEFAULT_PORT : atoi(argv[1]);
     unsigned int interval = (argc < 3) ? MAX_INTERVAL : atoi(argv[2]);
 
@@ -44,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     c_initSem();
 
-    // Vars
+    // vars
     struct rk_sema semaphoreQueue = {0}; // Семафор для очереди
     struct queue *queue = NULL; // Очередь
 
@@ -55,6 +59,9 @@ int main(int argc, char *argv[]) {
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
 
+    struct rps rps = {};
+
+    // init
     initSem(&firstByteData);
 
     // Инициализация семафоров
@@ -87,6 +94,7 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->socketPool = &socketPool;
 
     serverTcpArgs->interval = &interval;
+    serverTcpArgs->rps = &rps;
     if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
         perror("Could not create thread");
 
@@ -99,6 +107,7 @@ int main(int argc, char *argv[]) {
     serverUdpArgs->stats = stats;
     serverUdpArgs->port = port;
     serverUdpArgs->interval = &interval;
+    serverUdpArgs->rps = &rps;
     if (pthread_create(&udpServerThread, NULL, serverUdpHandler, (void *) serverUdpArgs) != 0) {
         perror("Could not create thread");
 

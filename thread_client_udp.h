@@ -3,6 +3,7 @@
 
 #include <arpa/inet.h>
 #include "udp_request.h"
+#include "rps.h"
 
 struct clientUdpArgs {
     int serverSocket;
@@ -17,6 +18,8 @@ struct clientUdpArgs {
     struct udpRequest **firstRequest;
     struct udpRequest **lastRequest;
     struct rk_sema *semaphoreRequest;
+
+    struct rps *rps;
 };
 
 void *clientUdpHandler(void *);

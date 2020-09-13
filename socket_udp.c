@@ -60,6 +60,7 @@ void *serverUdpHandler(void *args) {
     struct firstByteData *firstByte = ((struct serverUdpArgs *) args)->firstByteData;
     unsigned short serverPort = ((struct serverUdpArgs *) args)->port;
     unsigned int *interval = ((struct serverUdpArgs *) args)->interval;
+    struct rps *rps = ((struct serverUdpArgs *) args)->rps;
     c_free(args);
 
     int serverSocket;
@@ -106,6 +107,8 @@ void *serverUdpHandler(void *args) {
         clientUdpArgs->lastRequest = &lastRequest;
         clientUdpArgs->semaphoreRequest = &semaphoreRequest;
 
+        clientUdpArgs->rps = rps;
+
         // Поток
         pthread_t udpClientThread;
         if (pthread_create(&udpClientThread, NULL, clientUdpHandler, (void *) clientUdpArgs) != 0) {
@@ -125,6 +128,8 @@ void *serverUdpHandler(void *args) {
     while ((receivedSize = recvfrom(serverSocket, (char *) receivedMessage, RECEIVED_UDP_MESSAGE_LENGTH,
                                     MSG_WAITALL, (struct sockaddr *) &clientAddr,
                                     (socklen_t *) &sockAddrSize)) > 0) {
+
+        updateRps(rps);
         stats->recv_pass_udp++;
         stats->recv_bytes_udp += receivedSize;
 

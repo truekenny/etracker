@@ -6,6 +6,7 @@
 #include "data_change.h"
 #include "queue.h"
 #include "socket_garbage.h"
+#include "rps.h"
 
 struct serverTcpArgs {
     unsigned short port;
@@ -18,6 +19,7 @@ struct serverTcpArgs {
     struct socketPool **socketPool;
 
     unsigned int *interval;
+    struct rps *rps;
 };
 
 void *serverTcpHandler(void *args);

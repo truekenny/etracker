@@ -4,12 +4,15 @@
 #include "stats.h"
 #include "data_change.h"
 #include "queue.h"
+#include "rps.h"
 
 struct serverUdpArgs {
     unsigned short port;
     struct stats *stats;
     struct firstByteData *firstByteData;
     unsigned int  *interval;
+
+    struct rps *rps;
 };
 
 void *serverUdpHandler(void *args);
