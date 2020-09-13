@@ -8,6 +8,8 @@
 #define DEBUG 0
 // Начальный размер памяти
 #define START_ALLOCATE_SIZE 2000
+// Минимальный размер оставшейся свободной памяти (если выделяеься точный предел)
+#define MIN_FREE_ALLOCATE_SIZE 2000
 // Каждый раз расширяю память минимум в два раза
 #define MIN_RE_ALLOC_MULTIPLY 2
 #define max(a, b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
@@ -56,7 +58,9 @@ void reAllocBlock(struct block *block, unsigned int requiredSpace) {
     }
 
     // Новый размер выделенной памяти
-    unsigned int newAlloc = max(block->allocated + requiredSpace, MIN_RE_ALLOC_MULTIPLY * block->allocated);
+    unsigned int newAlloc = max(
+            block->allocated + requiredSpace + MIN_FREE_ALLOCATE_SIZE,
+            MIN_RE_ALLOC_MULTIPLY * block->allocated);
 
     if (newAlloc) {
         DEBUG && printf("ReAlloc block: %d -> %d\n", block->allocated, newAlloc);

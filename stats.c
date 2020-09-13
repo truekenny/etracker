@@ -1,23 +1,32 @@
+#include <stdlib.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <unistd.h>
 #include "stats.h"
 #include "alloc.h"
 
-void formatStats(int threadNumber, struct block *block, struct stats *stats) {
-    struct c_countChanges * countChanges = c_result();
+void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval) {
+    struct c_countChanges *countChanges = c_result();
+    double load[3] = {0};
 
-    addFormatStringBlock(block, 2000,
-                         "Total malloc = %d\n"
-                         "Total calloc = %d\n"
-                         "Total *alloc = %d\n"
-                         "Total free = %d\n"
-                         "Total *alloc - free = %d\n\n",
-                         countChanges->countMalloc,
-                         countChanges->countCalloc,
-                         countChanges->countMalloc + countChanges->countCalloc,
-                         countChanges->countFree,
-                         countChanges->countMalloc + countChanges->countCalloc - countChanges->countFree);
+    getloadavg(load, 3);
 
-    addFormatStringBlock(block, 2500,
+    struct rlimit rlimit;
+
+    getrlimit(RLIMIT_NOFILE, &rlimit);
+
+    addFormatStringBlock(block, 4500,
                          "start_time = %.24s\n" "thread_number = %d\n\n"
+
+                         "Load Avg = %.2f %.2f %.2f\n"
+                         "Interval = %d\n"
+                         "Active sockets: %d (rlimit %lld/%lld)\n\n"
+
+                         "Malloc = %d\n"
+                         "Calloc = %d\n"
+                         "*alloc = %d\n"
+                         "free = %d\n"
+                         "*alloc - free = %d\n\n"
 
                          "stats.http_200 = %d\n"
                          "stats.http_400 = %d\n"
@@ -51,6 +60,17 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats) {
 
                          "stats.connect_udp = %d\n" "stats.announce_udp = %d\n" "stats.scrape_udp = %d\n\n",
                          ctime(&stats->time), threadNumber,
+
+                         load[0], load[1], load[2],
+                         interval,
+                         stats->accept_pass - stats->close_pass - stats->close_failed,
+                         rlimit.rlim_cur, rlimit.rlim_max,
+
+                         countChanges->countMalloc,
+                         countChanges->countCalloc,
+                         countChanges->countMalloc + countChanges->countCalloc,
+                         countChanges->countFree,
+                         countChanges->countMalloc + countChanges->countCalloc - countChanges->countFree,
 
                          stats->http_200,
                          stats->http_400,

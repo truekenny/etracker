@@ -47,6 +47,6 @@ struct stats {
     unsigned int scrape_udp;
 };
 
-void formatStats(int threadNumber, struct block *block, struct stats *stats);
+void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval);
 
 #endif //SC6_STATS_H

@@ -196,7 +196,7 @@ void *clientTcpHandler(void *args) {
                                 printQueue(block, *queue);
                                 rk_sema_post(semaphoreQueue);
                             }
-                            formatStats(threadNumber, block, stats);
+                            formatStats(threadNumber, block, stats, *interval);
 
                             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                             freeBlock(block);
