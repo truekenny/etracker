@@ -1,10 +1,11 @@
 #include <time.h>
 #include "rps.h"
 
-#define ONE_MINUTE_SECONDS 60
+// Замеряемый период
+#define PERIOD 1
 
 void updateRps(struct rps *rps) {
-    if (time(NULL) / ONE_MINUTE_SECONDS % 2) {
+    if (time(NULL) / PERIOD % 2) {
         // odd minute
         if (rps->status == TIME_EVEN) {
             rps->status = TIME_ODD;
@@ -24,7 +25,8 @@ void updateRps(struct rps *rps) {
 }
 
 float getRps(struct rps *rps) {
-    float rpm = (float) ((time(NULL) / ONE_MINUTE_SECONDS % 2) ? rps->even : rps->odd);
+    //float rpm = (float) ((time(NULL) / PERIOD % 2) ? rps->even : rps->odd);
+    float rpm = (float) ((rps->status == TIME_ODD) ? rps->even : rps->odd);
 
-    return rpm / ONE_MINUTE_SECONDS;
+    return rpm / PERIOD;
 }
