@@ -99,7 +99,7 @@ If this were the result of dos scrape requests, then net-out would be clearly vi
 - `LA` - Load Average
 - `ML` - Max Allowed Load Average
 - `I` - Interval
-- `RPS` - Request per seconds (TCP+UDP)
+- `RPS` - Requests per second (TCP+UDP)
 
 #### Stats page
 

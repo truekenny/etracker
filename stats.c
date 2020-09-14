@@ -18,6 +18,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
     getrusage(RUSAGE_SELF, &rusage);
 
     addFormatStringBlock(block, 4500,
+                         "github.com/truekenny/sc6 - open-source BitTorrent tracker\n\n"
                          "start_time = %.24s\n" "thread_number = %d\n\n"
 
                          "Load Avg = %.2f %.2f %.2f\n"

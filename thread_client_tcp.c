@@ -46,7 +46,7 @@ void *clientTcpHandler(void *args) {
     struct rk_sema *semaphoreSocketPool = ((struct clientTcpArgs *) args)->semaphoreSocketPool;
     struct socketPool **socketPool = ((struct clientTcpArgs *) args)->socketPool;
 
-    unsigned int *interval =  ((struct clientTcpArgs *) args)->interval;
+    unsigned int *interval = ((struct clientTcpArgs *) args)->interval;
     struct rps *rps = ((struct clientTcpArgs *) args)->rps;
     c_free(args);
 
@@ -205,7 +205,9 @@ void *clientTcpHandler(void *args) {
                             runGarbageCollector(NULL, firstByteData);
                             renderHttpMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
                         } else if (startsWith("GET / ", readBuffer)) {
-                            renderHttpMessage(writeBlock, 200, "github.com/truekenny/sc6 - open-source BitTorrent tracker", 57, canKeepAlive, stats);
+                            renderHttpMessage(writeBlock, 200,
+                                              "github.com/truekenny/sc6 - open-source BitTorrent tracker\n", 58,
+                                              canKeepAlive, stats);
                         } else if (startsWith("GET /scrape", readBuffer)) {
                             stats->scrape++;
 
