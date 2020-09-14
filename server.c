@@ -22,12 +22,18 @@
 #include "interval.h"
 #include "rps.h"
 
+#if !defined(REVISION)
+#define REVISION "UNKNOWN"
+#endif
+
 #define DEBUG 0
 #define DEFAULT_PORT 3000
 
 void setNobody();
 
 int main(int argc, char *argv[]) {
+    printf("Revision: %s\n", REVISION);
+
     setlocale(LC_NUMERIC, "");
 
     unsigned short port = (argc < 2) ? DEFAULT_PORT : atoi(argv[1]);

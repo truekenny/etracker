@@ -5,6 +5,10 @@
 #include "stats.h"
 #include "alloc.h"
 
+#if !defined(REVISION)
+#define REVISION "UNKNOWN"
+#endif
+
 void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval, struct rps *rps) {
     struct c_countChanges *countChanges = c_result();
 
@@ -18,7 +22,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
     getrusage(RUSAGE_SELF, &rusage);
 
     addFormatStringBlock(block, 4500,
-                         "github.com/truekenny/sc6 - open-source BitTorrent tracker\n\n"
+                         "github.com/truekenny/sc6 - open-source BitTorrent tracker (%s)\n\n"
                          "start_time = %.24s\n" "thread_number = %d\n\n"
 
                          "Load Avg = %.2f %.2f %.2f\n"
@@ -27,7 +31,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
 
                          "Request per second ~ %.2f\n\n"
 
-                         "rusage.ru_maxrss = %'12ld\n"
+                         "rusage.ru_maxrss = %'12ld\n\n"
 
                          "Malloc = %'12d\n"
                          "Calloc = %'12d\n"
@@ -74,6 +78,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "stats.connect_udp  = %'12d\n"
                          "stats.announce_udp = %'12d\n"
                          "stats.scrape_udp   = %'12d\n\n",
+                         REVISION,
                          ctime(&stats->time), threadNumber,
 
                          load[0], load[1], load[2],

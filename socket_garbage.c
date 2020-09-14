@@ -6,7 +6,7 @@
 #include "equeue.h"
 
 #define DEBUG 0
-#define TIMEOUT 4
+#define TIMEOUT 3
 
 void updateSocket(struct socketPool **socketPool, int socket, int equeue) {
     struct socketPool *currentSocketPool = *socketPool;
