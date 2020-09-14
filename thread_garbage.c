@@ -6,14 +6,16 @@
 #include "data_garbage.h"
 #include "stats.h"
 #include "interval.h"
+#include "rps.h"
 
 #define DEBUG 0
 #define I_15_MINUTES_TIME (15 * 60)
 #define GARBAGE_SOCKET_POOL_TIME 1
 
 struct i15MinutesArgs {
-    struct firstByteData *firstByte;
+    struct firstByteData *firstByteData;
     unsigned int *interval;
+    struct rps *rps;
 };
 
 struct garbageSocketPoolArgs {
@@ -26,7 +28,7 @@ void *i15MinutesHandler(void *_args);
 
 void *garbageSocketPoolHandler(void *_args);
 
-void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval) {
+void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval, struct rps *rps) {
     pthread_attr_t tattr;
     pthread_t tid;
     int ret;
@@ -34,8 +36,9 @@ void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval)
     struct sched_param param;
 
     struct i15MinutesArgs *i15MinutesArgs = c_calloc(1, sizeof(struct i15MinutesArgs));
-    i15MinutesArgs->firstByte = firstByte;
+    i15MinutesArgs->firstByteData = firstByte;
     i15MinutesArgs->interval = interval;
+    i15MinutesArgs->rps = rps;
 
     // initialized with default attributes
     ret = pthread_attr_init(&tattr);
@@ -61,13 +64,23 @@ void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval)
 }
 
 void *i15MinutesHandler(void *_args) {
-    struct firstByteData *firstByte = ((struct i15MinutesArgs *) _args)->firstByte;
+    struct firstByteData *firstByte = ((struct i15MinutesArgs *) _args)->firstByteData;
     unsigned int *interval = ((struct i15MinutesArgs *) _args)->interval;
+    struct rps *rps = ((struct i15MinutesArgs *) _args)->rps;
     c_free(_args);
 
     while (1) {
-        runGarbageCollector(firstByte);
-        updateInterval(interval);
+        struct block *block = initBlock();
+
+        runGarbageCollector(block, firstByte);
+        addStringBlock(block, "  ", 2);
+        updateInterval(block, interval);
+
+        addFormatStringBlock(block, 100, "  RPS: %.2f\n\x00", getRps(rps));
+        printf("%s", block->data);
+
+        freeBlock(block);
+
         sleep(I_15_MINUTES_TIME);
     }
 

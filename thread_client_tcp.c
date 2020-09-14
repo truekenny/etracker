@@ -202,7 +202,7 @@ void *clientTcpHandler(void *args) {
                             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                             freeBlock(block);
                         } else if (startsWith("GET /garbage", readBuffer)) {
-                            runGarbageCollector(firstByteData);
+                            runGarbageCollector(NULL, firstByteData);
                             renderHttpMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
                         } else if (startsWith("GET /scrape", readBuffer)) {
                             stats->scrape++;

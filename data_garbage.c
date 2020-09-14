@@ -6,7 +6,7 @@
 #include "time.h"
 #include "alloc.h"
 
-void runGarbageCollector(struct firstByteData *firstByte) {
+void runGarbageCollector(struct block *block, struct firstByteData *firstByte) {
     int i, j;
     unsigned int totalPeers = 0,
             totalTorrents = 0,
@@ -97,14 +97,16 @@ void runGarbageCollector(struct firstByteData *firstByte) {
         }
     }
 
-    printf("%.19s GRBG: "
-           "%7d TP %7d TT "
-           "%7d MP %7d MT "
-           "%7d RP %7d RT "
-           "%7lu µs\n",
-           ctime((time_t *) &now),
-           totalPeers, totalTorrents,
-           maxPeersInOneTorrent, maxTorrentsInOneHash,
-           removedPeers, removedTorrents,
-           getDiffTime(startTime));
+    if (block != NULL)
+        addFormatStringBlock(block, 1000,
+                             "%.19s GRBG: "
+                             "%7d TP %7d TT "
+                             "%7d MP %7d MT "
+                             "%7d RP %7d RT "
+                             "%7lu µs",
+                             ctime((time_t *) &now),
+                             totalPeers, totalTorrents,
+                             maxPeersInOneTorrent, maxTorrentsInOneHash,
+                             removedPeers, removedTorrents,
+                             getDiffTime(startTime));
 }
