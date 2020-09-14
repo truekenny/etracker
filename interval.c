@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "interval.h"
 
-#define MIN_INTERVAL 299
+#define MIN_INTERVAL 239
 #define STEP_INTERVAL 60
 
 void updateInterval(struct block *block, unsigned int *interval) {

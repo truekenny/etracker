@@ -3,8 +3,6 @@
 
 #include "sem.h"
 
-#define INTERVAL 1800
-
 struct peer {
     unsigned short port;
     unsigned int ip;

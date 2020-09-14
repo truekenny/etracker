@@ -6,7 +6,7 @@
 #include "data_get.h"
 #include "alloc.h"
 
-#define MAX_PEER_PER_RESULT 50
+#define MAX_PEER_PER_RESULT 60
 
 void int2ip(char *dest, unsigned int source);
 

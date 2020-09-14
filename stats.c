@@ -27,9 +27,6 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "Request per second ~ %.2f\n\n"
 
                          "rusage.ru_maxrss = %'12ld\n"
-                         "rusage.ru_ixrss  = %'12ld\n"
-                         "rusage.ru_idrss  = %'12ld\n"
-                         "rusage.ru_isrss  = %'12ld\n\n"
 
                          "Malloc = %'12d\n"
                          "Calloc = %'12d\n"
@@ -85,7 +82,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
 
                          getRps(rps),
 
-                         rusage.ru_maxrss, rusage.ru_ixrss, rusage.ru_idrss, rusage.ru_isrss,
+                         rusage.ru_maxrss,
 
                          countChanges->countMalloc,
                          countChanges->countCalloc,

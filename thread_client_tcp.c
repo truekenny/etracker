@@ -201,9 +201,11 @@ void *clientTcpHandler(void *args) {
 
                             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                             freeBlock(block);
-                        } else if (startsWith("GET /garbage", readBuffer)) {
+                        } else if (DEBUG && startsWith("GET /garbage", readBuffer)) {
                             runGarbageCollector(NULL, firstByteData);
                             renderHttpMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
+                        } else if (startsWith("GET / ", readBuffer)) {
+                            renderHttpMessage(writeBlock, 200, "github.com/truekenny/sc6 - open-source BitTorrent tracker", 57, canKeepAlive, stats);
                         } else if (startsWith("GET /scrape", readBuffer)) {
                             stats->scrape++;
 

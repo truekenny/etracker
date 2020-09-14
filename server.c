@@ -74,8 +74,6 @@ int main(int argc, char *argv[]) {
     DEBUG && printf("first = %p\n", queue);
     DEBUG && printf("&first = %p\n", &queue);
 
-    if (INTERVAL < 100)
-        printf("- Interval: %d\n", INTERVAL);
     if (RANDOM_DATA_INFO_HASH)
         printf("- Random data info_hash: %d\n", RANDOM_DATA_INFO_HASH);
     if (RANDOM_DATA_PEER_ID)

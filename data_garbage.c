@@ -6,6 +6,8 @@
 #include "time.h"
 #include "alloc.h"
 
+#define OUTDATED_INTERVAL 1800
+
 void runGarbageCollector(struct block *block, struct firstByteData *firstByte) {
     int i, j;
     unsigned int totalPeers = 0,
@@ -17,7 +19,7 @@ void runGarbageCollector(struct block *block, struct firstByteData *firstByte) {
             removedPeers = 0,
             removedTorrents = 0;
     long now = time(NULL);
-    long limitTime = now - INTERVAL * 2;
+    long limitTime = now - OUTDATED_INTERVAL * 2;
 
     unsigned long startTime = getStartTime();
 
