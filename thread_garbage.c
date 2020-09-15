@@ -1,16 +1,21 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "thread_garbage.h"
 #include "alloc.h"
 #include "data_garbage.h"
 #include "stats.h"
 #include "interval.h"
 #include "rps.h"
+#include "list.h"
+#include "socket.h"
+#include "block.h"
 
 #define DEBUG 0
 #define I_15_MINUTES_TIME (15 * 60)
 #define GARBAGE_SOCKET_POOL_TIME 1
+#define SOCKET_TIMEOUT 3
 
 struct i15MinutesArgs {
     struct firstByteData *firstByteData;
@@ -19,8 +24,10 @@ struct i15MinutesArgs {
 };
 
 struct garbageSocketPoolArgs {
-    struct socketPool **socketPool;
-    struct rk_sema *semaphoreSocketPool;
+    // struct socketPool **socketPool;
+    // struct rk_sema *semaphoreSocketPool;
+    struct list *socketList;
+
     struct stats *stats;
 };
 
@@ -88,7 +95,7 @@ void *i15MinutesHandler(void *_args) {
 }
 
 void
-runGarbageSocketPoolThread(struct socketPool **socketPool, struct rk_sema *semaphoreSocketPool, struct stats *stats) {
+runGarbageSocketPoolThread(struct list *socketList, struct stats *stats) {
     pthread_attr_t tattr;
     pthread_t tid;
     int ret;
@@ -96,8 +103,7 @@ runGarbageSocketPoolThread(struct socketPool **socketPool, struct rk_sema *semap
     struct sched_param param;
 
     struct garbageSocketPoolArgs *garbageSocketPoolArgs = c_calloc(1, sizeof(struct garbageSocketPoolArgs));
-    garbageSocketPoolArgs->socketPool = socketPool;
-    garbageSocketPoolArgs->semaphoreSocketPool = semaphoreSocketPool;
+    garbageSocketPoolArgs->socketList = socketList;
     garbageSocketPoolArgs->stats = stats;
 
     // initialized with default attributes
@@ -123,18 +129,36 @@ runGarbageSocketPoolThread(struct socketPool **socketPool, struct rk_sema *semap
     ret = pthread_create(&tid, &tattr, garbageSocketPoolHandler, (void *) garbageSocketPoolArgs);
 }
 
+unsigned char checkOutdatedSocketCallback(struct list *list, struct item *item, void *args) {
+    // unused
+    if(list == NULL) {
+        printf("thread_garbage.c: unused list\n");
+
+        exit(123);
+    }
+
+    struct socketData *socketData = item->data;
+    struct stats *stats = args;
+
+    if (socketData->time < time(NULL) - SOCKET_TIMEOUT) {
+        struct block *block = initBlock();
+        renderHttpMessage(block, 408, "Request Timeout", 15, 0, stats);
+        send_(socketData->socket, block->data, block->size, stats);
+        freeBlock(block);
+
+        deleteSocketItemL(item, stats);
+    }
+
+    return 0;
+}
+
 void *garbageSocketPoolHandler(void *_args) {
-    struct socketPool **socketPool = ((struct garbageSocketPoolArgs *) _args)->socketPool;
-    struct rk_sema *semaphoreSocketPool = ((struct garbageSocketPoolArgs *) _args)->semaphoreSocketPool;
+    struct list *socketList = ((struct garbageSocketPoolArgs *) _args)->socketList;
     struct stats *stats = ((struct garbageSocketPoolArgs *) _args)->stats;
     c_free(_args);
 
     while (1) {
-        rk_sema_wait(semaphoreSocketPool);
-        unsigned int removed = runCollectSocket(socketPool, stats);
-        rk_sema_post(semaphoreSocketPool);
-
-        DEBUG && printf("thread_garbage.c: runCollectSocket: removed=%d\n", removed);
+        mapList(socketList, stats, &checkOutdatedSocketCallback);
 
         sleep(GARBAGE_SOCKET_POOL_TIME);
     }

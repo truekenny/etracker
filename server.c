@@ -21,6 +21,7 @@
 #include "socket_garbage.h"
 #include "interval.h"
 #include "rps.h"
+#include "list.h"
 
 #if !defined(REVISION)
 #define REVISION "UNKNOWN"
@@ -39,7 +40,7 @@ int main(int argc, char *argv[]) {
     unsigned short port = (argc < 2) ? DEFAULT_PORT : atoi(argv[1]);
     unsigned int interval = (argc < 3) ? MAX_INTERVAL : atoi(argv[2]);
 
-    if(!port || !interval) {
+    if (!port || !interval) {
         printf("./server.o [port] [interval]\n");
 
         exit(1);
@@ -58,8 +59,7 @@ int main(int argc, char *argv[]) {
     struct rk_sema semaphoreQueue = {0}; // Семафор для очереди
     struct queue *queue = NULL; // Очередь
 
-    struct rk_sema semaphoreSocketPool = {0};
-    struct socketPool *socketPool = NULL;
+    struct list *socketList = initList(NULL, 1, 0, sizeof(int), 1);
 
     struct firstByteData firstByteData = {}; // Торренты и пиры
     struct stats *stats = c_calloc(1, sizeof(struct stats));
@@ -72,10 +72,9 @@ int main(int argc, char *argv[]) {
 
     // Инициализация семафоров
     rk_sema_init(&semaphoreQueue, 1);
-    rk_sema_init(&semaphoreSocketPool, 1);
 
     run15MinutesThread(&firstByteData, &interval, &rps);
-    runGarbageSocketPoolThread(&socketPool, &semaphoreSocketPool, stats);
+    runGarbageSocketPoolThread(socketList, stats);
 
     DEBUG && printf("first = %p\n", queue);
     DEBUG && printf("&first = %p\n", &queue);
@@ -94,8 +93,7 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->stats = stats;
     serverTcpArgs->port = port;
 
-    serverTcpArgs->semaphoreSocketPool = &semaphoreSocketPool;
-    serverTcpArgs->socketPool = &socketPool;
+    serverTcpArgs->socketList = socketList;
 
     serverTcpArgs->interval = &interval;
     serverTcpArgs->rps = &rps;

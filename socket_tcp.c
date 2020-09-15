@@ -27,8 +27,7 @@ void *serverTcpHandler(void *args) {
     struct firstByteData *firstByteData = ((struct serverTcpArgs *) args)->firstByteData;
     unsigned short port = ((struct serverTcpArgs *) args)->port;
 
-    struct rk_sema *semaphoreSocketPool = ((struct serverTcpArgs *) args)->semaphoreSocketPool;
-    struct socketPool **socketPool = ((struct serverTcpArgs *) args)->socketPool;
+    struct list *socketList =  ((struct serverTcpArgs *) args)->socketList;
 
     unsigned int *interval =  ((struct serverTcpArgs *) args)->interval;
     struct rps *rps = ((struct serverTcpArgs *) args)->rps;
@@ -85,8 +84,7 @@ void *serverTcpHandler(void *args) {
 
         clientTcpArgs->equeue = equeue[threadNumber] = initEqueue();
 
-        clientTcpArgs->semaphoreSocketPool = semaphoreSocketPool;
-        clientTcpArgs->socketPool = socketPool;
+        clientTcpArgs->socketList = socketList;
 
         clientTcpArgs->interval = interval;
         clientTcpArgs->rps = rps;
@@ -126,9 +124,7 @@ void *serverTcpHandler(void *args) {
 
         int equeueThread = equeue[(currentThread++) % coreCount];
 
-        rk_sema_wait(semaphoreSocketPool);
-        updateSocket(socketPool, clientSocket, equeueThread);
-        rk_sema_post(semaphoreSocketPool);
+        updateSocketL(socketList, clientSocket, equeueThread);
 
         addClientEqueue(equeueThread, clientSocket);
         DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");

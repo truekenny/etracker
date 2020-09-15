@@ -56,5 +56,20 @@ int rk_sema_post(struct rk_sema *s) {
     }
 #endif
     return 0;
+}
 
+/**
+ * Уничтожение семафора
+ * @param s
+ */
+int rk_sema_destroy(struct rk_sema *s) {
+#ifdef __APPLE__
+    dispatch_release(s->semaphoreQueue);
+#else
+    if (sem_destroy(&s->semaphoreQueue)) {
+        perror("Sem_destroy failed");
+        exit(12);
+    }
+#endif
+    return 0;
 }

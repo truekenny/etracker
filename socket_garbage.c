@@ -6,113 +6,63 @@
 #include "equeue.h"
 
 #define DEBUG 0
-#define TIMEOUT 3
 
-void updateSocket(struct socketPool **socketPool, int socket, int equeue) {
-    struct socketPool *currentSocketPool = *socketPool;
+void updateSocketL(struct list *socketList, int socket, int equeue) {
+    unsigned char *pSocket = (unsigned char *) &socket;
 
-    while (currentSocketPool != NULL) {
-        if (currentSocketPool->socket == socket) {
-            currentSocketPool->time = time(NULL);
+    struct list *leaf = getLeaf(socketList, pSocket);
+    waitSemaphoreLeaf(leaf);
 
-            DEBUG && printf("socketPool #%d update\n", socket);
+    struct item *item = setHash(socketList, pSocket);
 
-            return;
-        }
-
-        currentSocketPool = currentSocketPool->next;
+    struct socketData *socketData;
+    if (item->data == NULL) {
+        socketData = c_calloc(1, sizeof(struct socketData));
+    } else {
+        socketData = item->data;
     }
+    socketData->socket = socket;
+    socketData->equeue = equeue;
+    socketData->time = time(NULL);
 
-    currentSocketPool = c_calloc(1, sizeof(struct socketPool));
-    currentSocketPool->socket = socket;
-    currentSocketPool->time = time(NULL);
-    currentSocketPool->next = *socketPool;
-    currentSocketPool->equeue = equeue;
+    item->data = socketData;
 
-    *socketPool = currentSocketPool;
-
-    DEBUG && printf("socketPool #%d new\n", socket);
+    postSemaphoreLeaf(leaf);
 }
 
-void deleteSocket(struct socketPool **socketPool, int socket, struct stats *stats) {
-    struct socketPool *currentSocketPool = *socketPool;
-    struct socketPool *previous = NULL;
+void deleteSocketItemL(struct item *item, struct stats *stats) {
 
-    while (currentSocketPool != NULL) {
-        if (currentSocketPool->socket == socket) {
-            if (previous == NULL) {
-                *socketPool = currentSocketPool->next;
+    if (item == NULL) {
+        printf("socket_garbage.c: socketData not found\n");
 
-            } else {
-                previous->next = currentSocketPool->next;
-            }
+        // return;
+    } else {
+        struct socketData *socketData = item->data;
 
-            deleteClientEqueue(currentSocketPool->equeue, currentSocketPool->socket);
-            int status = close(currentSocketPool->socket);
-            if (status) {
-                stats->close_failed++;
-            } else {
-                stats->close_pass++;
-            }
-            DEBUG && printf("Close socket=%d, status=%d\n", currentSocketPool->socket, status);
-            c_free(currentSocketPool);
+        int socket = socketData->socket;
 
-            DEBUG && printf("socketPool #%d delete\n", socket);
-
-            return;
+        deleteClientEqueue(socketData->equeue, socket);
+        int status = close(socket);
+        if (status) {
+            stats->close_failed++;
+        } else {
+            stats->close_pass++;
         }
+        c_free(socketData);
 
-        previous = currentSocketPool;
-        currentSocketPool = currentSocketPool->next;
+        deleteItem(item);
     }
 
-    printf("Socket #%d not found for delete\n", socket);
 }
 
-unsigned int runCollectSocket(struct socketPool **socketPool, struct stats *stats) {
-    struct socketPool *currentSocketPool = *socketPool;
-    struct socketPool *previous = NULL;
-    long diffTime = time(NULL) - TIMEOUT;
+void deleteSocketL(struct list *socketList, int socket, struct stats *stats) {
+    unsigned char *pSocket = (unsigned char *) &socket;
 
-    unsigned int removed = 0;
+    struct list *leaf = getLeaf(socketList, pSocket);
+    waitSemaphoreLeaf(leaf);
 
-    while (currentSocketPool != NULL) {
-        if (currentSocketPool->time <= diffTime) {
-            if (previous == NULL) {
-                *socketPool = currentSocketPool->next;
-            } else {
-                previous->next = currentSocketPool->next;
-            }
+    struct item *item = getHash(socketList, pSocket);
+    deleteSocketItemL(item, stats);
 
-            struct socketPool *delete = currentSocketPool;
-            currentSocketPool = currentSocketPool->next;
-
-            struct block *block = initBlock();
-            renderHttpMessage(block, 408, "Request Timeout", 15, 0, stats);
-            send_(delete->socket, block->data, block->size, stats);
-            freeBlock(block);
-
-
-            deleteClientEqueue(delete->equeue, delete->socket);
-            int status = close(delete->socket);
-            if (status) {
-                stats->close_failed++;
-            } else {
-                stats->close_pass++;
-            }
-
-            DEBUG && printf("Close socket=%d, status=%d\n", delete->socket, status);
-            DEBUG && printf("socketPool #%d collect\n", delete->socket);
-            c_free(delete);
-
-            removed++;
-
-            continue;
-        }
-
-        previous = currentSocketPool;
-        currentSocketPool = currentSocketPool->next;
-    }
-
-    return removed;
+    postSemaphoreLeaf(leaf);
 }

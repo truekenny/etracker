@@ -3,20 +3,18 @@
 
 #include <time.h>
 #include "stats.h"
+#include "list.h"
 
-struct socketPool {
+struct socketData {
     int socket;
     int equeue;
     long time;
-
-    struct socketPool *next;
 };
 
+void updateSocketL(struct list *socketList,  int socket, int equeue);
 
-void updateSocket(struct socketPool **socketPool, int socket, int equeue);
+void deleteSocketItemL(struct item *item, struct stats *stats);
 
-void deleteSocket(struct socketPool **socketPool, int socket, struct stats *stats);
-
-unsigned int runCollectSocket(struct socketPool **socketPool, struct stats *stats);
+void deleteSocketL(struct list *socketList,  int socket, struct stats *stats);
 
 #endif //SC6_SOCKET_GARBAGE_H

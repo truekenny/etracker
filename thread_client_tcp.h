@@ -5,6 +5,7 @@
 #include "stats.h"
 #include "socket_garbage.h"
 #include "rps.h"
+#include "list.h"
 
 /**
  * Аргументы переданные в поток
@@ -18,8 +19,7 @@ struct clientTcpArgs {
 
     int equeue;
 
-    struct rk_sema *semaphoreSocketPool;
-    struct socketPool **socketPool;
+    struct list *socketList;
 
     unsigned int *interval;
     struct rps *rps;

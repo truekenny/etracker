@@ -40,4 +40,10 @@ int rk_sema_wait(struct rk_sema *s);
  */
 int rk_sema_post(struct rk_sema *s);
 
+/**
+ * Уничтожение семафора
+ * @param s
+ */
+int rk_sema_destroy(struct rk_sema *s);
+
 #endif //SC6_SEM_H

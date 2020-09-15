@@ -43,8 +43,7 @@ void *clientTcpHandler(void *args) {
 
     int equeue = ((struct clientTcpArgs *) args)->equeue;
 
-    struct rk_sema *semaphoreSocketPool = ((struct clientTcpArgs *) args)->semaphoreSocketPool;
-    struct socketPool **socketPool = ((struct clientTcpArgs *) args)->socketPool;
+    struct list *socketList =  ((struct clientTcpArgs *) args)->socketList;
 
     unsigned int *interval = ((struct clientTcpArgs *) args)->interval;
     struct rps *rps = ((struct clientTcpArgs *) args)->rps;
@@ -63,9 +62,7 @@ void *clientTcpHandler(void *args) {
             if (isEof(&eevent, index)) {
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: Disconnect\n");
 
-                rk_sema_wait(semaphoreSocketPool);
-                deleteSocket(socketPool, currentSocket, stats);
-                rk_sema_post(semaphoreSocketPool);
+                deleteSocketL(socketList, currentSocket, stats);
                 // Socket is automatically removed from the kq by the kernel.
             } else if (isRead(&eevent, index)) {
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: Read %d\n", currentSocket);
@@ -84,9 +81,7 @@ void *clientTcpHandler(void *args) {
                     send_(currentSocket, block->data, block->size, stats);
                     freeBlock(block);
 
-                    rk_sema_wait(semaphoreSocketPool);
-                    deleteSocket(socketPool, currentSocket, stats);
-                    rk_sema_post(semaphoreSocketPool);
+                    deleteSocketL(socketList, currentSocket, stats);
 
                     stats->recv_failed++;
 
@@ -94,9 +89,7 @@ void *clientTcpHandler(void *args) {
                 }
 
                 if (strstr(readBuffer, "\r\n\r\n") != NULL) {
-                    rk_sema_wait(semaphoreSocketPool);
-                    updateSocket(socketPool, currentSocket, equeue);
-                    rk_sema_post(semaphoreSocketPool);
+                    updateSocketL(socketList, currentSocket, equeue);
 
                     // Сброс буфера, поскольку запрос полный, прочитать столько сколько было пикнуто
                     recv(currentSocket, readBuffer, readSize, MSG_NOSIGNAL);
@@ -255,10 +248,7 @@ void *clientTcpHandler(void *args) {
                     freeBlock(writeBlock);
 
                     if (!canKeepAlive) {
-                        rk_sema_wait(semaphoreSocketPool);
-                        deleteSocket(socketPool, currentSocket, stats);
-                        rk_sema_post(semaphoreSocketPool);
-                        // close(currentSocket);
+                        deleteSocketL(socketList, currentSocket, stats);
                     }
                 } // "\r\n\r\n"
             } // EVFILT_READ

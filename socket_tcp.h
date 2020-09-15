@@ -7,6 +7,7 @@
 #include "queue.h"
 #include "socket_garbage.h"
 #include "rps.h"
+#include "list.h"
 
 struct serverTcpArgs {
     unsigned short port;
@@ -15,8 +16,7 @@ struct serverTcpArgs {
     struct queue **queue;
     struct firstByteData *firstByteData;
 
-    struct rk_sema *semaphoreSocketPool;
-    struct socketPool **socketPool;
+    struct list *socketList;
 
     unsigned int *interval;
     struct rps *rps;

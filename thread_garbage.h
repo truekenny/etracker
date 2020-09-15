@@ -4,9 +4,10 @@
 #include "data_change.h"
 #include "socket_garbage.h"
 #include "stats.h"
+#include "list.h"
 
 void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval, struct rps *rps);
 
-void runGarbageSocketPoolThread(struct socketPool ** socketPool, struct rk_sema *semaphoreSocketPool, struct stats *stats);
+void runGarbageSocketPoolThread(struct list *socketList, struct stats *stats);
 
 #endif //SC6_THREAD_GARBAGE_H
