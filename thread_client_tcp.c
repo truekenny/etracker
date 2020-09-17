@@ -36,8 +36,7 @@
  */
 void *clientTcpHandler(void *args) {
     int threadNumber = ((struct clientTcpArgs *) args)->threadNumber;
-    struct rk_sema *semaphoreQueue = ((struct clientTcpArgs *) args)->semaphoreQueue;
-    struct queue **queue = ((struct clientTcpArgs *) args)->queue;
+    struct list *queueList = ((struct clientTcpArgs *) args)->queueList;
     struct firstByteData *firstByteData = ((struct clientTcpArgs *) args)->firstByteData;
     struct stats *stats = ((struct clientTcpArgs *) args)->stats;
 
@@ -94,21 +93,10 @@ void *clientTcpHandler(void *args) {
                     // Сброс буфера, поскольку запрос полный, прочитать столько сколько было пикнуто
                     recv(currentSocket, readBuffer, readSize, MSG_NOSIGNAL);
 
-
                     DEBUG_KQUEUE && printf("thread_client_tcp.c: IN %d", threadNumber);
 
-                    DEBUG && printf("first = %p\n", queue);
-                    DEBUG && printf("*first = %p\n", *queue);
-
                     if (QUEUE_ENABLE) {
-                        rk_sema_wait(semaphoreQueue);
-                        if (CHECK_SEMAPHORE) {
-                            printf("Check semaphore clientTcpHandler begin = %d\n", threadNumber);
-                            usleep(rand() % 5000 + 5000); // проверка работы семафора
-                            printf("Check semaphore clientTcpHandler end = %d\n", threadNumber);
-                        }
-                        *queue = addToQueue(*queue, threadNumber);
-                        rk_sema_post(semaphoreQueue);
+                        addQueueList(queueList, threadNumber);
                     }
 
                     DEBUG && printf("Handler: sock:%d number:%d\n", currentSocket, threadNumber);
@@ -185,12 +173,11 @@ void *clientTcpHandler(void *args) {
                         } else if (startsWith("GET /stats", readBuffer)) {
                             struct block *block = initBlock();
 
-                            if (QUEUE_ENABLE) {
-                                rk_sema_wait(semaphoreQueue);
-                                printQueue(block, *queue);
-                                rk_sema_post(semaphoreQueue);
-                            }
                             formatStats(threadNumber, block, stats, *interval, rps);
+
+                            if (QUEUE_ENABLE) {
+                                printQueueList(block, queueList);
+                            }
 
                             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                             freeBlock(block);
@@ -235,9 +222,7 @@ void *clientTcpHandler(void *args) {
                     }
 
                     if (QUEUE_ENABLE) {
-                        rk_sema_wait(semaphoreQueue);
-                        *queue = deleteFromQueue(*queue, threadNumber);
-                        rk_sema_post(semaphoreQueue);
+                        deleteQueueList(queueList, threadNumber);
                     }
 
                     DEBUG && printf("Recv bytes: %zu\n", readSize);

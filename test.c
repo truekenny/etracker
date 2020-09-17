@@ -6,13 +6,9 @@
 #include "list.h"
 #include "alloc.h"
 
-struct queue *first = NULL;
-
 int testSem();
 
 int testList();
-
-int testQueue();
 
 int testBlock();
 
@@ -21,7 +17,6 @@ int main() {
 
     printf("testSem complete = %d\n", testSem());
     printf("testList complete = %d\n", testList());
-    printf("testQueue complete = %d\n", testQueue());
     printf("testBlock complete = %d\n", testBlock());
 }
 
@@ -181,32 +176,6 @@ int testBlock() {
         printf("%c", block->data[i]);
     }
     printf("\n");
-
-    return 1;
-}
-
-int testQueue() {
-    struct block *block = initBlock();
-    first = addToQueue(first, 1);
-    first = addToQueue(first, 2);
-    first = addToQueue(first, 3);
-    first = addToQueue(first, 4);
-    printQueue(block, first);
-
-    first = deleteFromQueue(first, 2);
-    printQueue(block, first);
-
-    first = deleteFromQueue(first, 1);
-    printQueue(block, first);
-
-    first = deleteFromQueue(first, 4);
-    printQueue(block, first);
-
-    first = deleteFromQueue(first, 3);
-    printQueue(block, first);
-
-    first = addToQueue(first, 5);
-    printQueue(block, first);
 
     return 1;
 }

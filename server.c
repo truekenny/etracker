@@ -56,8 +56,7 @@ int main(int argc, char *argv[]) {
     c_initSem();
 
     // vars
-    struct rk_sema semaphoreQueue = {0}; // Семафор для очереди
-    struct queue *queue = NULL; // Очередь
+    struct list *queueList = initList(NULL, 0, 0, sizeof(int), 1);
 
     struct list *socketList = initList(NULL, 1, 0, sizeof(int), 1);
 
@@ -70,14 +69,11 @@ int main(int argc, char *argv[]) {
     // init
     initSem(&firstByteData);
 
-    // Инициализация семафоров
-    rk_sema_init(&semaphoreQueue, 1);
 
     run15MinutesThread(&firstByteData, &interval, &rps);
     runGarbageSocketPoolThread(socketList, stats);
 
-    DEBUG && printf("first = %p\n", queue);
-    DEBUG && printf("&first = %p\n", &queue);
+
 
     if (RANDOM_DATA_INFO_HASH)
         printf("- Random data info_hash: %d\n", RANDOM_DATA_INFO_HASH);
@@ -87,8 +83,7 @@ int main(int argc, char *argv[]) {
     // Start TCP
     pthread_t tcpServerThread;
     struct serverTcpArgs *serverTcpArgs = (struct serverTcpArgs *) c_malloc(sizeof(struct serverTcpArgs));
-    serverTcpArgs->semaphoreQueue = &semaphoreQueue;
-    serverTcpArgs->queue = &queue;
+    serverTcpArgs->queueList = queueList;
     serverTcpArgs->firstByteData = &firstByteData;
     serverTcpArgs->stats = stats;
     serverTcpArgs->port = port;

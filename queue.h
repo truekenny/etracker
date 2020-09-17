@@ -2,32 +2,12 @@
 #define SC6_QUEUE_H
 
 #include "block.h"
+#include "list.h"
 
-/**
- * Структура элемента очереди
- */
-struct queue;
+void addQueueList(struct list *list, int threadNumber);
 
-/**
- * Добавляет элемент в очередь
- * @param first
- * @param n
- * @return Ссылка на первый элемент
- */
-struct queue * addToQueue(struct queue *first, int n);
+void deleteQueueList(struct list *list, int threadNumber);
 
-/**
- * Распечатка очереди
- * @param first
- */
-void printQueue(struct block *block, struct queue *first);
-
-/**
- * Удаление элемента из очереди
- * @param first
- * @param n
- * @return Ссылка на первый элемент
- */
-struct queue * deleteFromQueue(struct queue *first, int n);
+void printQueueList(struct block *block, struct list *queueList);
 
 #endif //SC6_QUEUE_H

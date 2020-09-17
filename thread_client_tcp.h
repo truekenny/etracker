@@ -12,8 +12,7 @@
  */
 struct clientTcpArgs {
     int threadNumber;
-    struct rk_sema *semaphoreQueue;
-    struct queue **queue;
+    struct list *queueList;
     struct firstByteData *firstByteData;
     struct stats *stats;
 

@@ -161,6 +161,9 @@ void *garbageSocketPoolHandler(void *_args) {
         mapList(socketList, stats, &checkOutdatedSocketCallback);
 
         sleep(GARBAGE_SOCKET_POOL_TIME);
+
+        // Чтобы нормально работала подсветка кода в IDE
+        if (rand() % 2 == 3) break;
     }
 
     return 0;

@@ -22,8 +22,7 @@
 
 void *serverTcpHandler(void *args) {
     struct stats *stats = ((struct serverTcpArgs *) args)->stats;
-    struct rk_sema *semaphoreQueue = ((struct serverTcpArgs *) args)->semaphoreQueue;
-    struct queue **queue = ((struct serverTcpArgs *) args)->queue;
+    struct list *queueList = ((struct serverTcpArgs *) args)->queueList;
     struct firstByteData *firstByteData = ((struct serverTcpArgs *) args)->firstByteData;
     unsigned short port = ((struct serverTcpArgs *) args)->port;
 
@@ -77,8 +76,7 @@ void *serverTcpHandler(void *args) {
 
         struct clientTcpArgs *clientTcpArgs = (struct clientTcpArgs *) c_malloc(sizeof(struct clientTcpArgs));
         clientTcpArgs->threadNumber = threadNumber;
-        clientTcpArgs->semaphoreQueue = semaphoreQueue;
-        clientTcpArgs->queue = queue;
+        clientTcpArgs->queueList = queueList;
         clientTcpArgs->firstByteData = firstByteData;
         clientTcpArgs->stats = stats;
 

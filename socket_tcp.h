@@ -12,8 +12,7 @@
 struct serverTcpArgs {
     unsigned short port;
     struct stats *stats;
-    struct rk_sema *semaphoreQueue;
-    struct queue **queue;
+    struct list *queueList;
     struct firstByteData *firstByteData;
 
     struct list *socketList;
