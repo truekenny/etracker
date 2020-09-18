@@ -1,7 +1,6 @@
 #ifndef SC6_THREAD_CLIENT_TCP_H
 #define SC6_THREAD_CLIENT_TCP_H
 
-#include "data_change.h"
 #include "stats.h"
 #include "socket_garbage.h"
 #include "rps.h"
@@ -13,7 +12,8 @@
 struct clientTcpArgs {
     int threadNumber;
     struct list *queueList;
-    struct firstByteData *firstByteData;
+    // struct firstByteData *firstByteData;
+    struct list *torrentList;
     struct stats *stats;
 
     int equeue;

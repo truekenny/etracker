@@ -3,7 +3,6 @@
 
 #include "stats.h"
 #include "sem.h"
-#include "data_change.h"
 #include "queue.h"
 #include "socket_garbage.h"
 #include "rps.h"
@@ -13,7 +12,8 @@ struct serverTcpArgs {
     unsigned short port;
     struct stats *stats;
     struct list *queueList;
-    struct firstByteData *firstByteData;
+    // struct firstByteData *firstByteData;
+    struct list *torrentList;
 
     struct list *socketList;
 

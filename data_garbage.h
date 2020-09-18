@@ -3,7 +3,8 @@
 
 #include "data_structure.h"
 #include "block.h"
+#include "list.h"
 
-void runGarbageCollector(struct block *block, struct firstByteData *firstByte);
+void runGarbageCollectorL(struct block *block, struct list *torrentList);
 
 #endif //SC6_DATA_GARBAGE_H

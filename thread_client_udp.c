@@ -5,13 +5,11 @@
 #include "thread_client_udp.h"
 #include "alloc.h"
 #include "uri.h"
-#include "data_sem.h"
 #include "data_structure.h"
-#include "data_change.h"
-#include "data_render.h"
 #include "socket_udp_structure.h"
 #include "stats.h"
 #include "string.h"
+#include "data.h"
 
 #define DEBUG 0
 #define MSG_CONFIRM_ 0
@@ -21,7 +19,7 @@ void *clientUdpHandler(void *args) {
     struct clientUdpArgs *clientUdpArgs = (struct clientUdpArgs *) args;
 
     int serverSocket = clientUdpArgs->serverSocket;
-    struct firstByteData *firstByteData = clientUdpArgs->firstByteData;
+    struct list *torrentList = clientUdpArgs->torrentList;
     struct stats *stats = clientUdpArgs->stats;
     unsigned int *interval = clientUdpArgs->interval;
 
@@ -104,33 +102,24 @@ void *clientUdpHandler(void *args) {
                 memcpy(query->peer_id, announceRequest->peer_id, PARAM_VALUE_LENGTH);
                 query->numwant = htonl(announceRequest->num_want);
                 query->ip = clientAddr->sin_addr.s_addr;
+                query->transaction_id = announceRequest->transaction_id;
 
-                // todo: обработка announce
                 { // аннонс
-                    struct torrent *torrent = {0};
+                    // struct torrent *torrent = {0};
                     struct block *writeBlock = initBlock();
 
-                    waitSem(firstByteData, query);
+                    struct list *leaf = getLeaf(torrentList, query->info_hash);
+                    waitSemaphoreLeaf(leaf);
+
+                    struct item *torrent;
                     if (query->event == EVENT_ID_STOPPED) {
-                        torrent = deletePeer(firstByteData, query);
-                        DEBUG && printf("Delete UDP peer %s %s\n", query->info_hash, query->peer_id);
+                        torrent = deletePeerPublic(torrentList, query);
                     } else {
-                        torrent = updatePeer(firstByteData, query);
-                        DEBUG && printf("Update UDP peer %s %s\n", query->info_hash, query->peer_id);
+                        torrent = setPeerPublic(torrentList, query);
                     }
+                    renderAnnouncePublic(writeBlock, torrent, query, *interval);
 
-                    struct announceHeadResponse announceHeadResponse = {};
-                    announceHeadResponse.action = ntohl(ACTION_ANNOUNCE);
-                    announceHeadResponse.transaction_id = announceRequest->transaction_id;
-                    announceHeadResponse.interval = ntohl(*interval);
-                    if (torrent != NULL) {
-                        announceHeadResponse.leechers = ntohl(torrent->incomplete);
-                        announceHeadResponse.seeders = ntohl(torrent->complete);
-                    }
-                    addStringBlock(writeBlock, &announceHeadResponse, sizeof(struct announceHeadResponse));
-
-                    renderPeers(writeBlock, torrent, query, interval);
-                    postSem(firstByteData, query);
+                    postSemaphoreLeaf(leaf);
 
                     stats->sent_bytes_udp += writeBlock->size;
 
@@ -161,17 +150,12 @@ void *clientUdpHandler(void *args) {
                                &((char *) scrapeRequest)[sizeof(struct scrapeRequest)],
                                hashCount * PARAM_VALUE_LENGTH);
 
-                // todo: обработка scrape
                 {  // scrape
                     struct block *writeBlock = initBlock();
-
-                    struct scrapeHeadResponse scrapeHeadResponse = {};
-                    scrapeHeadResponse.action = htonl(ACTION_SCRAPE);
-                    scrapeHeadResponse.transaction_id = scrapeRequest->transaction_id;
-                    addStringBlock(writeBlock, &scrapeHeadResponse, sizeof(struct scrapeHeadResponse));
-
-                    renderTorrents(writeBlock, firstByteData, hashes, 1);
-
+                    struct query *query = c_calloc(1, sizeof(struct query));
+                    query->udp = 1;
+                    query->transaction_id = scrapeRequest->transaction_id;
+                    renderScrapeTorrentsPublic(writeBlock, torrentList, hashes, query);
 
                     DEBUG && printHex(writeBlock->data, writeBlock->size);
                     if (sendto(serverSocket, writeBlock->data, writeBlock->size,
@@ -184,9 +168,11 @@ void *clientUdpHandler(void *args) {
                     }
 
 
-                    freeBlock(hashes);
+                    c_free(query);
                     freeBlock(writeBlock);
                 }  // scrape
+
+                freeBlock(hashes);
             } // income packet scrape check
 
         } // Проверка формата

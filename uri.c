@@ -10,6 +10,7 @@
 #define QUERY_VALUE 2
 #define PATH_LENGTH 50
 #define FIRST_LINE_LENGTH 1000
+#define MAX_PEER_PER_RESULT_2 60
 
 void getParam(struct query *query, struct block *block, char *param, char *value);
 
@@ -139,7 +140,7 @@ void getParam(struct query *query, struct block *block, char *param, char *value
         } else if (!strcmp(value, EVENT_STRING_PAUSED)) {
             query->event = EVENT_ID_PAUSED;
         } else {
-            query->event = 0;
+            query->event = EVENT_ID_CONTINUE;
         }
     } else if (!strcmp(param, "port")) {
         query->port = htons(atoi(value));
@@ -160,5 +161,7 @@ void getParam(struct query *query, struct block *block, char *param, char *value
         query->no_peer_id = 1;
     } else if (!strcmp(param, "numwant")) {
         query->numwant = atoi(value);
+        if (query->numwant > MAX_PEER_PER_RESULT_2)
+            query->numwant = MAX_PEER_PER_RESULT_2;
     }
 }

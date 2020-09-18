@@ -5,10 +5,15 @@
 
 #define RANDOM_DATA_INFO_HASH 0
 #define RANDOM_DATA_PEER_ID 0
+
+// При добавлении или удалении
+#define EVENT_ID_NONE      0
 #define EVENT_ID_COMPLETED 1
 #define EVENT_ID_STARTED   2
 #define EVENT_ID_STOPPED   3
 #define EVENT_ID_PAUSED    4
+// Event не указан
+#define EVENT_ID_CONTINUE  5
 #define EVENT_STRING_COMPLETED "completed"
 #define EVENT_STRING_STARTED   "started"
 #define EVENT_STRING_STOPPED   "stopped"
@@ -30,6 +35,7 @@ struct query {
     unsigned int numwant;
 
     int threadNumber;
+    unsigned int transaction_id;
 };
 
 void parseUri(struct query *query, struct block *block, char *message);

@@ -13,8 +13,6 @@
 #include "alloc.h"
 #include "socket.h"
 #include "uri.h"
-#include "data_change.h"
-#include "data_sem.h"
 #include "socket_tcp.h"
 #include "socket_udp.h"
 #include "thread_garbage.h"
@@ -60,19 +58,15 @@ int main(int argc, char *argv[]) {
 
     struct list *socketList = initList(NULL, 1, 0, sizeof(int), 1);
 
-    struct firstByteData firstByteData = {}; // Торренты и пиры
+    struct list *torrentList = initList(NULL, 2, 0, PARAM_VALUE_LENGTH, 1);
+
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
 
     struct rps rps = {};
 
-    // init
-    initSem(&firstByteData);
-
-
-    run15MinutesThread(&firstByteData, &interval, &rps);
+    run15MinutesThread(torrentList, &interval, &rps);
     runGarbageSocketPoolThread(socketList, stats);
-
 
 
     if (RANDOM_DATA_INFO_HASH)
@@ -84,7 +78,7 @@ int main(int argc, char *argv[]) {
     pthread_t tcpServerThread;
     struct serverTcpArgs *serverTcpArgs = (struct serverTcpArgs *) c_malloc(sizeof(struct serverTcpArgs));
     serverTcpArgs->queueList = queueList;
-    serverTcpArgs->firstByteData = &firstByteData;
+    serverTcpArgs->torrentList = torrentList;
     serverTcpArgs->stats = stats;
     serverTcpArgs->port = port;
 
@@ -100,7 +94,7 @@ int main(int argc, char *argv[]) {
     // Start UDP
     pthread_t udpServerThread;
     struct serverUdpArgs *serverUdpArgs = (struct serverUdpArgs *) c_malloc(sizeof(struct serverUdpArgs));
-    serverUdpArgs->firstByteData = &firstByteData;
+    serverUdpArgs->torrentList = torrentList;
     serverUdpArgs->stats = stats;
     serverUdpArgs->port = port;
     serverUdpArgs->interval = &interval;

@@ -2,113 +2,162 @@
 #include <stdio.h>
 #include "data_garbage.h"
 #include "data_structure.h"
-#include "data_torrent_stat.h"
 #include "time.h"
 #include "alloc.h"
+#include "list.h"
+#include "uri.h"
 
 #define OUTDATED_INTERVAL 1800
 
-void runGarbageCollector(struct block *block, struct firstByteData *firstByte) {
-    int i, j;
-    unsigned int totalPeers = 0,
-            totalTorrents = 0,
-            maxPeersInOneTorrent = 0,
-            maxTorrentsInOneHash = 0,
-            currentPeersInOneTorrent = 0,
-            currentTorrentsInOneHash = 0,
-            removedPeers = 0,
-            removedTorrents = 0;
-    long now = time(NULL);
-    long limitTime = now - OUTDATED_INTERVAL * 2;
+struct garbageStats {
+    unsigned int totalPeers;
+    unsigned int totalTorrents;
 
-    unsigned long startTime = getStartTime();
+    unsigned int maxPeersInOneTorrent;
+    unsigned int maxPeersInLeaf;
+    unsigned int maxTorrentsInOneLeaf;
 
-    for (i = 0; i < 256; i++) {
-        for (j = 0; j < 256; j++) {
-            rk_sema_wait(&firstByte->secondByteData[i].semaphore[j]);
+    unsigned int currentPeersInTorrent; // Считаю кол-во пиров в торренте
+    unsigned int currentPeersInLeaf;
+    unsigned int currentTorrentsInLeaf;
 
-            struct torrent *currentTorrent = firstByte->secondByteData[i].torrent[j];
-            struct torrent *previousTorrent = NULL;
+    unsigned int removedPeers;
+    unsigned int removedTorrents;
 
-            currentTorrentsInOneHash = 0;
+    struct list *lastTorrentLeaf;
+    struct list *lastPeerLeaf;
 
-            while (currentTorrent != NULL) {
-                totalTorrents++;
-                currentTorrentsInOneHash++;
+    long limitTime;
 
-                struct peer *currentPeer = currentTorrent->peer;
-                struct peer *previousPeer = NULL;
+    struct item *currentTorrent;
+};
 
-                currentPeersInOneTorrent = 0;
+/**
+ * Обработка следующего пира
+ * @param list
+ * @param peer
+ * @param args
+ * @return
+ */
+unsigned char runGarbageCollectorCallbackCallback(struct list *list, struct item *peer, void *args) {
+    struct garbageStats *garbageStats = args;
+    struct peerDataL *peerDataL = peer->data;
 
-                while (currentPeer != NULL) {
-                    totalPeers++;
-                    currentPeersInOneTorrent++;
+    if (garbageStats->lastPeerLeaf != list) {
+        garbageStats->currentPeersInLeaf = 0;
+    }
+    garbageStats->currentPeersInLeaf++;
+    garbageStats->lastPeerLeaf = list;
 
-                    if (currentPeer->updateTime < limitTime) {
-                        // Пир просрочен
-                        torrentChangeStats(currentTorrent, currentPeer->event, currentPeer->event, -1);
+    if (garbageStats->currentPeersInLeaf > garbageStats->maxPeersInLeaf) {
+        garbageStats->maxPeersInLeaf = garbageStats->currentPeersInLeaf;
+    }
 
-                        if (previousPeer == NULL) {
-                            currentTorrent->peer = currentPeer->next;
-                            c_free(currentPeer);
-                            currentPeer = currentTorrent->peer;
-                        } else {
-                            previousPeer->next = currentPeer->next;
-                            c_free(currentPeer);
-                            currentPeer = previousPeer->next;
-                        }
-                        removedPeers++;
-                        totalPeers--;
+    if (peerDataL->updateTime < garbageStats->limitTime) {
+        // Удаляю пир
 
-                        continue;
-                    }
+        // Правлю статистику
+        struct torrentDataL *torrentDataL = garbageStats->currentTorrent->data;
+        if (peerDataL->event == EVENT_ID_COMPLETED) {
+            torrentDataL->complete--;
+        } else {
+            torrentDataL->incomplete--;
+        }
 
-                    previousPeer = currentPeer;
-                    currentPeer = currentPeer->next;
-                }
+        // Освобождаю ресурсы
+        c_free(peer->data);
+        deleteItem(peer);
+        garbageStats->removedPeers++;
+    } else {
+        garbageStats->totalPeers++;
+        garbageStats->currentPeersInTorrent++;
+    }
 
-                if (currentPeersInOneTorrent > maxPeersInOneTorrent)
-                    maxPeersInOneTorrent = currentPeersInOneTorrent;
+    return 0;
+}
 
-                if (currentTorrent->peer == NULL) {
-                    // Надо удалить торрент, так как нет пиров
-                    if (previousTorrent == NULL) {
-                        firstByte->secondByteData[i].torrent[j] = currentTorrent->next;
-                        c_free(currentTorrent);
-                        currentTorrent = firstByte->secondByteData[i].torrent[j];
-                    } else {
-                        previousTorrent->next = currentTorrent->next;
-                        c_free(currentTorrent);
-                        currentTorrent = previousTorrent->next;
-                    }
-                    removedTorrents++;
-                    totalTorrents--;
+/**
+ * Обработка следующего торрента
+ * @param list
+ * @param torrent
+ * @param args
+ * @return
+ */
+unsigned char runGarbageCollectorCallback(struct list *list, struct item *torrent, void *args) {
+    struct garbageStats *garbageStats = args;
+    struct torrentDataL *torrentDataL = torrent->data;
 
-                    continue;
-                }
+    if (garbageStats->lastTorrentLeaf != list) {
+        garbageStats->currentTorrentsInLeaf = 0;
+    }
+    garbageStats->currentTorrentsInLeaf++;
+    garbageStats->lastTorrentLeaf = list;
 
-                previousTorrent = currentTorrent;
-                currentTorrent = currentTorrent->next;
-            }
+    if (garbageStats->currentTorrentsInLeaf > garbageStats->maxTorrentsInOneLeaf) {
+        garbageStats->maxTorrentsInOneLeaf = garbageStats->currentTorrentsInLeaf;
+    }
 
-            if (currentTorrentsInOneHash > maxTorrentsInOneHash)
-                maxTorrentsInOneHash = currentTorrentsInOneHash;
+    garbageStats->currentPeersInTorrent = 0;
+    garbageStats->currentTorrent = torrent;
 
-            rk_sema_post(&firstByte->secondByteData[i].semaphore[j]);
+    mapList(torrentDataL->peerList, args, &runGarbageCollectorCallbackCallback);
+
+    if (garbageStats->currentPeersInTorrent == 0) {
+        freeList(torrentDataL->peerList, 1);
+        c_free(torrent->data);
+        deleteItem(torrent);
+
+        garbageStats->removedTorrents++;
+    } else {
+        garbageStats->totalTorrents++;
+
+        if (garbageStats->currentPeersInTorrent > garbageStats->maxPeersInOneTorrent) {
+            garbageStats->maxPeersInOneTorrent = garbageStats->currentPeersInTorrent;
         }
     }
 
-    if (block != NULL)
-        addFormatStringBlock(block, 1000,
-                             "%.19s GRBG: "
-                             "%7d TP %7d TT "
-                             "%7d MP %7d MT "
-                             "%7d RP %7d RT "
-                             "%7lu µs",
-                             ctime((time_t *) &now),
-                             totalPeers, totalTorrents,
-                             maxPeersInOneTorrent, maxTorrentsInOneHash,
-                             removedPeers, removedTorrents,
-                             getDiffTime(startTime));
+    return 0;
+}
+
+/**
+ * Запуск сборщика мусора
+ * @param block
+ * @param torrentList
+ */
+void runGarbageCollectorL(struct block *block, struct list *torrentList) {
+    struct garbageStats garbageStats = {};
+    long now = time(NULL);
+    garbageStats.limitTime = now - OUTDATED_INTERVAL * 2;
+
+    unsigned long startTime = getStartTime();
+
+    mapList(torrentList, &garbageStats, &runGarbageCollectorCallback);
+
+    if (block == NULL)
+        return;
+
+    addFormatStringBlock(block, 4500,
+                         "GRBG: %.19s "
+                         "%7d TP "
+                         "%7d TT "
+
+                         "%7d MPT "
+                         "%7d MPL "
+                         "%7d MTL "
+
+                         "%7d RP "
+                         "%7d RT "
+                         "%7lu µs",
+                         ctime((time_t *) &now),
+                         garbageStats.totalPeers,
+                         garbageStats.totalTorrents,
+
+                         garbageStats.maxPeersInOneTorrent,
+                         garbageStats.maxPeersInLeaf,
+                         garbageStats.maxTorrentsInOneLeaf,
+
+                         garbageStats.removedPeers,
+                         garbageStats.removedTorrents,
+                         getDiffTime(startTime)
+    );
 }

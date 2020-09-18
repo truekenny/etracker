@@ -19,6 +19,7 @@
 
 struct i15MinutesArgs {
     struct firstByteData *firstByteData;
+    struct list *torrentList;
     unsigned int *interval;
     struct rps *rps;
 };
@@ -35,7 +36,7 @@ void *i15MinutesHandler(void *_args);
 
 void *garbageSocketPoolHandler(void *_args);
 
-void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval, struct rps *rps) {
+void run15MinutesThread(struct list *torrentList, unsigned int *interval, struct rps *rps) {
     pthread_attr_t tattr;
     pthread_t tid;
     int ret;
@@ -43,7 +44,8 @@ void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval,
     struct sched_param param;
 
     struct i15MinutesArgs *i15MinutesArgs = c_calloc(1, sizeof(struct i15MinutesArgs));
-    i15MinutesArgs->firstByteData = firstByte;
+    // i15MinutesArgs->firstByteData = firstByte;
+    i15MinutesArgs->torrentList = torrentList;
     i15MinutesArgs->interval = interval;
     i15MinutesArgs->rps = rps;
 
@@ -71,7 +73,8 @@ void run15MinutesThread(struct firstByteData *firstByte, unsigned int *interval,
 }
 
 void *i15MinutesHandler(void *_args) {
-    struct firstByteData *firstByte = ((struct i15MinutesArgs *) _args)->firstByteData;
+    // struct firstByteData *firstByte = ((struct i15MinutesArgs *) _args)->firstByteData;
+    struct list *torrentList = ((struct i15MinutesArgs *) _args)->torrentList;
     unsigned int *interval = ((struct i15MinutesArgs *) _args)->interval;
     struct rps *rps = ((struct i15MinutesArgs *) _args)->rps;
     c_free(_args);
@@ -79,7 +82,7 @@ void *i15MinutesHandler(void *_args) {
     while (1) {
         struct block *block = initBlock();
 
-        runGarbageCollector(block, firstByte);
+        runGarbageCollectorL(block, torrentList);
         addStringBlock(block, "  ", 2);
         updateInterval(block, interval);
 

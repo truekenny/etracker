@@ -57,7 +57,7 @@ void *serverUdpHandler(void *args) {
     long coreCount = sysconf(_SC_NPROCESSORS_ONLN);
 
     struct stats *stats = ((struct serverUdpArgs *) args)->stats;
-    struct firstByteData *firstByte = ((struct serverUdpArgs *) args)->firstByteData;
+    struct list *torrentList = ((struct serverUdpArgs *) args)->torrentList;
     unsigned short serverPort = ((struct serverUdpArgs *) args)->port;
     unsigned int *interval = ((struct serverUdpArgs *) args)->interval;
     struct rps *rps = ((struct serverUdpArgs *) args)->rps;
@@ -94,7 +94,7 @@ void *serverUdpHandler(void *args) {
         printf("Starting UDP worker %d/%ld\n", threadNumber, coreCount - 1);
 
         struct clientUdpArgs *clientUdpArgs = c_calloc(1, sizeof(struct clientUdpArgs));
-        clientUdpArgs->firstByteData = firstByte;
+        clientUdpArgs->torrentList = torrentList;
         clientUdpArgs->stats = stats;
         clientUdpArgs->serverSocket = serverSocket;
         clientUdpArgs->interval = interval;

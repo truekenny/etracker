@@ -74,6 +74,9 @@ void freeList(struct list *list, unsigned char firstRecursion) {
 
 unsigned char mapList(struct list *list, void *args,
                       unsigned char (*callback)(struct list *list, struct item *item, void *args)) {
+    if (list == NULL)
+        return 0;
+
     if (list->level > 0) {
         for (int index = 0; index < DEC_BYTE; ++index) {
             unsigned char test = mapList(&list->list[index], args, callback);
@@ -162,6 +165,10 @@ void deleteHash(struct list *list, unsigned char *hash) {
         deleteItem(item);
 }
 
+/*
+ * todo: добавить setHashLeaf, поскольку leaf получаю для блокирования семафора;
+ *  полагаю, что эта оптимизация не принесет большой оптимизации, так как getLeaf почти линейна
+ */
 struct item *setHash(struct list *list, unsigned char *hash) {
     struct list *leaf = getLeaf(list, hash);
 

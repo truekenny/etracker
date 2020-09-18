@@ -32,7 +32,7 @@ The port is indicated simultaneously for TCP and UDP.
 
 ### Settings
 
-1. Optional *full scrape* (`data_render.h` `ENABLE_FULL_SCRAPE: 0 -> 1`).
+1. Optional *full scrape* (`data.c` `ENABLE_FULL_SCRAPE: 0 -> 1`).
 
 ### Statictics
 
@@ -45,10 +45,26 @@ The port is indicated simultaneously for TCP and UDP.
 
 ### Efficiency
 
-- **1200 RPS** on one core Xeon (cpu family 6) 2100MHz take **30%**
-- **760k** peers + **520k** torrents take **91 MByte**
+#### CPU usage
+
+**1200 RPS** on one core Xeon (cpu family 6) 2100MHz take **30%**
 
 For best efficiency – all you need one core CPU.
+
+#### Memory usage
+
+Revision | Bytes per torrent | Bytes per peer | Bytes per torrent (compact structures) | Bytes per peer (compact structures) | Startup | **760k** peers + **520k** torrents | **760k** peers + **520k** torrents (compact)
+--- | --- :| --- :| --- :| --- :| --- :| --- :| --- :
+[HEAD](.) | 124 | 84 | 107 | 75 | 9.2M | 138M | 120M
+[0ec61ac](commit/0ec61ac54407d99cc59d84df4cb00cff96309936) | 56 | 56 | 48 | 43 | 6.6M | 71M | 59M
+
+0ec61ac torrent = structure torrent<br>
+0ec61ac peer = structure peer<br>
+
+HEAD torrent = structure item + hash + structure dataTorrent + structure list<br>
+HEAD peer = structure item + hash + structure dataPeer  
+
+*Better code structure comes with a price tag.*
 
 ### Similar applications
 

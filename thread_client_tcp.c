@@ -11,13 +11,11 @@
 #include "queue.h"
 #include "string.h"
 #include "uri.h"
-#include "data_change.h"
-#include "data_sem.h"
 #include "data_garbage.h"
-#include "data_render.h"
 #include "socket.h"
 #include "block.h"
 #include "equeue.h"
+#include "data.h"
 
 #define DEBUG 0
 #define DEBUG_KQUEUE 0
@@ -37,12 +35,12 @@
 void *clientTcpHandler(void *args) {
     int threadNumber = ((struct clientTcpArgs *) args)->threadNumber;
     struct list *queueList = ((struct clientTcpArgs *) args)->queueList;
-    struct firstByteData *firstByteData = ((struct clientTcpArgs *) args)->firstByteData;
+    struct list *torrentList = ((struct clientTcpArgs *) args)->torrentList;
     struct stats *stats = ((struct clientTcpArgs *) args)->stats;
 
     int equeue = ((struct clientTcpArgs *) args)->equeue;
 
-    struct list *socketList =  ((struct clientTcpArgs *) args)->socketList;
+    struct list *socketList = ((struct clientTcpArgs *) args)->socketList;
 
     unsigned int *interval = ((struct clientTcpArgs *) args)->interval;
     struct rps *rps = ((struct clientTcpArgs *) args)->rps;
@@ -149,23 +147,23 @@ void *clientTcpHandler(void *args) {
                                 renderHttpMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
                                                   stats);
                             } else {
-                                struct torrent *torrent;
+                                // struct torrent *torrent;
                                 struct block *block = initBlock();
 
-                                switch (query.event) {
-                                    case EVENT_ID_STOPPED:
-                                        waitSem(firstByteData, &query);
-                                        torrent = deletePeer(firstByteData, &query);
-                                        renderPeers(block, torrent, &query, interval);
-                                        postSem(firstByteData, &query);
-                                        break;
-                                    default:
-                                        waitSem(firstByteData, &query);
-                                        torrent = updatePeer(firstByteData, &query);
-                                        renderPeers(block, torrent, &query, interval);
-                                        postSem(firstByteData, &query);
-                                        break;
-                                } // End of switch
+                                struct list *leaf = getLeaf(torrentList, query.info_hash);
+                                waitSemaphoreLeaf(leaf);
+
+
+                                struct item *torrent;
+                                if (query.event == EVENT_ID_STOPPED) {
+                                    torrent = deletePeerPublic(torrentList, &query);
+                                } else {
+                                    torrent = setPeerPublic(torrentList, &query);
+                                }
+
+                                renderAnnouncePublic(block, torrent, &query, *interval);
+
+                                postSemaphoreLeaf(leaf);
 
                                 renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                                 freeBlock(block);
@@ -182,8 +180,10 @@ void *clientTcpHandler(void *args) {
                             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                             freeBlock(block);
                         } else if (DEBUG && startsWith("GET /garbage", readBuffer)) {
-                            runGarbageCollector(NULL, firstByteData);
-                            renderHttpMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
+                            struct block *block = initBlock();
+                            runGarbageCollectorL(block, torrentList);
+                            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
+                            freeBlock(block);
                         } else if (startsWith("GET / ", readBuffer)) {
                             renderHttpMessage(writeBlock, 200,
                                               "github.com/truekenny/etracker - open-source BitTorrent tracker\n", 63,
@@ -200,7 +200,7 @@ void *clientTcpHandler(void *args) {
                                 renderHttpMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
                                                   stats);
                             } else {
-                                renderTorrents(block, firstByteData, hashes, 0);
+                                renderScrapeTorrentsPublic(block, torrentList, hashes, &query);
                                 renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                             }
 
