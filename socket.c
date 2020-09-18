@@ -70,7 +70,7 @@ void renderHttpMessage(struct block *block, int code, char *message, size_t size
 
     addFormatStringBlock(block, 1000, "Content-Type: text/plain\r\n"
                                       "Content-Length: %zu\r\n"
-                                      "Server: github.com/truekenny/sc6\r\n"
+                                      "Server: github.com/truekenny/etracker\r\n"
                                       "\r\n",
                          size
     );

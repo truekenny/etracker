@@ -186,7 +186,7 @@ void *clientTcpHandler(void *args) {
                             renderHttpMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
                         } else if (startsWith("GET / ", readBuffer)) {
                             renderHttpMessage(writeBlock, 200,
-                                              "github.com/truekenny/sc6 - open-source BitTorrent tracker\n", 58,
+                                              "github.com/truekenny/etracker - open-source BitTorrent tracker\n", 63,
                                               canKeepAlive, stats);
                         } else if (startsWith("GET /scrape", readBuffer)) {
                             stats->scrape++;

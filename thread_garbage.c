@@ -89,6 +89,9 @@ void *i15MinutesHandler(void *_args) {
         freeBlock(block);
 
         sleep(I_15_MINUTES_TIME);
+
+        // Чтобы нормально работала подсветка кода в IDE
+        if (rand() % 2 == 3) break;
     }
 
     return 0;

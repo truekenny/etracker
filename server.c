@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     unsigned int interval = (argc < 3) ? MAX_INTERVAL : atoi(argv[2]);
 
     if (!port || !interval) {
-        printf("./server.o [port] [interval]\n");
+        printf("./etracker [port] [interval]\n");
 
         exit(1);
     }

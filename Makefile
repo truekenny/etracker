@@ -3,16 +3,16 @@ SERVER_FILES=server.c queue.c sem.c alloc.c uri.c socket.c string.c thread_clien
 	stats.c socket_tcp.c socket_udp.c thread_garbage.c data_structure.c data_sem.c data_garbage.c data_torrent_stat.c \
 	data_render.c thread_client_udp.c socket_udp_structure.c data_get.c equeue.c socket_garbage.c interval.c \
 	udp_request.c rps.c list.c
-SERVER_OUTPUT=-o server.o
+SERVER_OUTPUT=-o etracker
 SERVER_CFLAGS=-pthread -lm
 REVISION=`test -d .git && git rev-parse --short HEAD`
-RM_SERVER=rm -rf server.o.dSYM
+RM_SERVER=rm -rf etracker.dSYM
 RM_CLIENT=rm -rf client.o.dSYM
 
 all:
 	$(RM_SERVER)
 	$(RM_CLIENT)
-	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\"
+	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast
 	$(CC) client.c -o client.o
 tidy:
 	$(RM_SERVER)

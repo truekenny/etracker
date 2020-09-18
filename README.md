@@ -1,21 +1,21 @@
-## sc6 - open-source BitTorrent tracker
+## etracker - open-source BitTorrent tracker
 
-**sc6** aims for maximum stability and minimal resource usage.
+**etracker** aims for maximum stability and minimal resource usage.
 
-**sc6** implements 
+**etracker** implements 
 [The BitTorrent Protocol Specification](https://www.bittorrent.org/beps/bep_0003.html),
 [UDP Tracker Protocol for BitTorrent](https://www.bittorrent.org/beps/bep_0003.html).
 
 ### Build
 
-    git clone git@github.com:truekenny/sc6.git
+    git clone git@github.com:truekenny/etracker.git
 	make server	
 
 ### Run
 
-    ./server.o port
+    ./etracker [port]
 
-Example: `./server.o 6969`
+Example: `./etracker 6969`
 The port is indicated simultaneously for TCP and UDP.
 
 ### Interfaces
@@ -56,7 +56,7 @@ For best efficiency – all you need one core CPU.
 
 ##### Comparison (same pc, rps)
 
-![opentracker](https://raw.githubusercontent.com/truekenny/sc6/master/Pictures/opentracker.png)
+![opentracker](https://raw.githubusercontent.com/truekenny/etracker/master/Pictures/opentracker.png)
 
 Where these peaks come from on the chart - I don't know.
 If this were the result of dos scrape requests, then net-out would be clearly visible, but it will not be at all.
