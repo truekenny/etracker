@@ -125,9 +125,25 @@ void *serverUdpHandler(void *args) {
 
     unsigned long receiveCount = 0;
 
-    while ((receivedSize = recvfrom(serverSocket, (char *) receivedMessage, RECEIVED_UDP_MESSAGE_LENGTH,
-                                    MSG_WAITALL, (struct sockaddr *) &clientAddr,
-                                    (socklen_t *) &sockAddrSize)) > 0) {
+    while (1) {
+        receivedSize = recvfrom(serverSocket, (char *) receivedMessage, RECEIVED_UDP_MESSAGE_LENGTH,
+                                MSG_WAITALL, (struct sockaddr *) &clientAddr,
+                                (socklen_t *) &sockAddrSize);
+
+        if (receivedSize == 0) {
+            printf("Recvfrom return 0\n");
+            stats->recv_failed_udp++;
+
+            continue;
+        }
+
+        if (receivedSize < 0) {
+            printf("Recvfrom return < 0\n");
+            stats->recv_failed_udp++;
+
+            continue;
+        }
+
 
         updateRps(rps);
         stats->recv_pass_udp++;
@@ -154,6 +170,9 @@ void *serverUdpHandler(void *args) {
         pthread_mutex_lock(&mutexSignalRequest);
         pthread_cond_signal(&signalRequest);
         pthread_mutex_unlock(&mutexSignalRequest);
+
+        // Чтобы нормально работала подсветка кода в IDE
+        if (rand() % 2 == 3) break;
     } // while recv
 
     puts("UDP server socket finished");

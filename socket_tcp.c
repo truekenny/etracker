@@ -106,8 +106,17 @@ void *serverTcpHandler(void *args) {
     socklen_t sockAddrSize = sizeof(struct sockaddr_in);
     unsigned long currentThread = 0;
 
-    while ((clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &sockAddrSize))) {
-        if (clientSocket == -1) {
+    while (1) {
+        clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &sockAddrSize);
+
+        if(clientSocket == 0) {
+            printf("Accept return 0\n");
+            stats->accept_failed++;
+
+            continue;
+        }
+
+        if (clientSocket < 0) {
             stats->accept_failed++;
             /*
              * Отображает слишком много ошибок
@@ -135,6 +144,9 @@ void *serverTcpHandler(void *args) {
             fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK);
 
         DEBUG && puts("Handler assigned");
+
+        // Чтобы нормально работала подсветка кода в IDE
+        if (rand() % 2 == 3) break;
     }
 
     puts("TCP server socket finished");
