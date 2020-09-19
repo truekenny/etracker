@@ -66,6 +66,8 @@ void renderHttpMessage(struct block *block, int code, char *message, size_t size
     // End of headers
     if (canKeepAlive) {
         addStringBlock(block, "Connection: Keep-Alive\r\n", 24);
+    } else {
+        addStringBlock(block, "Connection: Close\r\n", 19);
     }
 
     addFormatStringBlock(block, 1000, "Content-Type: text/plain\r\n"
