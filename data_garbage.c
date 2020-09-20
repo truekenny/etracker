@@ -64,8 +64,6 @@ unsigned char runGarbageCollectorCallbackCallback(struct list *list, struct item
             torrentDataL->incomplete--;
         }
 
-        // Освобождаю ресурсы
-        c_free(peer->data);
         deleteItem(peer);
         garbageStats->removedPeers++;
     } else {
@@ -104,7 +102,7 @@ unsigned char runGarbageCollectorCallback(struct list *list, struct item *torren
 
     if (garbageStats->currentPeersInTorrent == 0) {
         freeList(torrentDataL->peerList, 1);
-        c_free(torrent->data);
+
         deleteItem(torrent);
 
         garbageStats->removedTorrents++;

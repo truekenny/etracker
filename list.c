@@ -154,6 +154,9 @@ void deleteItem(struct item *item) {
         }
     }
 
+    if (item->data != NULL) {
+        c_free(item->data);
+    }
     c_free(item->hash);
     c_free(item);
 }

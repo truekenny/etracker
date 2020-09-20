@@ -48,7 +48,6 @@ void deleteSocketItemL(struct item *item, struct stats *stats) {
         } else {
             stats->close_pass++;
         }
-        c_free(socketData);
 
         deleteItem(item);
     }

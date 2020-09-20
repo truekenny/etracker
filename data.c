@@ -329,7 +329,6 @@ struct item *deletePeerPublic(struct list *torrentList, struct query *query) {
             // Удаление из статистики
             changeTorrentStatsL(torrent, peerDataL->event, EVENT_ID_NONE);
 
-            c_free(peer->data);
             deleteItem(peer);
         }
     }
