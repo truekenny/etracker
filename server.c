@@ -100,13 +100,13 @@ int main(int argc, char *argv[]) {
         return 102;
     }
 
-    run15MinutesThread(torrentList, &interval, &rps);
-    runGarbageSocketPoolThread(socketList, stats);
-
     // Надо успеть забиндить порт, а затем уже сбрасывать права
     sleep(1);
     setNobody();
 
+    run15MinutesThread(torrentList, &interval, &rps);
+    runGarbageSocketPoolThread(socketList, stats);
+    
     printf("Join TCP Thread\n");
     pthread_join(tcpServerThread, NULL);
     printf("Join UDP Thread\n");
