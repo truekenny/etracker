@@ -37,36 +37,29 @@ int main(int argc, char *argv[]) {
 
     unsigned short port = (argc < 2) ? DEFAULT_PORT : atoi(argv[1]);
     unsigned int interval = (argc < 3) ? MAX_INTERVAL : atoi(argv[2]);
+    long workers = (argc < 4) ? sysconf(_SC_NPROCESSORS_ONLN) : atoi(argv[3]);
 
-    if (!port || !interval) {
-        printf("./etracker [port] [interval]\n");
+    if (!port || !interval || !workers) {
+        printf("./etracker [port] [interval] [workers]\n");
 
         exit(1);
     }
 
-    printf("Starting configuration: port = %d, interval = %d\n", port, interval);
+    printf("Starting configuration: port = %d, interval = %d, workers = %ld\n", port, interval, workers);
 
-    printf("This system has %ld processors configured and "
-           "%ld processors available.\n",
-           sysconf(_SC_NPROCESSORS_CONF),
-           sysconf(_SC_NPROCESSORS_ONLN));
+    printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 
     c_initSem();
 
     // vars
     struct list *queueList = initList(NULL, 0, 0, sizeof(int), 1);
-
     struct list *socketList = initList(NULL, 1, 0, sizeof(int), 1);
-
     struct list *torrentList = initList(NULL, 2, 0, PARAM_VALUE_LENGTH, 1);
 
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
 
     struct rps rps = {};
-
-    run15MinutesThread(torrentList, &interval, &rps);
-    runGarbageSocketPoolThread(socketList, stats);
 
 
     if (RANDOM_DATA_INFO_HASH)
@@ -81,11 +74,11 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->torrentList = torrentList;
     serverTcpArgs->stats = stats;
     serverTcpArgs->port = port;
-
     serverTcpArgs->socketList = socketList;
-
     serverTcpArgs->interval = &interval;
     serverTcpArgs->rps = &rps;
+    serverTcpArgs->workers = workers;
+
     if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
         perror("Could not create thread");
 
@@ -99,12 +92,19 @@ int main(int argc, char *argv[]) {
     serverUdpArgs->port = port;
     serverUdpArgs->interval = &interval;
     serverUdpArgs->rps = &rps;
+    serverUdpArgs->workers = workers;
+
     if (pthread_create(&udpServerThread, NULL, serverUdpHandler, (void *) serverUdpArgs) != 0) {
         perror("Could not create thread");
 
         return 102;
     }
 
+    run15MinutesThread(torrentList, &interval, &rps);
+    runGarbageSocketPoolThread(socketList, stats);
+
+    // Надо успеть забиндить порт, а затем уже сбрасывать права
+    sleep(1);
     setNobody();
 
     printf("Join TCP Thread\n");

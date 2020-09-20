@@ -8,11 +8,11 @@
 struct serverUdpArgs {
     unsigned short port;
     struct stats *stats;
-    // struct firstByteData *firstByteData;
     struct list *torrentList;
     unsigned int  *interval;
 
     struct rps *rps;
+    long workers;
 };
 
 void *serverUdpHandler(void *args);

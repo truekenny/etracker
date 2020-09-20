@@ -18,15 +18,12 @@
 #define SOCKET_TIMEOUT 3
 
 struct i15MinutesArgs {
-    struct firstByteData *firstByteData;
     struct list *torrentList;
     unsigned int *interval;
     struct rps *rps;
 };
 
 struct garbageSocketPoolArgs {
-    // struct socketPool **socketPool;
-    // struct rk_sema *semaphoreSocketPool;
     struct list *socketList;
 
     struct stats *stats;
@@ -44,36 +41,25 @@ void run15MinutesThread(struct list *torrentList, unsigned int *interval, struct
     struct sched_param param;
 
     struct i15MinutesArgs *i15MinutesArgs = c_calloc(1, sizeof(struct i15MinutesArgs));
-    // i15MinutesArgs->firstByteData = firstByte;
     i15MinutesArgs->torrentList = torrentList;
     i15MinutesArgs->interval = interval;
     i15MinutesArgs->rps = rps;
 
-    // initialized with default attributes
     ret = pthread_attr_init(&tattr);
-
-    // safe to get existing scheduling param
     ret = pthread_attr_getschedparam(&tattr, &param);
 
     if (param.sched_priority > newPriority) {
         printf("Garbage data thread change priority %d -> %d\n", param.sched_priority, newPriority);
-
-        // set the priority; others are unchanged
         param.sched_priority = newPriority;
     } else {
         printf("Garbage data thread NO change priority %d -> %d\n", param.sched_priority, newPriority);
     }
 
-
-    // setting the new scheduling param
     ret = pthread_attr_setschedparam(&tattr, &param);
-
-    // with new priority specified
     ret = pthread_create(&tid, &tattr, i15MinutesHandler, (void *) i15MinutesArgs);
 }
 
 void *i15MinutesHandler(void *_args) {
-    // struct firstByteData *firstByte = ((struct i15MinutesArgs *) _args)->firstByteData;
     struct list *torrentList = ((struct i15MinutesArgs *) _args)->torrentList;
     unsigned int *interval = ((struct i15MinutesArgs *) _args)->interval;
     struct rps *rps = ((struct i15MinutesArgs *) _args)->rps;
@@ -112,26 +98,17 @@ runGarbageSocketPoolThread(struct list *socketList, struct stats *stats) {
     garbageSocketPoolArgs->socketList = socketList;
     garbageSocketPoolArgs->stats = stats;
 
-    // initialized with default attributes
     ret = pthread_attr_init(&tattr);
-
-    // safe to get existing scheduling param
     ret = pthread_attr_getschedparam(&tattr, &param);
 
     if (param.sched_priority > newPriority) {
         printf("Garbage socket pool thread change priority %d -> %d\n", param.sched_priority, newPriority);
-
-        // set the priority; others are unchanged
         param.sched_priority = newPriority;
     } else {
         printf("Garbage socket pool thread NO change priority %d -> %d\n", param.sched_priority, newPriority);
     }
 
-
-    // setting the new scheduling param
     ret = pthread_attr_setschedparam(&tattr, &param);
-
-    // with new priority specified
     ret = pthread_create(&tid, &tattr, garbageSocketPoolHandler, (void *) garbageSocketPoolArgs);
 }
 

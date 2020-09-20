@@ -54,13 +54,12 @@ void *serverUdpHandler(void *args) {
     struct rk_sema semaphoreRequest = {0};
     rk_sema_init(&semaphoreRequest, 1);
 
-    long coreCount = sysconf(_SC_NPROCESSORS_ONLN);
-
     struct stats *stats = ((struct serverUdpArgs *) args)->stats;
     struct list *torrentList = ((struct serverUdpArgs *) args)->torrentList;
     unsigned short serverPort = ((struct serverUdpArgs *) args)->port;
     unsigned int *interval = ((struct serverUdpArgs *) args)->interval;
     struct rps *rps = ((struct serverUdpArgs *) args)->rps;
+    long workers = ((struct serverUdpArgs *) args)->workers;
     c_free(args);
 
     int serverSocket;
@@ -90,8 +89,8 @@ void *serverUdpHandler(void *args) {
     }
 
     // Starting Workers
-    for (int threadNumber = 0; threadNumber < coreCount; threadNumber++) {
-        printf("Starting UDP worker %d/%ld\n", threadNumber, coreCount - 1);
+    for (int threadNumber = 0; threadNumber < workers; threadNumber++) {
+        printf("Starting UDP worker %d/%ld\n", threadNumber, workers - 1);
 
         struct clientUdpArgs *clientUdpArgs = c_calloc(1, sizeof(struct clientUdpArgs));
         clientUdpArgs->torrentList = torrentList;

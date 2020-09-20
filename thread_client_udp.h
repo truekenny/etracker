@@ -7,7 +7,6 @@
 
 struct clientUdpArgs {
     int serverSocket;
-    // struct firstByteData *firstByteData;
     struct list *torrentList;
     struct stats *stats;
     unsigned int *interval;

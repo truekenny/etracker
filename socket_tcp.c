@@ -25,14 +25,11 @@ void *serverTcpHandler(void *args) {
     struct list *queueList = ((struct serverTcpArgs *) args)->queueList;
     struct list *torrentList =  ((struct serverTcpArgs *) args)->torrentList;
     unsigned short port = ((struct serverTcpArgs *) args)->port;
-
     struct list *socketList =  ((struct serverTcpArgs *) args)->socketList;
-
     unsigned int *interval =  ((struct serverTcpArgs *) args)->interval;
     struct rps *rps = ((struct serverTcpArgs *) args)->rps;
+    long workers =((struct serverTcpArgs *) args)->workers;
     c_free(args);
-
-    long coreCount = sysconf(_SC_NPROCESSORS_ONLN);
 
     int serverSocket;
     struct sockaddr_in serverAddr;
@@ -67,12 +64,12 @@ void *serverTcpHandler(void *args) {
     }
     DEBUG && puts("Bind done");
 
-    int *equeue = c_calloc(coreCount, sizeof(int));
+    int *equeue = c_calloc(workers, sizeof(int));
 
     pthread_t tcpClientThread;
     // Кол-во воркеров = кол-ву ядер
-    for (int threadNumber = 0; threadNumber < coreCount; threadNumber++) {
-        printf("Starting TCP worker %d/%ld\n", threadNumber, coreCount - 1);
+    for (int threadNumber = 0; threadNumber < workers; threadNumber++) {
+        printf("Starting TCP worker %d/%ld\n", threadNumber, workers - 1);
 
         struct clientTcpArgs *clientTcpArgs = (struct clientTcpArgs *) c_malloc(sizeof(struct clientTcpArgs));
         clientTcpArgs->threadNumber = threadNumber;
@@ -129,7 +126,7 @@ void *serverTcpHandler(void *args) {
         updateRps(rps);
         stats->accept_pass++;
 
-        int equeueThread = equeue[(currentThread++) % coreCount];
+        int equeueThread = equeue[(currentThread++) % workers];
 
         updateSocketL(socketList, clientSocket, equeueThread);
 

@@ -12,13 +12,14 @@ struct serverTcpArgs {
     unsigned short port;
     struct stats *stats;
     struct list *queueList;
-    // struct firstByteData *firstByteData;
     struct list *torrentList;
 
     struct list *socketList;
 
     unsigned int *interval;
     struct rps *rps;
+
+    long workers;
 };
 
 void *serverTcpHandler(void *args);
