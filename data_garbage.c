@@ -12,6 +12,7 @@
 struct garbageStats {
     unsigned int totalPeers;
     unsigned int totalTorrents;
+    unsigned int totalTorrentsWithChangeLimit; // Торренты, для которых менялся level у структуры peerList
 
     unsigned int maxPeersInOneTorrent;
     unsigned int maxPeersInLeaf;
@@ -112,6 +113,10 @@ unsigned char runGarbageCollectorCallback(struct list *list, struct item *torren
         if (garbageStats->currentPeersInTorrent > garbageStats->maxPeersInOneTorrent) {
             garbageStats->maxPeersInOneTorrent = garbageStats->currentPeersInTorrent;
         }
+
+        if (garbageStats->currentPeersInTorrent > LIMIT_PEERS_FOR_LEVEL_0) {
+            garbageStats->totalTorrentsWithChangeLimit++;
+        }
     }
 
     return 0;
@@ -138,6 +143,7 @@ void runGarbageCollectorL(struct block *block, struct list *torrentList) {
                          "GRBG: %.19s "
                          "%7d TP "
                          "%7d TT "
+                         "%7d TL "
 
                          "%7d MPT "
                          "%7d MPL "
@@ -149,6 +155,7 @@ void runGarbageCollectorL(struct block *block, struct list *torrentList) {
                          ctime((time_t *) &now),
                          garbageStats.totalPeers,
                          garbageStats.totalTorrents,
+                         garbageStats.totalTorrentsWithChangeLimit,
 
                          garbageStats.maxPeersInOneTorrent,
                          garbageStats.maxPeersInLeaf,

@@ -3,6 +3,9 @@
 
 #include "sem.h"
 
+// Максимальное кол-во пиров, на структуру peerList с level=0
+#define LIMIT_PEERS_FOR_LEVEL_0 256
+
 struct peerDataL {
     unsigned short port;
     unsigned int ip;

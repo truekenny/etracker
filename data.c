@@ -348,7 +348,7 @@ struct item *setPeerPublic(struct list *torrentList, struct query *query) {
 
     struct list *peerList = torrentDataL->peerList;
 
-    if (torrentDataL->complete + torrentDataL->incomplete > 256
+    if (torrentDataL->complete + torrentDataL->incomplete > LIMIT_PEERS_FOR_LEVEL_0
         && peerList->level == 0) {
         peerList = reInitList(peerList, 1);
         torrentDataL->peerList = peerList;
