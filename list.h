@@ -32,6 +32,8 @@ void postSemaphoreLeaf(struct list *leaf);
 
 struct list *getLeaf(struct list *list, unsigned char *hash);
 
+struct list *reInitList(struct list *list, unsigned char level);
+
 struct list *initList(struct list *list, unsigned char level, unsigned char nest, unsigned char hashLength,
                       unsigned char semaphoreEnabled);
 

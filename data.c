@@ -344,8 +344,15 @@ struct item *deletePeerPublic(struct list *torrentList, struct query *query) {
  */
 struct item *setPeerPublic(struct list *torrentList, struct query *query) {
     struct item *torrent = setTorrentL(torrentList, query->info_hash);
+    struct torrentDataL *torrentDataL = torrent->data;
 
-    struct list *peerList = ((struct torrentDataL *) torrent->data)->peerList;
+    struct list *peerList = torrentDataL->peerList;
+
+    if (torrentDataL->complete + torrentDataL->incomplete > 256
+        && peerList->level == 0) {
+        peerList = reInitList(peerList, 1);
+        torrentDataL->peerList = peerList;
+    }
 
     struct item *peer = setHash(peerList, query->peer_id);
 

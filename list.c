@@ -7,6 +7,33 @@
 #define LIMIT_LEVEL 2
 #define DEC_BYTE 256
 
+unsigned char reInitListCallback(struct list *list, struct item *item, void *args) {
+    if (list == NULL) {
+        // unused
+    }
+
+    struct list *resultList = args;
+
+    struct item *newItem = setHash(resultList, item->hash);
+
+    // Сохраняю данные в новом item
+    newItem->data = item->data;
+    // В старом теряю указатель, чтобы не освободить в функции удаления item
+    item->data = NULL;
+    deleteItem(item);
+
+    return 0;
+}
+
+struct list *reInitList(struct list *list, unsigned char level) {
+    struct list *resultList = initList(NULL, level, 0, list->hashLength, list->semaphoreEnabled);
+
+    mapList(list, resultList, &reInitListCallback);
+    freeList(list, 1);
+
+    return resultList;
+}
+
 struct list *initList(struct list *list, unsigned char level, unsigned char nest, unsigned char hashLength,
                       unsigned char semaphoreEnabled) {
 

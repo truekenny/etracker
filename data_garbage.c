@@ -17,8 +17,8 @@ struct garbageStats {
     unsigned int maxPeersInLeaf;
     unsigned int maxTorrentsInOneLeaf;
 
-    unsigned int currentPeersInTorrent; // Считаю кол-во пиров в торренте
-    unsigned int currentPeersInLeaf;
+    unsigned int currentPeersInTorrent; // Кол-во пиров в торренте, которые остались после сборки мусора
+    unsigned int currentPeersInLeaf; // Кол-во пиров в листе, которые были до сборки мусора
     unsigned int currentTorrentsInLeaf;
 
     unsigned int removedPeers;
