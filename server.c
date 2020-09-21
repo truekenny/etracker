@@ -52,9 +52,9 @@ int main(int argc, char *argv[]) {
     c_initSem();
 
     // vars
-    struct list *queueList = initList(NULL, 0, 0, sizeof(int), 1);
-    struct list *socketList = initList(NULL, 1, 0, sizeof(int), 1);
-    struct list *torrentList = initList(NULL, 2, 0, PARAM_VALUE_LENGTH, 1);
+    struct list *queueList = initList(NULL, 0, STARTING_NEST, sizeof(int), ENABLE_SEMAPHORE, LITTLE_ENDIAN);
+    struct list *socketList = initList(NULL, 1, STARTING_NEST, sizeof(int), ENABLE_SEMAPHORE, LITTLE_ENDIAN);
+    struct list *torrentList = initList(NULL, 2, STARTING_NEST, PARAM_VALUE_LENGTH, ENABLE_SEMAPHORE, LITTLE_ENDIAN);
 
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
 
     run15MinutesThread(torrentList, &interval, &rps);
     runGarbageSocketPoolThread(socketList, stats);
-    
+
     printf("Join TCP Thread\n");
     pthread_join(tcpServerThread, NULL);
     printf("Join UDP Thread\n");

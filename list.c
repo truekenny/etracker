@@ -26,7 +26,8 @@ unsigned char reInitListCallback(struct list *list, struct item *item, void *arg
 }
 
 struct list *reInitList(struct list *list, unsigned char level) {
-    struct list *resultList = initList(NULL, level, 0, list->hashLength, list->semaphoreEnabled);
+    struct list *resultList =
+            initList(NULL, level, STARTING_NEST, list->hashLength, list->semaphoreEnabled, list->endianness);
 
     mapList(list, resultList, &reInitListCallback);
     freeList(list, 1);
@@ -35,7 +36,7 @@ struct list *reInitList(struct list *list, unsigned char level) {
 }
 
 struct list *initList(struct list *list, unsigned char level, unsigned char nest, unsigned char hashLength,
-                      unsigned char semaphoreEnabled) {
+                      unsigned char semaphoreEnabled, unsigned short endianness) {
 
     if (level > LIMIT_LEVEL) {
         printf("Level limit = %d, current = %d\n", LIMIT_LEVEL, level);
@@ -55,13 +56,14 @@ struct list *initList(struct list *list, unsigned char level, unsigned char nest
     list->level = level;
     list->hashLength = hashLength;
     list->semaphoreEnabled = semaphoreEnabled;
+    list->endianness = endianness;
 
     if (level > 0) {
         list->list = c_calloc(DEC_BYTE, sizeof(struct list));
 
         for (int index = 0; index < DEC_BYTE; ++index) {
             initList(&list->list[index], level - 1, nest + 1, hashLength,
-                     semaphoreEnabled);
+                     semaphoreEnabled, endianness);
         }
     }
 
@@ -279,7 +281,10 @@ struct list *getLeaf(struct list *list, unsigned char *hash) {
     unsigned char nest = 0;
 
     while (currentList->level > 0) {
-        currentList = &currentList->list[hash[nest]];
+        if (list->endianness == BIG_ENDIAN)
+            currentList = &currentList->list[hash[list->hashLength - 1 - nest]];
+        else
+            currentList = &currentList->list[hash[nest]];
         nest++;
     }
 

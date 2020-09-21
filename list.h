@@ -3,6 +3,15 @@
 
 #include "sem.h"
 
+#define STARTING_NEST 0
+
+#define DISABLE_SEMAPHORE 0
+#define ENABLE_SEMAPHORE 1
+
+// По первым байтам
+// #define LITTLE_ENDIAN 0
+// #define BIG_ENDIAN 1
+
 struct item {
     unsigned char *hash;
 
@@ -17,6 +26,10 @@ struct item {
 struct list {
     unsigned char hashLength;
     unsigned char level; // 0 - 2
+
+    // Параметр влияет на то, по каким байтам хэша будет выбираться лист
+    // (по первым - LITTLE_ENDIAN или последним - BIG_ENDIAN)
+    unsigned short endianness;
 
     struct list *list;
 
@@ -35,7 +48,7 @@ struct list *getLeaf(struct list *list, unsigned char *hash);
 struct list *reInitList(struct list *list, unsigned char level);
 
 struct list *initList(struct list *list, unsigned char level, unsigned char nest, unsigned char hashLength,
-                      unsigned char semaphoreEnabled);
+                      unsigned char semaphoreEnabled, unsigned short endianness);
 
 void freeList(struct list *list, unsigned char firstRecursion);
 

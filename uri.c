@@ -149,10 +149,10 @@ void getParam(struct query *query, struct block *block, char *param, char *value
 
         // Random peers
         if (RANDOM_DATA_PEER_ID) {
-            query->peer_id[0] = (rand() % 256);
-            query->peer_id[1] = (rand() % 256);
-            query->peer_id[2] = (rand() % 256);
-            query->peer_id[3] = (rand() % 256);
+            query->peer_id[PARAM_VALUE_LENGTH - 1] = (rand() % 256);
+            query->peer_id[PARAM_VALUE_LENGTH - 2] = (rand() % 256);
+            query->peer_id[PARAM_VALUE_LENGTH - 3] = (rand() % 256);
+            query->peer_id[PARAM_VALUE_LENGTH - 4] = (rand() % 256);
         }
 
     } else if (!strcmp(param, "compact")) {

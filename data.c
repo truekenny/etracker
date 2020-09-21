@@ -2,6 +2,7 @@
 #include <memory.h>
 #include <stdio.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 #include "data.h"
 #include "alloc.h"
 #include "socket_udp_structure.h"
@@ -28,9 +29,8 @@ struct item *setTorrentL(struct list *torrentList, unsigned char *hash) {
 
     if (torrent->data == NULL) {
         torrent->data = c_calloc(1, sizeof(struct torrentDataL));
-        // todo: продумать смену формата налету, например, если пиров больше 256, то делать level=2
         ((struct torrentDataL *) torrent->data)->peerList =
-                initList(NULL, 0, 0, PARAM_VALUE_LENGTH, 0);
+                initList(NULL, 0, STARTING_NEST, PARAM_VALUE_LENGTH, DISABLE_SEMAPHORE, BIG_ENDIAN);
     }
 
     return torrent;

@@ -1,7 +1,5 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <memory.h>
-#include "queue.h"
+#include <stdlib.h>
 #include "block.h"
 #include "list.h"
 #include "alloc.h"
@@ -58,7 +56,7 @@ int testList() {
            c_countChanges->countMalloc + c_countChanges->countCalloc - c_countChanges->countFree);
 
     struct list *list = NULL;
-    list = initList(NULL, 2, 0, 2, 1);
+    list = initList(NULL, 2, STARTING_NEST, 2, ENABLE_SEMAPHORE, LITTLE_ENDIAN);
 
     // Обхожу пустой список
     mapList(list, NULL, &listPrintCallback);
@@ -90,6 +88,10 @@ int testList() {
         setHash(list, add[index]);
         printList(list, 0);
     }
+
+    printf("reInitList\n");
+    list = reInitList(list, 1);
+
     const unsigned char deleteCount = 17;
     unsigned char delete[deleteCount][3] = {
             "14\x00",
