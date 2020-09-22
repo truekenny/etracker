@@ -25,7 +25,6 @@
  * Если включить, это влияет очень сильно на CPU
  * Возможно из-за роста sockPool
  */
-#define KEEP_ALIVE 0
 #define RECEIVED_MESSAGE_LENGTH 2000
 
 /**
@@ -45,6 +44,7 @@ void *clientTcpHandler(void *args) {
     struct block *authorizationHeader = ((struct clientTcpArgs *) args)->authorizationHeader;
     unsigned int *maxPeersPerResponse = ((struct clientTcpArgs *) args)->maxPeersPerResponse;
     unsigned short *socketTimeout = ((struct clientTcpArgs *) args)->socketTimeout;
+    unsigned char *keepAlive = ((struct clientTcpArgs *) args)->keepAlive;
 
     c_free(args);
 
@@ -123,8 +123,14 @@ void *clientTcpHandler(void *args) {
                     if (isHttp) {
                         DEBUG && printf("Message complete\n");
 
-                        canKeepAlive = KEEP_ALIVE && ((strstr(readBuffer, "HTTP/1.1") != NULL)
-                                                      || (strstr(readBuffer, "Connection: Keep-Alive") != NULL));
+                        canKeepAlive = *keepAlive
+                                       && (
+                                               (
+                                                       (strstr(readBuffer, "HTTP/1.1") != NULL)
+                                                       && (strstr(readBuffer, "Connection: Close") == NULL)
+                                               )
+                                               || (strstr(readBuffer, "Connection: Keep-Alive") != NULL)
+                                       );
 
                         if (startsWith("GET /announce", readBuffer)) {
                             stats->announce++;
@@ -183,9 +189,11 @@ void *clientTcpHandler(void *args) {
                                 struct block *block = initBlock();
                                 addFormatStringBlock(block, 500,
                                                      "Before request:"
+                                                     "  keep_alive = %2u"
                                                      "  interval = %4u"
                                                      "  max_peers_response = %4u"
                                                      "  socket_timeout = %2u\n",
+                                                     *keepAlive,
                                                      *interval,
                                                      *maxPeersPerResponse,
                                                      *socketTimeout);
@@ -196,12 +204,16 @@ void *clientTcpHandler(void *args) {
                                     *maxPeersPerResponse = query.max_peers_per_response;
                                 if (query.socket_timeout)
                                     *socketTimeout = query.socket_timeout;
+                                if (query.keep_alive)
+                                    *keepAlive = query.keep_alive == 1;
 
                                 addFormatStringBlock(block, 500,
                                                      "After  request:"
+                                                     "  keep_alive = %2u"
                                                      "  interval = %4u"
                                                      "  max_peers_response = %4u"
                                                      "  socket_timeout = %2u\n",
+                                                     *keepAlive,
                                                      *interval,
                                                      *maxPeersPerResponse,
                                                      *socketTimeout);

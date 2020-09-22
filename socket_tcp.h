@@ -22,6 +22,7 @@ struct serverTcpArgs {
     long workers;
     unsigned int *maxPeersPerResponse;
     unsigned short *socketTimeout;
+    unsigned char *keepAlive;
 };
 
 void *serverTcpHandler(void *args);

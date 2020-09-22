@@ -30,7 +30,8 @@ void *serverTcpHandler(void *args) {
     struct rps *rps = ((struct serverTcpArgs *) args)->rps;
     long workers = ((struct serverTcpArgs *) args)->workers;
     unsigned int *maxPeersPerResponse = ((struct serverTcpArgs *) args)->maxPeersPerResponse;
-    unsigned short *socketTimeout =  ((struct serverTcpArgs *) args)->socketTimeout;
+    unsigned short *socketTimeout = ((struct serverTcpArgs *) args)->socketTimeout;
+    unsigned char *keepAlive = ((struct serverTcpArgs *) args)->keepAlive;
 
     c_free(args);
 
@@ -92,6 +93,7 @@ void *serverTcpHandler(void *args) {
         clientTcpArgs->authorizationHeader = authorizationHeader;
         clientTcpArgs->maxPeersPerResponse = maxPeersPerResponse;
         clientTcpArgs->socketTimeout = socketTimeout;
+        clientTcpArgs->keepAlive = keepAlive;
 
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create TCP thread");

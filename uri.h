@@ -41,6 +41,7 @@ struct query {
     unsigned int interval;
     unsigned int max_peers_per_response;
     unsigned short socket_timeout;
+    unsigned char keep_alive;
 };
 
 void parseUri(struct query *query, struct block *block, char *message);

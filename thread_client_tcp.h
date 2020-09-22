@@ -25,6 +25,7 @@ struct clientTcpArgs {
 
     unsigned int *maxPeersPerResponse;
     unsigned short *socketTimeout;
+    unsigned char *keepAlive;
 };
 
 void *clientTcpHandler(void *);

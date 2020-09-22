@@ -166,5 +166,7 @@ void getParam(struct query *query, struct block *block, char *param, char *value
         query->max_peers_per_response = atoi(value);
     } else if(!strcmp(param, "socket_timeout")) {
         query->socket_timeout = atoi(value);
+    } else if(!strcmp(param, "keep_alive")) {
+        query->keep_alive = atoi(value);
     }
 }

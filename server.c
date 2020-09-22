@@ -29,6 +29,7 @@
 #define DEFAULT_PORT 3000
 #define DEFAULT_MAX_PEER_PER_RESULT 60
 #define DEFAULT_SOCKET_TIMEOUT 3
+#define DEFAULT_KEEP_ALIVE 0
 
 void setNobody();
 
@@ -42,15 +43,17 @@ int main(int argc, char *argv[]) {
     long workers = (argc < 4) ? sysconf(_SC_NPROCESSORS_ONLN) : atoi(argv[3]);
     unsigned int maxPeersPerResponse = (argc < 5) ? DEFAULT_MAX_PEER_PER_RESULT : atoi(argv[4]);
     unsigned short socketTimeout = (argc < 6) ? DEFAULT_SOCKET_TIMEOUT : atoi(argv[5]);
+    unsigned char keepAlive = (argc < 7) ? DEFAULT_KEEP_ALIVE : atoi(argv[6]);
 
     if (!port || !interval || !workers || !maxPeersPerResponse || !socketTimeout) {
-        printf("./etracker [port] [interval] [workers] [maxPeersPerResponse] [socketTimeout]\n");
+        printf("./etracker [port] [interval] [workers] [maxPeersPerResponse] [socketTimeout] [keepAlive]\n");
 
         exit(1);
     }
 
-    printf("Starting configuration: port = %d, interval = %d, workers = %ld, maxPeersPerResponse = %u, socketTimeout = %u\n",
-           port, interval, workers, maxPeersPerResponse, socketTimeout);
+    printf("Starting configuration: port = %d, interval = %d, workers = %ld, maxPeersPerResponse = %u, "
+           "socketTimeout = %u, keepAlive = %u\n",
+           port, interval, workers, maxPeersPerResponse, socketTimeout, keepAlive);
 
     printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 
@@ -85,6 +88,7 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->workers = workers;
     serverTcpArgs->maxPeersPerResponse = &maxPeersPerResponse;
     serverTcpArgs->socketTimeout = &socketTimeout;
+    serverTcpArgs->keepAlive = &keepAlive;
 
     if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
         perror("Could not create thread");
