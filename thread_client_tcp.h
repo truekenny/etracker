@@ -21,6 +21,7 @@ struct clientTcpArgs {
 
     unsigned int *interval;
     struct rps *rps;
+    struct block *authorizationHeader;
 };
 
 void *clientTcpHandler(void *);

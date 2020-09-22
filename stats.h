@@ -9,6 +9,7 @@ struct stats {
     time_t time;
     unsigned int http_200;
     unsigned int http_400;
+    unsigned int http_401;
     unsigned int http_403;
     unsigned int http_404;
     unsigned int http_405;

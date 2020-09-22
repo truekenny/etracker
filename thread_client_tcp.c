@@ -16,6 +16,7 @@
 #include "block.h"
 #include "equeue.h"
 #include "data.h"
+#include "basic.h"
 
 #define DEBUG 0
 #define DEBUG_KQUEUE 0
@@ -37,13 +38,11 @@ void *clientTcpHandler(void *args) {
     struct list *queueList = ((struct clientTcpArgs *) args)->queueList;
     struct list *torrentList = ((struct clientTcpArgs *) args)->torrentList;
     struct stats *stats = ((struct clientTcpArgs *) args)->stats;
-
     int equeue = ((struct clientTcpArgs *) args)->equeue;
-
     struct list *socketList = ((struct clientTcpArgs *) args)->socketList;
-
     unsigned int *interval = ((struct clientTcpArgs *) args)->interval;
     struct rps *rps = ((struct clientTcpArgs *) args)->rps;
+    struct block *authorizationHeader = ((struct clientTcpArgs *) args)->authorizationHeader;
     c_free(args);
 
     struct Eevent eevent;
@@ -167,6 +166,15 @@ void *clientTcpHandler(void *args) {
 
                                 renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
                                 freeBlock(block);
+                            }
+                        } else if (startsWith("GET /set", readBuffer)) {
+                            if (authorizationHeader->size == 0)
+                                getAuthorizationHeader(authorizationHeader);
+
+                            if (hasBasic(readBuffer, authorizationHeader->data)) {
+                                renderHttpMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
+                            } else {
+                                renderHttpMessage(writeBlock, 401, "Authorization Failure", 21, canKeepAlive, stats);
                             }
                         } else if (startsWith("GET /stats", readBuffer)) {
                             struct block *block = initBlock();

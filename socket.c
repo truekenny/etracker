@@ -23,6 +23,11 @@ void renderHttpMessage(struct block *block, int code, char *message, size_t size
             stats->http_400++;
             addStringBlock(block, "HTTP/1.0 400 Invalid Request\r\n", 30);
             break;
+        case 401:
+            stats->http_401++;
+            addStringBlock(block, "HTTP/1.0 401 Unauthorized\r\n", 27);
+            addStringBlock(block, "WWW-Authenticate: Basic realm=\"etracker\"\r\n", 42);
+            break;
         case 403:
             stats->http_403++;
             addStringBlock(block, "HTTP/1.0 403 Forbidden\r\n", 24);

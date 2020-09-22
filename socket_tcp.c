@@ -31,6 +31,8 @@ void *serverTcpHandler(void *args) {
     long workers =((struct serverTcpArgs *) args)->workers;
     c_free(args);
 
+    struct block *authorizationHeader = initBlock();
+
     int serverSocket;
     struct sockaddr_in serverAddr;
 
@@ -83,6 +85,8 @@ void *serverTcpHandler(void *args) {
 
         clientTcpArgs->interval = interval;
         clientTcpArgs->rps = rps;
+
+        clientTcpArgs->authorizationHeader = authorizationHeader;
 
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create TCP thread");

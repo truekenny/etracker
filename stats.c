@@ -41,6 +41,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
 
                          "stats.http_200 = %'12d\n"
                          "stats.http_400 = %'12d\n"
+                         "stats.http_401 = %'12d\n"
                          "stats.http_403 = %'12d (Full Scrape)\n"
                          "stats.http_404 = %'12d\n"
                          "stats.http_405 = %'12d (Not GET)\n"
@@ -98,6 +99,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
 
                          stats->http_200,
                          stats->http_400,
+                         stats->http_401,
                          stats->http_403,
                          stats->http_404,
                          stats->http_405,

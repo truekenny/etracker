@@ -25,11 +25,17 @@ struct block *initBlock() {
 }
 
 void freeBlock(struct block *block) {
+    if (block == NULL) {
+        printf("Cant freeBlock, block == NULL\n");
+
+        return;
+    }
+
     c_free(block->data);
     c_free(block);
 }
 
-struct block *resetBlock(struct block * block) {
+struct block *resetBlock(struct block *block) {
     freeBlock(block);
 
     return initBlock();

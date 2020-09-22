@@ -3,6 +3,9 @@
 #include "block.h"
 #include "list.h"
 #include "alloc.h"
+#include "base64.h"
+
+int testBase64();
 
 int testSem();
 
@@ -13,9 +16,53 @@ int testBlock();
 int main() {
     printf("Starting tests\n");
 
+    printf("testBase64 complete = %d\n", testBase64());
     printf("testSem complete = %d\n", testSem());
     printf("testList complete = %d\n", testList());
     printf("testBlock complete = %d\n", testBlock());
+}
+
+int testBase64() {
+    struct block *input = NULL;
+    struct block *result;
+
+    input = resetBlock(input);
+    addStringBlock(input, "1234567890", 10);
+    result = base64_encode(input);
+    printf("base64_encode(1234567890) > MTIzNDU2Nzg5MA== > %s\n", result->data);
+    freeBlock(result);
+
+    input = resetBlock(input);
+    addStringBlock(input, "123456789", 9);
+    result = base64_encode(input);
+    printf("base64_encode(123456789) > MTIzNDU2Nzg5 > %s\n", result->data);
+    freeBlock(result);
+
+    input = resetBlock(input);
+    addStringBlock(input, "12345678", 8);
+    result = base64_encode(input);
+    printf("base64_encode(12345678) > MTIzNDU2Nzg= > %s\n", result->data);
+    freeBlock(result);
+
+    input = resetBlock(input);
+    addStringBlock(input, "1", 1);
+    result = base64_encode(input);
+    printf("base64_encode(1) > MQ== > %s\n", result->data);
+    freeBlock(result);
+
+    input = resetBlock(input);
+    addStringBlock(input, "12", 2);
+    result = base64_encode(input);
+    printf("base64_encode(12) > MTI= > %s\n", result->data);
+    freeBlock(result);
+
+    input = resetBlock(input);
+    addStringBlock(input, "123", 3);
+    result = base64_encode(input);
+    printf("base64_encode(123) > MTIz > %s\n", result->data);
+    freeBlock(result);
+
+    return 1;
 }
 
 int testSem() {

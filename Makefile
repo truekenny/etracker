@@ -1,7 +1,8 @@
 CC=gcc
 SERVER_FILES=server.c queue.c sem.c alloc.c uri.c socket.c string.c thread_client_tcp.c time.c block.c \
 	stats.c socket_tcp.c socket_udp.c thread_garbage.c data_structure.c data_garbage.c thread_client_udp.c \
-	socket_udp_structure.c equeue.c socket_garbage.c interval.c udp_request.c rps.c list.c data.c
+	socket_udp_structure.c equeue.c socket_garbage.c interval.c udp_request.c rps.c list.c data.c basic.c \
+	base64.c
 SERVER_OUTPUT=-o etracker
 SERVER_CFLAGS=-pthread -lm
 REVISION=`test -d .git && git rev-parse --short HEAD`
@@ -25,7 +26,7 @@ client:
 	$(CC) client.c -o client.o
 test:
 	$(CC) -Werror \
-		test.c queue.c alloc.c block.c list.c sem.c \
+		test.c queue.c alloc.c block.c list.c sem.c base64.c \
 		-o test.o
 clear:
 	$(RM_SERVER)
