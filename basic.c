@@ -36,4 +36,5 @@ void getAuthorizationHeader(struct block *authorizationHeader) {
     addStringBlock(authorizationHeader, "Authorization: Basic ", 21);
     addStringBlock(authorizationHeader, base64_encoded->data, base64_encoded->size);
     addStringBlock(authorizationHeader, "\r\x00", 2);
+    freeBlock(base64_encoded);
 }
