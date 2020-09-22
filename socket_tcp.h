@@ -20,6 +20,8 @@ struct serverTcpArgs {
     struct rps *rps;
 
     long workers;
+    unsigned int *maxPeersPerResponse;
+    unsigned short *socketTimeout;
 };
 
 void *serverTcpHandler(void *args);

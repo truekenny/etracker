@@ -27,6 +27,8 @@
 
 #define DEBUG 0
 #define DEFAULT_PORT 3000
+#define DEFAULT_MAX_PEER_PER_RESULT 60
+#define DEFAULT_SOCKET_TIMEOUT 3
 
 void setNobody();
 
@@ -38,14 +40,17 @@ int main(int argc, char *argv[]) {
     unsigned short port = (argc < 2) ? DEFAULT_PORT : atoi(argv[1]);
     unsigned int interval = (argc < 3) ? MAX_INTERVAL : atoi(argv[2]);
     long workers = (argc < 4) ? sysconf(_SC_NPROCESSORS_ONLN) : atoi(argv[3]);
+    unsigned int maxPeersPerResponse = (argc < 5) ? DEFAULT_MAX_PEER_PER_RESULT : atoi(argv[4]);
+    unsigned short socketTimeout = (argc < 6) ? DEFAULT_SOCKET_TIMEOUT : atoi(argv[5]);
 
-    if (!port || !interval || !workers) {
-        printf("./etracker [port] [interval] [workers]\n");
+    if (!port || !interval || !workers || !maxPeersPerResponse || !socketTimeout) {
+        printf("./etracker [port] [interval] [workers] [maxPeersPerResponse] [socketTimeout]\n");
 
         exit(1);
     }
 
-    printf("Starting configuration: port = %d, interval = %d, workers = %ld\n", port, interval, workers);
+    printf("Starting configuration: port = %d, interval = %d, workers = %ld, maxPeersPerResponse = %u, socketTimeout = %u\n",
+           port, interval, workers, maxPeersPerResponse, socketTimeout);
 
     printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 
@@ -78,6 +83,8 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->interval = &interval;
     serverTcpArgs->rps = &rps;
     serverTcpArgs->workers = workers;
+    serverTcpArgs->maxPeersPerResponse = &maxPeersPerResponse;
+    serverTcpArgs->socketTimeout = &socketTimeout;
 
     if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
         perror("Could not create thread");
@@ -105,7 +112,7 @@ int main(int argc, char *argv[]) {
     setNobody();
 
     run15MinutesThread(torrentList, &interval, &rps);
-    runGarbageSocketPoolThread(socketList, stats);
+    runGarbageSocketTimeoutThread(socketList, stats, &socketTimeout);
 
     printf("Join TCP Thread\n");
     pthread_join(tcpServerThread, NULL);

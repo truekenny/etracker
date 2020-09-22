@@ -22,6 +22,9 @@ struct clientTcpArgs {
     unsigned int *interval;
     struct rps *rps;
     struct block *authorizationHeader;
+
+    unsigned int *maxPeersPerResponse;
+    unsigned short *socketTimeout;
 };
 
 void *clientTcpHandler(void *);

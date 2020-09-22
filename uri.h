@@ -36,6 +36,8 @@ struct query {
 
     int threadNumber;
     unsigned int transaction_id;
+
+    unsigned int *maxPeersPerResponse;
 };
 
 void parseUri(struct query *query, struct block *block, char *message);

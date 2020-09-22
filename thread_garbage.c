@@ -15,7 +15,6 @@
 #define DEBUG 0
 #define I_15_MINUTES_TIME (15 * 60)
 #define GARBAGE_SOCKET_POOL_TIME 1
-#define SOCKET_TIMEOUT 3
 
 struct i15MinutesArgs {
     struct list *torrentList;
@@ -23,15 +22,16 @@ struct i15MinutesArgs {
     struct rps *rps;
 };
 
-struct garbageSocketPoolArgs {
+struct garbageSocketTimeoutArgs {
     struct list *socketList;
-
     struct stats *stats;
+    unsigned short *socketTimeout;
+    long maxTimeAllow; // Временная переменная, чтобы не считать это значение для каждого подключения
 };
 
 void *i15MinutesHandler(void *_args);
 
-void *garbageSocketPoolHandler(void *_args);
+void *garbageSocketTimeoutHandler(void *_args);
 
 void run15MinutesThread(struct list *torrentList, unsigned int *interval, struct rps *rps) {
     pthread_attr_t tattr;
@@ -86,17 +86,17 @@ void *i15MinutesHandler(void *_args) {
     return 0;
 }
 
-void
-runGarbageSocketPoolThread(struct list *socketList, struct stats *stats) {
+void runGarbageSocketTimeoutThread(struct list *socketList, struct stats *stats, unsigned short *socketTimeout) {
     pthread_attr_t tattr;
     pthread_t tid;
     int ret;
     int newPriority = 5;
     struct sched_param param;
 
-    struct garbageSocketPoolArgs *garbageSocketPoolArgs = c_calloc(1, sizeof(struct garbageSocketPoolArgs));
-    garbageSocketPoolArgs->socketList = socketList;
-    garbageSocketPoolArgs->stats = stats;
+    struct garbageSocketTimeoutArgs *garbageSocketTimeoutArgs = c_calloc(1, sizeof(struct garbageSocketTimeoutArgs));
+    garbageSocketTimeoutArgs->socketList = socketList;
+    garbageSocketTimeoutArgs->stats = stats;
+    garbageSocketTimeoutArgs->socketTimeout = socketTimeout;
 
     ret = pthread_attr_init(&tattr);
     ret = pthread_attr_getschedparam(&tattr, &param);
@@ -109,21 +109,24 @@ runGarbageSocketPoolThread(struct list *socketList, struct stats *stats) {
     }
 
     ret = pthread_attr_setschedparam(&tattr, &param);
-    ret = pthread_create(&tid, &tattr, garbageSocketPoolHandler, (void *) garbageSocketPoolArgs);
+    ret = pthread_create(&tid, &tattr, garbageSocketTimeoutHandler, (void *) garbageSocketTimeoutArgs);
 }
 
-unsigned char checkOutdatedSocketCallback(struct list *list, struct item *item, void *args) {
+unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item, void *args) {
     // unused
-    if(list == NULL) {
+    if (list == NULL) {
         printf("thread_garbage.c: unused list\n");
 
         exit(123);
     }
 
     struct socketData *socketData = item->data;
-    struct stats *stats = args;
+    struct stats *stats = ((struct garbageSocketTimeoutArgs *) args)->stats;
+    long maxTimeAllow = ((struct garbageSocketTimeoutArgs *) args)->maxTimeAllow;
 
-    if (socketData->time < time(NULL) - SOCKET_TIMEOUT) {
+    // printf("%ld <= %ld\n", socketData->time, maxTimeAllow);
+
+    if (socketData->time <= maxTimeAllow) {
         struct block *block = initBlock();
         renderHttpMessage(block, 408, "Request Timeout", 15, 0, stats);
         send_(socketData->socket, block->data, block->size, stats);
@@ -135,19 +138,21 @@ unsigned char checkOutdatedSocketCallback(struct list *list, struct item *item, 
     return 0;
 }
 
-void *garbageSocketPoolHandler(void *_args) {
-    struct list *socketList = ((struct garbageSocketPoolArgs *) _args)->socketList;
-    struct stats *stats = ((struct garbageSocketPoolArgs *) _args)->stats;
-    c_free(_args);
+void *garbageSocketTimeoutHandler(void *_args) {
+    struct list *socketList = ((struct garbageSocketTimeoutArgs *) _args)->socketList;
 
     while (1) {
-        mapList(socketList, stats, &checkOutdatedSocketCallback);
+        unsigned short *socketTimeout = ((struct garbageSocketTimeoutArgs *) _args)->socketTimeout;
+        ((struct garbageSocketTimeoutArgs *) _args)->maxTimeAllow = time(NULL) - *socketTimeout;
+        mapList(socketList, _args, &garbageSocketTimeoutCallback);
 
         sleep(GARBAGE_SOCKET_POOL_TIME);
 
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;
     }
+
+    c_free(_args);
 
     return 0;
 }

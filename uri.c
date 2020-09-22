@@ -10,7 +10,6 @@
 #define QUERY_VALUE 2
 #define PATH_LENGTH 50
 #define FIRST_LINE_LENGTH 1000
-#define MAX_PEER_PER_RESULT_2 60
 
 void getParam(struct query *query, struct block *block, char *param, char *value);
 
@@ -161,7 +160,7 @@ void getParam(struct query *query, struct block *block, char *param, char *value
         query->no_peer_id = 1;
     } else if (!strcmp(param, "numwant")) {
         query->numwant = atoi(value);
-        if (query->numwant > MAX_PEER_PER_RESULT_2)
-            query->numwant = MAX_PEER_PER_RESULT_2;
+        if (query->numwant > *query->maxPeersPerResponse)
+            query->numwant = *query->maxPeersPerResponse;
     }
 }

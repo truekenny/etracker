@@ -43,6 +43,9 @@ void *clientTcpHandler(void *args) {
     unsigned int *interval = ((struct clientTcpArgs *) args)->interval;
     struct rps *rps = ((struct clientTcpArgs *) args)->rps;
     struct block *authorizationHeader = ((struct clientTcpArgs *) args)->authorizationHeader;
+    unsigned int *maxPeersPerResponse = ((struct clientTcpArgs *) args)->maxPeersPerResponse;
+    unsigned short *socketTimeout = ((struct clientTcpArgs *) args)->socketTimeout;
+
     c_free(args);
 
     struct Eevent eevent;
@@ -132,10 +135,10 @@ void *clientTcpHandler(void *args) {
                             socklen_t socklen = sizeof(peer);
                             getpeername(currentSocket, (struct sockaddr *) &peer, &socklen); // client
                             query.ip = peer.sin_addr.s_addr;
-
                             query.numwant = DEFAULT_NUM_WANT;
                             query.event = EVENT_ID_STARTED;
                             query.threadNumber = threadNumber;
+                            query.maxPeersPerResponse = maxPeersPerResponse;
 
                             parseUri(&query, NULL, readBuffer);
 
@@ -172,7 +175,18 @@ void *clientTcpHandler(void *args) {
                                 getAuthorizationHeader(authorizationHeader);
 
                             if (hasBasic(readBuffer, authorizationHeader->data)) {
-                                renderHttpMessage(writeBlock, 200, "OK", 2, canKeepAlive, stats);
+                                struct block *block = initBlock();
+                                addFormatStringBlock(block, 500,
+                                                     "interval = %u\n"
+                                                     "max_peer_per_response = %u\n"
+                                                     "socket_timeout = %u\n",
+                                                     *interval,
+                                                     *maxPeersPerResponse,
+                                                     *socketTimeout);
+                                renderHttpMessage(writeBlock, 200,
+                                                  block->data, block->size,
+                                                  canKeepAlive, stats);
+                                freeBlock(block);
                             } else {
                                 renderHttpMessage(writeBlock, 401, "Authorization Failure", 21, canKeepAlive, stats);
                             }

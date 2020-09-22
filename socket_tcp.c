@@ -23,12 +23,15 @@
 void *serverTcpHandler(void *args) {
     struct stats *stats = ((struct serverTcpArgs *) args)->stats;
     struct list *queueList = ((struct serverTcpArgs *) args)->queueList;
-    struct list *torrentList =  ((struct serverTcpArgs *) args)->torrentList;
+    struct list *torrentList = ((struct serverTcpArgs *) args)->torrentList;
     unsigned short port = ((struct serverTcpArgs *) args)->port;
-    struct list *socketList =  ((struct serverTcpArgs *) args)->socketList;
-    unsigned int *interval =  ((struct serverTcpArgs *) args)->interval;
+    struct list *socketList = ((struct serverTcpArgs *) args)->socketList;
+    unsigned int *interval = ((struct serverTcpArgs *) args)->interval;
     struct rps *rps = ((struct serverTcpArgs *) args)->rps;
-    long workers =((struct serverTcpArgs *) args)->workers;
+    long workers = ((struct serverTcpArgs *) args)->workers;
+    unsigned int *maxPeersPerResponse = ((struct serverTcpArgs *) args)->maxPeersPerResponse;
+    unsigned short *socketTimeout =  ((struct serverTcpArgs *) args)->socketTimeout;
+
     c_free(args);
 
     struct block *authorizationHeader = initBlock();
@@ -87,6 +90,8 @@ void *serverTcpHandler(void *args) {
         clientTcpArgs->rps = rps;
 
         clientTcpArgs->authorizationHeader = authorizationHeader;
+        clientTcpArgs->maxPeersPerResponse = maxPeersPerResponse;
+        clientTcpArgs->socketTimeout = socketTimeout;
 
         if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
             perror("Could not create TCP thread");
@@ -110,7 +115,7 @@ void *serverTcpHandler(void *args) {
     while (1) {
         clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &sockAddrSize);
 
-        if(clientSocket == 0) {
+        if (clientSocket == 0) {
             printf("Accept return 0\n");
             stats->accept_failed++;
 

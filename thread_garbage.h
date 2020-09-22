@@ -7,6 +7,6 @@
 
 void run15MinutesThread(struct list *torrentList, unsigned int *interval, struct rps *rps);
 
-void runGarbageSocketPoolThread(struct list *socketList, struct stats *stats);
+void runGarbageSocketTimeoutThread(struct list *socketList, struct stats *stats, unsigned short *socketTimeout);
 
 #endif //SC6_THREAD_GARBAGE_H
