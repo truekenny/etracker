@@ -29,8 +29,7 @@ void *clientUdpHandler(void *args) {
     struct udpRequest **lastRequest = clientUdpArgs->lastRequest;
     struct rk_sema *semaphoreRequest = clientUdpArgs->semaphoreRequest;
     unsigned int threadNumber = clientUdpArgs->threadNumber;
-
-    // struct rps *rps = clientUdpArgs->rps;
+    unsigned int *maxPeersPerResponse = clientUdpArgs->maxPeersPerResponse;
 
     c_free(args);
 
@@ -103,6 +102,9 @@ void *clientUdpHandler(void *args) {
                 query->numwant = htonl(announceRequest->num_want);
                 query->ip = clientAddr->sin_addr.s_addr;
                 query->transaction_id = announceRequest->transaction_id;
+
+                if (query->numwant > *maxPeersPerResponse)
+                    query->numwant = *maxPeersPerResponse;
 
                 { // аннонс
                     // struct torrent *torrent = {0};

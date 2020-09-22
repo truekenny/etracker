@@ -60,6 +60,7 @@ void *serverUdpHandler(void *args) {
     unsigned int *interval = ((struct serverUdpArgs *) args)->interval;
     struct rps *rps = ((struct serverUdpArgs *) args)->rps;
     long workers = ((struct serverUdpArgs *) args)->workers;
+    unsigned int *maxPeersPerResponse = ((struct serverUdpArgs *) args)->maxPeersPerResponse;
     c_free(args);
 
     int serverSocket;
@@ -105,8 +106,8 @@ void *serverUdpHandler(void *args) {
         clientUdpArgs->firstRequest = &firstRequest;
         clientUdpArgs->lastRequest = &lastRequest;
         clientUdpArgs->semaphoreRequest = &semaphoreRequest;
-
         clientUdpArgs->rps = rps;
+        clientUdpArgs->maxPeersPerResponse = maxPeersPerResponse;
 
         // Поток
         pthread_t udpClientThread;

@@ -100,6 +100,7 @@ int main(int argc, char *argv[]) {
     serverUdpArgs->interval = &interval;
     serverUdpArgs->rps = &rps;
     serverUdpArgs->workers = workers;
+    serverUdpArgs->maxPeersPerResponse = &maxPeersPerResponse;
 
     if (pthread_create(&udpServerThread, NULL, serverUdpHandler, (void *) serverUdpArgs) != 0) {
         perror("Could not create thread");

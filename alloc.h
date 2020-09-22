@@ -4,9 +4,9 @@
 #include <stdatomic.h>
 
 struct c_countChanges {
-    atomic_int countMalloc;
-    atomic_int countCalloc;
-    atomic_int countFree;
+    atomic_ullong countMalloc;
+    atomic_ullong countCalloc;
+    atomic_ullong countFree;
 };
 
 void c_initSem();

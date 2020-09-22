@@ -138,9 +138,11 @@ void *clientTcpHandler(void *args) {
                             query.numwant = DEFAULT_NUM_WANT;
                             query.event = EVENT_ID_STARTED;
                             query.threadNumber = threadNumber;
-                            query.maxPeersPerResponse = maxPeersPerResponse;
 
                             parseUri(&query, NULL, readBuffer);
+
+                            if (query.numwant > *maxPeersPerResponse)
+                                query.numwant = *maxPeersPerResponse;
 
                             if (!query.has_info_hash) {
                                 renderHttpMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive,
@@ -175,14 +177,35 @@ void *clientTcpHandler(void *args) {
                                 getAuthorizationHeader(authorizationHeader);
 
                             if (hasBasic(readBuffer, authorizationHeader->data)) {
+                                struct query query = {};
+                                parseUri(&query, NULL, readBuffer);
+
                                 struct block *block = initBlock();
                                 addFormatStringBlock(block, 500,
-                                                     "interval = %u\n"
-                                                     "max_peer_per_response = %u\n"
-                                                     "socket_timeout = %u\n",
+                                                     "Before request:"
+                                                     "  interval = %4u"
+                                                     "  max_peers_response = %4u"
+                                                     "  socket_timeout = %2u\n",
                                                      *interval,
                                                      *maxPeersPerResponse,
                                                      *socketTimeout);
+
+                                if (query.interval)
+                                    *interval = query.interval;
+                                if (query.max_peers_per_response)
+                                    *maxPeersPerResponse = query.max_peers_per_response;
+                                if (query.socket_timeout)
+                                    *socketTimeout = query.socket_timeout;
+
+                                addFormatStringBlock(block, 500,
+                                                     "After  request:"
+                                                     "  interval = %4u"
+                                                     "  max_peers_response = %4u"
+                                                     "  socket_timeout = %2u\n",
+                                                     *interval,
+                                                     *maxPeersPerResponse,
+                                                     *socketTimeout);
+
                                 renderHttpMessage(writeBlock, 200,
                                                   block->data, block->size,
                                                   canKeepAlive, stats);

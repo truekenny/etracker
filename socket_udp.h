@@ -13,6 +13,7 @@ struct serverUdpArgs {
 
     struct rps *rps;
     long workers;
+    unsigned int *maxPeersPerResponse;
 };
 
 void *serverUdpHandler(void *args);

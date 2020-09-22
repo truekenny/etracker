@@ -99,7 +99,7 @@ unsigned char listPrintCallback(struct list *list, struct item *item, void *args
 
 int testList() {
     struct c_countChanges *c_countChanges = c_result();
-    printf("M:%d C:%d F:%d T:%d\n", c_countChanges->countMalloc, c_countChanges->countCalloc, c_countChanges->countFree,
+    printf("M:%llu C:%llu F:%llu T:%llu\n", c_countChanges->countMalloc, c_countChanges->countCalloc, c_countChanges->countFree,
            c_countChanges->countMalloc + c_countChanges->countCalloc - c_countChanges->countFree);
 
     struct list *list = NULL;
@@ -186,12 +186,12 @@ int testList() {
     mapList(list, NULL, &listCallback);
     printList(list, 0);
 
-    printf("M:%d C:%d F:%d T:%d\n", c_countChanges->countMalloc, c_countChanges->countCalloc, c_countChanges->countFree,
+    printf("M:%llu C:%llu F:%llu T:%llu\n", c_countChanges->countMalloc, c_countChanges->countCalloc, c_countChanges->countFree,
            c_countChanges->countMalloc + c_countChanges->countCalloc - c_countChanges->countFree);
 
     freeList(list, 1);
 
-    printf("M:%d C:%d F:%d T:%d\n", c_countChanges->countMalloc, c_countChanges->countCalloc, c_countChanges->countFree,
+    printf("M:%llu C:%llu F:%llu T:%llu\n", c_countChanges->countMalloc, c_countChanges->countCalloc, c_countChanges->countFree,
            c_countChanges->countMalloc + c_countChanges->countCalloc - c_countChanges->countFree);
 
     if (c_countChanges->countMalloc + c_countChanges->countCalloc - c_countChanges->countFree) {

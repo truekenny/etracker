@@ -37,7 +37,10 @@ struct query {
     int threadNumber;
     unsigned int transaction_id;
 
-    unsigned int *maxPeersPerResponse;
+    // URI=/set
+    unsigned int interval;
+    unsigned int max_peers_per_response;
+    unsigned short socket_timeout;
 };
 
 void parseUri(struct query *query, struct block *block, char *message);

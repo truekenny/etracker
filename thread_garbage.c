@@ -124,9 +124,9 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
     struct stats *stats = ((struct garbageSocketTimeoutArgs *) args)->stats;
     long maxTimeAllow = ((struct garbageSocketTimeoutArgs *) args)->maxTimeAllow;
 
-    // printf("%ld <= %ld\n", socketData->time, maxTimeAllow);
+    // printf("%ld < %ld\n", socketData->time, maxTimeAllow);
 
-    if (socketData->time <= maxTimeAllow) {
+    if (socketData->time < maxTimeAllow) {
         struct block *block = initBlock();
         renderHttpMessage(block, 408, "Request Timeout", 15, 0, stats);
         send_(socketData->socket, block->data, block->size, stats);

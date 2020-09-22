@@ -20,6 +20,7 @@ struct clientUdpArgs {
     struct rk_sema *semaphoreRequest;
 
     struct rps *rps;
+    unsigned int *maxPeersPerResponse;
 };
 
 void *clientUdpHandler(void *);

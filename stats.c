@@ -25,19 +25,19 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "github.com/truekenny/etracker - open-source BitTorrent tracker (%s)\n\n"
                          "start_time = %.24s\n" "thread_number = %d\n\n"
 
-                         "Load Avg = %.2f %.2f %.2f\n"
-                         "Interval = %'d\n"
-                         "Active sockets: %'d (rlimit %'llu/%'llu)\n\n"
+                         "load_avg = %.2f %.2f %.2f\n"
+                         "interval = %'d\n"
+                         "active_socket_count: %'d (rlimit %'llu/%'llu)\n\n"
 
-                         "Request per second ~ %.2f\n\n"
+                         "request_per_second_count ~ %.2f\n\n"
 
                          "rusage.ru_maxrss = %'12ld\n\n"
 
-                         "Malloc = %'12d\n"
-                         "Calloc = %'12d\n"
-                         "*alloc = %'12d\n"
-                         "free   = %'12d\n"
-                         "*alloc - free = %'12d\n\n"
+                         "malloc        = %'15llu\n"
+                         "calloc        = %'15llu\n"
+                         "*alloc        = %'15llu\n"
+                         "free          = %'15llu\n"
+                         "*alloc - free = %'15llu\n\n"
 
                          "stats.http_200 = %'12d\n"
                          "stats.http_400 = %'12d\n"
