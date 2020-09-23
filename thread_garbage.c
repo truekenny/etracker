@@ -13,7 +13,6 @@
 #include "block.h"
 
 #define DEBUG 0
-#define I_15_MINUTES_TIME (15 * 60)
 #define GARBAGE_SOCKET_POOL_TIME 1
 
 struct i15MinutesArgs {
@@ -68,7 +67,7 @@ void *i15MinutesHandler(void *_args) {
     while (1) {
         struct block *block = initBlock();
 
-        runGarbageCollectorL(block, torrentList);
+        runGarbageCollectorL(block, torrentList, *interval);
         addStringBlock(block, "  ", 2);
         updateInterval(block, interval);
 
@@ -77,7 +76,7 @@ void *i15MinutesHandler(void *_args) {
 
         freeBlock(block);
 
-        sleep(I_15_MINUTES_TIME);
+        sleep(*interval);
 
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;

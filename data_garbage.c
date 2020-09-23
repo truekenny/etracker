@@ -6,8 +6,7 @@
 #include "alloc.h"
 #include "list.h"
 #include "uri.h"
-
-#define OUTDATED_INTERVAL 1800
+#include "interval.h"
 
 struct garbageStats {
     unsigned int totalPeers;
@@ -127,10 +126,11 @@ unsigned char runGarbageCollectorCallback(struct list *list, struct item *torren
  * @param block
  * @param torrentList
  */
-void runGarbageCollectorL(struct block *block, struct list *torrentList) {
+void runGarbageCollectorL(struct block *block, struct list *torrentList, unsigned int aliveTime) {
     struct garbageStats garbageStats = {};
     long now = time(NULL);
-    garbageStats.limitTime = now - OUTDATED_INTERVAL * 2;
+    // 2 – если интервал уменьшается, то нужно давать время жизни как минимум на step больше, еще один step – запас
+    garbageStats.limitTime = now - aliveTime - STEP_INTERVAL * 2;
 
     unsigned long startTime = getStartTime();
 
@@ -140,7 +140,7 @@ void runGarbageCollectorL(struct block *block, struct list *torrentList) {
         return;
 
     addFormatStringBlock(block, 4500,
-                         "GRBG: %.19s "
+                         "%.19s "
                          "%7d TP "
                          "%7d TT "
                          "%7d TL "

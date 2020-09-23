@@ -5,6 +5,6 @@
 #include "block.h"
 #include "list.h"
 
-void runGarbageCollectorL(struct block *block, struct list *torrentList);
+void runGarbageCollectorL(struct block *block, struct list *torrentList, unsigned int aliveTime);
 
 #endif //SC6_DATA_GARBAGE_H
