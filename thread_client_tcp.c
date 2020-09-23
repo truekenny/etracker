@@ -88,6 +88,8 @@ void *clientTcpHandler(void *args) {
                 }
 
                 if (strstr(readBuffer, "\r\n\r\n") != NULL) {
+                    updateRps(rps);
+
                     updateSocketL(socketList, currentSocket, equeue);
 
                     // Сброс буфера, поскольку запрос полный, прочитать столько сколько было пикнуто

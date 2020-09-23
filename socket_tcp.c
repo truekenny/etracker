@@ -134,7 +134,6 @@ void *serverTcpHandler(void *args) {
             continue;
         }
 
-        updateRps(rps);
         stats->accept_pass++;
 
         int equeueThread = equeue[(currentThread++) % workers];
