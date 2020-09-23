@@ -126,11 +126,10 @@ unsigned char runGarbageCollectorCallback(struct list *list, struct item *torren
  * @param block
  * @param torrentList
  */
-void runGarbageCollectorL(struct block *block, struct list *torrentList, unsigned int aliveTime) {
+void runGarbageCollectorL(struct block *block, struct list *torrentList) {
     struct garbageStats garbageStats = {};
     long now = time(NULL);
-    // 2 – если интервал уменьшается, то нужно давать время жизни как минимум на step больше, еще один step – запас
-    garbageStats.limitTime = now - aliveTime - STEP_INTERVAL * 2;
+    garbageStats.limitTime = now - MAX_ALIVE_TIME - STEP_INTERVAL;
 
     unsigned long startTime = getStartTime();
 

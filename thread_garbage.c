@@ -67,7 +67,7 @@ void *i15MinutesHandler(void *_args) {
     while (1) {
         struct block *block = initBlock();
 
-        runGarbageCollectorL(block, torrentList, *interval);
+        runGarbageCollectorL(block, torrentList);
         addStringBlock(block, "  ", 2);
         updateInterval(block, interval);
 

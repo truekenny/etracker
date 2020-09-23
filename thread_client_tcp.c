@@ -243,7 +243,7 @@ void *clientTcpHandler(void *args) {
                             freeBlock(block);
                         } else if (DEBUG && startsWith("GET /garbage", readBuffer)) {
                             struct block *block = initBlock();
-                            runGarbageCollectorL(block, torrentList, *interval);
+                            runGarbageCollectorL(block, torrentList);
                             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
                                               *socketTimeout, stats);
                             freeBlock(block);

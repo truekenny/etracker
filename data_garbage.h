@@ -5,6 +5,8 @@
 #include "block.h"
 #include "list.h"
 
-void runGarbageCollectorL(struct block *block, struct list *torrentList, unsigned int aliveTime);
+#define MAX_ALIVE_TIME 1800
+
+void runGarbageCollectorL(struct block *block, struct list *torrentList);
 
 #endif //SC6_DATA_GARBAGE_H

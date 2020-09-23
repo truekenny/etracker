@@ -20,6 +20,7 @@
 #include "interval.h"
 #include "rps.h"
 #include "list.h"
+#include "data_garbage.h"
 
 #if !defined(REVISION)
 #define REVISION "UNKNOWN"
@@ -35,6 +36,12 @@ void setNobody();
 
 int main(int argc, char *argv[]) {
     printf("Revision: %s\n", REVISION);
+
+    if (MAX_ALIVE_TIME < MAX_INTERVAL) {
+        printf("Bad idea: MAX_ALIVE_TIME < MAX_INTERVAL\n");
+
+        exit(18);
+    }
 
     setlocale(LC_NUMERIC, "");
 
