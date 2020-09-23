@@ -76,7 +76,7 @@ void *clientTcpHandler(void *args) {
                     // printf("recv has full buffer\n");
 
                     struct block *block = initBlock();
-                    renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, stats);
+                    renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats);
                     send_(currentSocket, block->data, block->size, stats);
                     freeBlock(block);
 
@@ -154,10 +154,10 @@ void *clientTcpHandler(void *args) {
 
                             if (!query.has_info_hash) {
                                 renderHttpMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive,
-                                                  stats);
+                                                  *socketTimeout, stats);
                             } else if (!query.port) {
                                 renderHttpMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
-                                                  stats);
+                                                  *socketTimeout, stats);
                             } else {
                                 // struct torrent *torrent;
                                 struct block *block = initBlock();
@@ -177,7 +177,8 @@ void *clientTcpHandler(void *args) {
 
                                 postSemaphoreLeaf(leaf);
 
-                                renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
+                                renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+                                                  *socketTimeout, stats);
                                 freeBlock(block);
                             }
                         } else if (startsWith("GET /set", readBuffer)) {
@@ -222,10 +223,11 @@ void *clientTcpHandler(void *args) {
 
                                 renderHttpMessage(writeBlock, 200,
                                                   block->data, block->size,
-                                                  canKeepAlive, stats);
+                                                  canKeepAlive, *socketTimeout, stats);
                                 freeBlock(block);
                             } else {
-                                renderHttpMessage(writeBlock, 401, "Authorization Failure", 21, canKeepAlive, stats);
+                                renderHttpMessage(writeBlock, 401, "Authorization Failure", 21, canKeepAlive,
+                                                  *socketTimeout, stats);
                             }
                         } else if (startsWith("GET /stats", readBuffer)) {
                             struct block *block = initBlock();
@@ -236,17 +238,19 @@ void *clientTcpHandler(void *args) {
                                 printQueueList(block, queueList);
                             }
 
-                            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
+                            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+                                              *socketTimeout, stats);
                             freeBlock(block);
                         } else if (DEBUG && startsWith("GET /garbage", readBuffer)) {
                             struct block *block = initBlock();
                             runGarbageCollectorL(block, torrentList);
-                            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
+                            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+                                              *socketTimeout, stats);
                             freeBlock(block);
                         } else if (startsWith("GET / ", readBuffer)) {
                             renderHttpMessage(writeBlock, 200,
                                               "github.com/truekenny/etracker - open-source BitTorrent tracker\n", 63,
-                                              canKeepAlive, stats);
+                                              canKeepAlive, *socketTimeout, stats);
                         } else if (startsWith("GET /scrape", readBuffer)) {
                             stats->scrape++;
 
@@ -257,16 +261,18 @@ void *clientTcpHandler(void *args) {
 
                             if (!hashes->size && !ENABLE_FULL_SCRAPE) {
                                 renderHttpMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
-                                                  stats);
+                                                  *socketTimeout, stats);
                             } else {
                                 renderScrapeTorrentsPublic(block, torrentList, hashes, &query);
-                                renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive, stats);
+                                renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+                                                  *socketTimeout, stats);
                             }
 
                             freeBlock(hashes);
                             freeBlock(block);
                         } else {
-                            renderHttpMessage(writeBlock, 404, "Page not found", 14, canKeepAlive, stats);
+                            renderHttpMessage(writeBlock, 404, "Page not found", 14, canKeepAlive,
+                                              *socketTimeout, stats);
                         }
 
                         if (canKeepAlive) {
@@ -276,7 +282,8 @@ void *clientTcpHandler(void *args) {
                         }
                     } // isHttp
                     else {
-                        renderHttpMessage(writeBlock, 405, readBuffer, readSize, canKeepAlive, stats);
+                        renderHttpMessage(writeBlock, 405, readBuffer, readSize, canKeepAlive,
+                                          *socketTimeout, stats);
                         DEBUG && printf("< %s", readBuffer);
                     }
 

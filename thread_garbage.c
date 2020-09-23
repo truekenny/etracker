@@ -128,7 +128,7 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
 
     if (socketData->time < maxTimeAllow) {
         struct block *block = initBlock();
-        renderHttpMessage(block, 408, "Request Timeout", 15, 0, stats);
+        renderHttpMessage(block, 408, "Request Timeout", 15, 0, 0, stats);
         send_(socketData->socket, block->data, block->size, stats);
         freeBlock(block);
 
