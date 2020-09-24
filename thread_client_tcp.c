@@ -88,14 +88,18 @@ void *clientTcpHandler(void *args) {
                 }
 
                 if(readSize == 0) {
-                    stats->recv_failed++;
+                    // Client close connection
+
+                    // stats->recv_failed++;
                     stats->recv_failed_read_0++;
+
+                    deleteSocketL(socketList, currentSocket, stats);
 
                     continue;
                 }
 
                 if (readSize < 0) {
-                    // Обычно Connection reset by peer
+                    // Обычно Connection reset by peer, реже Bad File Descriptor, возможно еще что-нибудь
                     stats->recv_failed++;
                     stats->recv_failed_read_sub_0++;
 
