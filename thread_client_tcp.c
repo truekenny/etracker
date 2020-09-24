@@ -68,11 +68,11 @@ void *clientTcpHandler(void *args) {
                 // Read from socket.
                 char readBuffer[RECEIVED_MESSAGE_LENGTH + 1];
                 memset(readBuffer, 0, sizeof(readBuffer));
-                size_t readSize = recv(currentSocket, readBuffer, sizeof(readBuffer), MSG_NOSIGNAL | MSG_PEEK);
+                ssize_t readSize = recv(currentSocket, readBuffer, RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL | MSG_PEEK);
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: read %zu bytes fd=%d \n", readSize, currentSocket);
 
                 // Запрос превышает лимит, прерываю такие сокеты
-                if (readSize == RECEIVED_MESSAGE_LENGTH) {
+                if (readSize >= RECEIVED_MESSAGE_LENGTH) {
                     // printf("recv has full buffer\n");
 
                     struct block *block = initBlock();
@@ -87,13 +87,36 @@ void *clientTcpHandler(void *args) {
                     continue;
                 }
 
+                if(readSize == 0) {
+                    continue;
+                }
+
+                if (readSize < 0) {
+                    // Обычно Connection reset by peer
+                    // printf("recvSize <= 0 = %zd\n", readSize);
+                    // perror("Recv failure");
+                    stats->recv_failed++;
+
+                    deleteSocketL(socketList, currentSocket, stats);
+
+                    continue;
+                }
+
                 if (strstr(readBuffer, "\r\n\r\n") != NULL) {
                     updateRps(rps);
 
                     updateSocketL(socketList, currentSocket, equeue);
 
+                    ssize_t beforeReadSize = readSize;
+
                     // Сброс буфера, поскольку запрос полный, прочитать столько сколько было пикнуто
-                    recv(currentSocket, readBuffer, readSize, MSG_NOSIGNAL);
+                    readSize = recv(currentSocket, readBuffer, readSize, MSG_NOSIGNAL);
+
+                    if (beforeReadSize != readSize) {
+                        // В принципе это ошибка 500, потому что я не ожидаю такого
+
+                        printf("beforeReadSize != readSize (%zd != %zd)\n", beforeReadSize, readSize);
+                    }
 
                     DEBUG_KQUEUE && printf("thread_client_tcp.c: IN %d", threadNumber);
 
