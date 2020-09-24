@@ -58,6 +58,11 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "stats.recv_failed   = %'12d\n"
                          "stats.accept_failed = %'12d\n\n"
 
+                         "stats.recv_failed_read_0         = %'12d\n"
+                         "stats.recv_failed_read_sub_0     = %'12d\n"
+                         "stats.recv_failed_read_not_equal = %'12d\n\n"
+
+
                          "stats.send_pass_udp = %'12d\n"
                          "stats.recv_pass_udp = %'12d\n\n"
 
@@ -115,6 +120,10 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          stats->send_failed,
                          stats->recv_failed,
                          stats->accept_failed,
+
+                         stats->recv_failed_read_0,
+                         stats->recv_failed_read_sub_0,
+                         stats->recv_failed_read_not_equal,
 
                          stats->send_pass_udp, stats->recv_pass_udp,
 

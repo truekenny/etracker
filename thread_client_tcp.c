@@ -88,14 +88,16 @@ void *clientTcpHandler(void *args) {
                 }
 
                 if(readSize == 0) {
+                    stats->recv_failed++;
+                    stats->recv_failed_read_0++;
+
                     continue;
                 }
 
                 if (readSize < 0) {
                     // Обычно Connection reset by peer
-                    // printf("recvSize <= 0 = %zd\n", readSize);
-                    // perror("Recv failure");
                     stats->recv_failed++;
+                    stats->recv_failed_read_sub_0++;
 
                     deleteSocketL(socketList, currentSocket, stats);
 
@@ -114,8 +116,13 @@ void *clientTcpHandler(void *args) {
 
                     if (beforeReadSize != readSize) {
                         // В принципе это ошибка 500, потому что я не ожидаю такого
+                        stats->recv_failed++;
+                        stats->recv_failed_read_not_equal++;
 
                         printf("beforeReadSize != readSize (%zd != %zd)\n", beforeReadSize, readSize);
+                        deleteSocketL(socketList, currentSocket, stats);
+                        
+                        continue;
                     }
 
                     DEBUG_KQUEUE && printf("thread_client_tcp.c: IN %d", threadNumber);

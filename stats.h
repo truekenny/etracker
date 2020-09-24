@@ -19,6 +19,9 @@ struct stats {
     unsigned int close_failed;
     unsigned int send_failed;
     unsigned int recv_failed;
+    unsigned int recv_failed_read_0;
+    unsigned int recv_failed_read_sub_0;
+    unsigned int recv_failed_read_not_equal;
     unsigned int accept_failed;
 
     unsigned int close_pass;
