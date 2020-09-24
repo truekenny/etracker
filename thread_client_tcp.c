@@ -120,8 +120,9 @@ void *clientTcpHandler(void *args) {
                         stats->recv_failed_read_not_equal++;
 
                         printf("beforeReadSize != readSize (%zd != %zd)\n", beforeReadSize, readSize);
+                        perror("Second recv failed");
                         deleteSocketL(socketList, currentSocket, stats);
-                        
+
                         continue;
                     }
 
