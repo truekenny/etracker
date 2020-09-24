@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "alloc.h"
 #include "sem.h"
@@ -17,7 +18,12 @@ void *c_malloc(int size) {
     countChanges.countMalloc++;
     DEBUG_STRICT_MEM && rk_sema_post(&semAlloc);
 
-    return malloc(size);
+    void *result = malloc(size);
+    if (result == NULL) {
+        printf("Malloc failure, size = %d\n", size);
+    }
+
+    return result;
 }
 
 void *c_calloc(int count, int size) {
@@ -25,7 +31,12 @@ void *c_calloc(int count, int size) {
     countChanges.countCalloc++;
     DEBUG_STRICT_MEM && rk_sema_post(&semAlloc);
 
-    return calloc(count, size);
+    void *result = calloc(count, size);
+    if (result == NULL) {
+        printf("Calloc failure, count = %d, size = %d\n", count, size);
+    }
+
+    return result;
 }
 
 void c_free(void *pointer) {
@@ -35,6 +46,17 @@ void c_free(void *pointer) {
 
     free(pointer);
 }
+
+void *c_realloc(void *pointer, size_t size) {
+    void *result = realloc(pointer, size);
+
+    if(result == NULL) {
+        printf("Realloc failure, needSize = %zu\n", size);
+    }
+
+    return result;
+}
+
 
 struct c_countChanges *c_result() {
     return &countChanges;

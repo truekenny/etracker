@@ -71,7 +71,7 @@ void reAllocBlock(struct block *block, unsigned int requiredSpace) {
     if (newAlloc) {
         DEBUG && printf("ReAlloc block: %d -> %d\n", block->allocated, newAlloc);
 
-        block->data = realloc(block->data, newAlloc);
+        block->data = c_realloc(block->data, newAlloc);
         block->allocated = newAlloc;
     }
 }
