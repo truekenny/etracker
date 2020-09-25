@@ -11,7 +11,7 @@ struct socketData {
     long time;
 };
 
-void updateSocketL(struct list *socketList,  int socket, int equeue);
+void updateSocketL(struct list *socketList,  int socket, int equeue, _Bool useSemaphore);
 
 void deleteSocketItemL(struct item *item, struct stats *stats);
 

@@ -7,11 +7,12 @@
 
 #define DEBUG 0
 
-void updateSocketL(struct list *socketList, int socket, int equeue) {
+void updateSocketL(struct list *socketList, int socket, int equeue, _Bool useSemaphore) {
     unsigned char *pSocket = (unsigned char *) &socket;
 
     struct list *leaf = getLeaf(socketList, pSocket);
-    waitSemaphoreLeaf(leaf);
+    if (useSemaphore)
+        waitSemaphoreLeaf(leaf);
 
     struct item *item = setHash(socketList, pSocket);
 
@@ -27,15 +28,15 @@ void updateSocketL(struct list *socketList, int socket, int equeue) {
 
     item->data = socketData;
 
-    postSemaphoreLeaf(leaf);
+    if (useSemaphore)
+        postSemaphoreLeaf(leaf);
 }
 
 void deleteSocketItemL(struct item *item, struct stats *stats) {
+    long now = time(NULL);
 
     if (item == NULL) {
-        printf("socket_garbage.c: socketData not found\n");
-
-        // return;
+        printf("%.19s socket_garbage.c: socketData not found\n", ctime((time_t *) &now));
     } else {
         struct socketData *socketData = item->data;
 
@@ -51,7 +52,6 @@ void deleteSocketItemL(struct item *item, struct stats *stats) {
 
         deleteItem(item);
     }
-
 }
 
 void deleteSocketL(struct list *socketList, int socket, struct stats *stats) {

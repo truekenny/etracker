@@ -138,7 +138,7 @@ void *serverTcpHandler(void *args) {
 
         int equeueThread = equeue[(currentThread++) % workers];
 
-        updateSocketL(socketList, clientSocket, equeueThread);
+        updateSocketL(socketList, clientSocket, equeueThread, 1);
 
         addClientEqueue(equeueThread, clientSocket);
         DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");
