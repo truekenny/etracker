@@ -14,14 +14,15 @@
 ### Run
 
     ./etracker [port]
+    ./etracker --help
 
 Example: `./etracker 6969`
 The port is indicated simultaneously for TCP and UDP.
 
 ### Interfaces
 
-- http://host:port/announce 
-- udp://host:port/announce
+    http://host:port/announce 
+    udp://host:port/announce
 
 ### Features
 
@@ -36,7 +37,11 @@ The port is indicated simultaneously for TCP and UDP.
 
 ### Statictics
 
-- http://host:port/stats
+    http://host:port/stats
+
+### Realtime options
+
+    http://host:port/set?param=value
 
 ### Platforms tested on
 
@@ -68,7 +73,7 @@ HEAD peer = structure item + hash + structure dataPeer
 
 ### Similar applications
 
-- [opentracker](https://github.com/masroore/opentracker).
+- [opentracker](https://github.com/masroore/opentracker)
 
 ##### Comparison (same pc, rps)
 
