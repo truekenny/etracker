@@ -355,7 +355,9 @@ void *clientTcpHandler(void *args) {
             struct item *socketItem = getHash(socketList, pCurrentSocket);
 
             if (socketItem == NULL) {
-                printf("socketItem not found\n");
+                long now = time(NULL);
+
+                printf("%.19s thread_client_tpc.c: socketItem not found\n", ctime((time_t *) &now));
             } else if (isEof(&eevent, index)) {
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: Disconnect\n");
 
