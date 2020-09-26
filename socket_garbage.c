@@ -33,9 +33,9 @@ void updateSocketL(struct list *socketList, int socket, int equeue, _Bool useSem
 }
 
 void deleteSocketItemL(struct item *item, struct stats *stats) {
-    long now = time(NULL);
-
     if (item == NULL) {
+        long now = time(NULL);
+
         printf("%.19s socket_garbage.c: socketData not found\n", ctime((time_t *) &now));
     } else {
         struct socketData *socketData = item->data;

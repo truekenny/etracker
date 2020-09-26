@@ -27,7 +27,27 @@
  */
 #define RECEIVED_MESSAGE_LENGTH 2000
 
-void processRead(void *args, int currentSocket, struct item *socketItem) {
+struct deleteSocketListArgs {
+    struct list *socketList;
+    struct stats *stats;
+};
+
+unsigned char deleteSocketListCallback(struct list *list, struct item *item, void *args) {
+    if (list == NULL) {
+        // error: unused parameter 'list'
+    }
+
+    struct list *socketList = ((struct deleteSocketListArgs *) args)->socketList;
+    struct stats *stats = ((struct deleteSocketListArgs *) args)->stats;
+    int socket = *(int *) item->hash;
+
+    deleteSocketL(socketList, socket, stats);
+    deleteItem(item);
+
+    return 0;
+}
+
+void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
     int threadNumber = ((struct clientTcpArgs *) args)->threadNumber;
     struct list *queueList = ((struct clientTcpArgs *) args)->queueList;
     struct list *torrentList = ((struct clientTcpArgs *) args)->torrentList;
@@ -40,6 +60,8 @@ void processRead(void *args, int currentSocket, struct item *socketItem) {
     unsigned int *maxPeersPerResponse = ((struct clientTcpArgs *) args)->maxPeersPerResponse;
     unsigned short *socketTimeout = ((struct clientTcpArgs *) args)->socketTimeout;
     unsigned char *keepAlive = ((struct clientTcpArgs *) args)->keepAlive;
+
+    unsigned char *pCurrentSocket = (unsigned char *) &currentSocket;
 
     DEBUG_KQUEUE && printf("thread_client_tcp.c: Read %d\n", currentSocket);
     // Read from socket.
@@ -57,7 +79,8 @@ void processRead(void *args, int currentSocket, struct item *socketItem) {
         send_(currentSocket, block->data, block->size, stats);
         freeBlock(block);
 
-        deleteSocketItemL(socketItem, stats);
+        // deleteSocketItemL(socketItem, stats);
+        setHash(deleteSocketList, pCurrentSocket);
 
         stats->recv_failed++;
 
@@ -69,7 +92,8 @@ void processRead(void *args, int currentSocket, struct item *socketItem) {
 
         stats->recv_failed_read_0++;
 
-        deleteSocketItemL(socketItem, stats);
+        // deleteSocketItemL(socketItem, stats);
+        setHash(deleteSocketList, pCurrentSocket);
 
         return;
     }
@@ -79,7 +103,8 @@ void processRead(void *args, int currentSocket, struct item *socketItem) {
         stats->recv_failed++;
         stats->recv_failed_read_sub_0++;
 
-        deleteSocketItemL(socketItem, stats);
+        // deleteSocketItemL(socketItem, stats);
+        setHash(deleteSocketList, pCurrentSocket);
 
         return;
     }
@@ -107,7 +132,9 @@ void processRead(void *args, int currentSocket, struct item *socketItem) {
         printf("%.19s beforeReadSize != readSize (%zd != %zd)\n",
                ctime((time_t *) &now), beforeReadSize, readSize);
         perror("Second recv failed");
-        deleteSocketItemL(socketItem, stats);
+
+        // deleteSocketItemL(socketItem, stats);
+        setHash(deleteSocketList, pCurrentSocket);
 
         return;
     }
@@ -316,7 +343,8 @@ void processRead(void *args, int currentSocket, struct item *socketItem) {
     freeBlock(writeBlock);
 
     if (!canKeepAlive) {
-        deleteSocketItemL(socketItem, stats);
+        // deleteSocketItemL(socketItem, stats);
+        setHash(deleteSocketList, pCurrentSocket);
     }
 }
 
@@ -340,6 +368,10 @@ void *clientTcpHandler(void *args) {
     // unsigned char *keepAlive = ((struct clientTcpArgs *) args)->keepAlive;
 
     struct Eevent eevent;
+    struct list *deleteSocketList = initList(NULL, 0, STARTING_NEST, sizeof(int), DISABLE_SEMAPHORE, LITTLE_ENDIAN);
+    struct deleteSocketListArgs deleteSocketListArgs;
+    deleteSocketListArgs.socketList = socketList;
+    deleteSocketListArgs.stats = stats;
 
     while (1) {
         int nev = checkEqueue(equeue, &eevent);
@@ -361,17 +393,24 @@ void *clientTcpHandler(void *args) {
             } else if (isEof(&eevent, index)) {
                 DEBUG_KQUEUE && printf("thread_client_tcp.c: Disconnect\n");
 
-                deleteSocketItemL(socketItem, stats);
+                // deleteSocketItemL(socketItem, stats);
+                setHash(deleteSocketList, pCurrentSocket);
             } else if (isRead(&eevent, index)) {
-                processRead(args, currentSocket, socketItem);
+                processRead(args, currentSocket, deleteSocketList);
             }
 
             postSemaphoreLeaf(socketLeaf);
         } // for
 
+        // Закрываю сокеты, которые требуют это
+        mapList(deleteSocketList, &deleteSocketListArgs, &deleteSocketListCallback);
+
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;
     } // white 1
+
+    freeList(deleteSocketList, 1);
+    c_free(args);
 
     if (pthread_detach(pthread_self()) != 0) {
         perror("Could not detach thread");
