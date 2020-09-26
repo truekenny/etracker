@@ -46,6 +46,9 @@ void addStringBlock(struct block *block, void *string, unsigned int requiredSpac
 
     memcpy(&block->data[block->size], string, requiredSpace);
     block->size += requiredSpace;
+
+    // Для printf
+    block->data[block->size] = 0;
 }
 
 void addFormatStringBlock(struct block *block, unsigned int requiredSpace, char *format, ...) {
@@ -55,18 +58,24 @@ void addFormatStringBlock(struct block *block, unsigned int requiredSpace, char 
     va_start(argList, format);
     block->size += vsprintf(&block->data[block->size], format, argList);
     va_end(argList);
+
+    // Для printf
+    block->data[block->size] = 0;
 }
 
 void reAllocBlock(struct block *block, unsigned int requiredSpace) {
-    // Место есть
-    if (block->size + requiredSpace < block->allocated) {
+    /*
+     * Проверка свободного места
+     * Знак сравнения без =, чтобы осталось место как минимум на 1 символ после и он будет \0
+     */
+    if (block->allocated > block->size + requiredSpace) {
         return;
     }
 
     // Новый размер выделенной памяти
     unsigned int newAlloc = max(
             block->allocated + requiredSpace + MIN_FREE_ALLOCATE_SIZE,
-            MIN_RE_ALLOC_MULTIPLY * block->allocated);
+            block->allocated * MIN_RE_ALLOC_MULTIPLY);
 
     if (newAlloc) {
         DEBUG && printf("ReAlloc block: %d -> %d\n", block->allocated, newAlloc);
