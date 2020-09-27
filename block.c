@@ -18,8 +18,9 @@ void reAllocBlock(struct block *block, unsigned int requiredSpace);
 
 struct block *initBlock() {
     struct block *block = c_calloc(1, sizeof(struct block));
-    block->data = c_calloc(START_ALLOCATE_SIZE, sizeof(char));
+    block->data = c_malloc(START_ALLOCATE_SIZE * sizeof(char));
     block->allocated = START_ALLOCATE_SIZE;
+    block->data[0] = 0;
 
     return block;
 }
