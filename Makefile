@@ -5,6 +5,7 @@ SERVER_FILES=server.c queue.c sem.c alloc.c uri.c socket.c string.c thread_clien
 	base64.c
 SERVER_OUTPUT=-o etracker
 SERVER_CFLAGS=-pthread -lm
+FSANITIZE=-g -fsanitize=address
 REVISION=`test -d .git && git rev-parse --short HEAD`
 RM_SERVER=rm -rf etracker.dSYM
 RM_CLIENT=rm -rf client.o.dSYM
@@ -16,14 +17,23 @@ all:
 	$(CC) client.c -o client.o
 tidy:
 	$(RM_SERVER)
-	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast -Wall -W -Werror
-	$(CC) -Wall -W -Werror client.c -o client.o
+	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast -Wall -W -Werror \
+		 $(FSANITIZE)
+tidy-max:
+	$(RM_SERVER)
+	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast -Wall -W -Werror \
+		 -Wshadow -Wfloat-equal \
+		 -pedantic -Wformat=2 -Wconversion \
+		 $(FSANITIZE)
 server:
 	$(RM_SERVER)
 	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast
+debug:
+	$(RM_SERVER)
+	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast -g $(FSANITIZE)
 client:
 	$(RM_CLIENT)
-	$(CC) client.c -o client.o
+	$(CC) -Wall -W -Werror client.c -o client.o
 test:
 	$(CC) -Werror \
 		test.c queue.c alloc.c block.c list.c sem.c base64.c \

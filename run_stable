@@ -1,0 +1,10 @@
+#!/bin/bash
+
+clear
+
+while true; do
+  date
+  prlimit --core=-1: --nofile=64000: ./etracker_stable.o 80 299 1 300 3 1
+  echo Exit code: $?
+  sleep 1
+done

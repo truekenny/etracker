@@ -3,4 +3,5 @@
 cmake-build-debug
 client.o.dSYM
 server.o.dSYM
+etracker.dSYM
 etracker
