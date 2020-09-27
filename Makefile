@@ -17,11 +17,11 @@ all:
 	$(CC) client.c -o client.o
 tidy:
 	$(RM_SERVER)
-	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast -Wall -W -Werror \
+	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Wall -W -Werror \
 		 $(FSANITIZE)
 tidy-max:
 	$(RM_SERVER)
-	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast -Wall -W -Werror \
+	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Wall -W -Werror \
 		 -Wshadow -Wfloat-equal \
 		 -pedantic -Wformat=2 -Wconversion \
 		 $(FSANITIZE)
@@ -30,7 +30,7 @@ server:
 	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast
 debug:
 	$(RM_SERVER)
-	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast -g $(FSANITIZE)
+	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" $(FSANITIZE)
 client:
 	$(RM_CLIENT)
 	$(CC) -Wall -W -Werror client.c -o client.o

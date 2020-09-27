@@ -120,6 +120,7 @@ unsigned char mapList(struct list *list, void *args,
             struct item *currentItem = list->firstItem;
 
             while (currentItem != NULL) {
+                struct item *nextItem = currentItem->nextInLeaf;
                 unsigned char test = (*callback)(list, currentItem, args);
 
                 if (test) {
@@ -128,7 +129,7 @@ unsigned char mapList(struct list *list, void *args,
                     return 1;
                 }
 
-                currentItem = currentItem->nextInLeaf;
+                currentItem = nextItem;
             }
 
             postSemaphoreLeaf(list);
