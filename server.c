@@ -21,16 +21,13 @@
 #include "rps.h"
 #include "list.h"
 #include "data_garbage.h"
+#include "argument.h"
 
 #if !defined(REVISION)
 #define REVISION "UNKNOWN"
 #endif
 
 #define DEBUG 0
-#define DEFAULT_PORT 3000
-#define DEFAULT_MAX_PEER_PER_RESULT 60
-#define DEFAULT_SOCKET_TIMEOUT 3
-#define DEFAULT_KEEP_ALIVE 0
 
 void setNobody();
 
@@ -45,22 +42,12 @@ int main(int argc, char *argv[]) {
 
     setlocale(LC_NUMERIC, "");
 
-    unsigned short port = (argc < 2) ? DEFAULT_PORT : atoi(argv[1]);
-    unsigned int interval = (argc < 3) ? MAX_INTERVAL : atoi(argv[2]);
-    long workers = (argc < 4) ? sysconf(_SC_NPROCESSORS_ONLN) : atoi(argv[3]);
-    unsigned int maxPeersPerResponse = (argc < 5) ? DEFAULT_MAX_PEER_PER_RESULT : atoi(argv[4]);
-    unsigned short socketTimeout = (argc < 6) ? DEFAULT_SOCKET_TIMEOUT : atoi(argv[5]);
-    unsigned char keepAlive = (argc < 7) ? DEFAULT_KEEP_ALIVE : atoi(argv[6]);
-
-    if (!port || !interval || !workers || !maxPeersPerResponse || !socketTimeout) {
-        printf("./etracker [port] [interval] [workers] [maxPeersPerResponse] [socketTimeout] [keepAlive]\n");
-
-        exit(1);
-    }
+    struct arguments *arguments = parseArguments(argc, argv);
 
     printf("Starting configuration: port = %d, interval = %d, workers = %ld, maxPeersPerResponse = %u, "
            "socketTimeout = %u, keepAlive = %u\n",
-           port, interval, workers, maxPeersPerResponse, socketTimeout, keepAlive);
+           arguments->port, arguments->interval, arguments->workers, arguments->maxPeersPerResponse,
+           arguments->socketTimeout, arguments->keepAlive);
 
     printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 
@@ -88,14 +75,14 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->queueList = queueList;
     serverTcpArgs->torrentList = torrentList;
     serverTcpArgs->stats = stats;
-    serverTcpArgs->port = port;
+    serverTcpArgs->port = arguments->port;
     serverTcpArgs->socketList = socketList;
-    serverTcpArgs->interval = &interval;
+    serverTcpArgs->interval = &arguments->interval;
     serverTcpArgs->rps = &rps;
-    serverTcpArgs->workers = workers;
-    serverTcpArgs->maxPeersPerResponse = &maxPeersPerResponse;
-    serverTcpArgs->socketTimeout = &socketTimeout;
-    serverTcpArgs->keepAlive = &keepAlive;
+    serverTcpArgs->workers = arguments->workers;
+    serverTcpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
+    serverTcpArgs->socketTimeout = &arguments->socketTimeout;
+    serverTcpArgs->keepAlive = &arguments->keepAlive;
 
     if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
         perror("Could not create thread");
@@ -107,11 +94,11 @@ int main(int argc, char *argv[]) {
     struct serverUdpArgs *serverUdpArgs = (struct serverUdpArgs *) c_malloc(sizeof(struct serverUdpArgs));
     serverUdpArgs->torrentList = torrentList;
     serverUdpArgs->stats = stats;
-    serverUdpArgs->port = port;
-    serverUdpArgs->interval = &interval;
+    serverUdpArgs->port = arguments->port;
+    serverUdpArgs->interval = &arguments->interval;
     serverUdpArgs->rps = &rps;
-    serverUdpArgs->workers = workers;
-    serverUdpArgs->maxPeersPerResponse = &maxPeersPerResponse;
+    serverUdpArgs->workers = arguments->workers;
+    serverUdpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
 
     if (pthread_create(&udpServerThread, NULL, serverUdpHandler, (void *) serverUdpArgs) != 0) {
         perror("Could not create thread");
@@ -123,8 +110,8 @@ int main(int argc, char *argv[]) {
     sleep(1);
     setNobody();
 
-    run15MinutesThread(torrentList, &interval, &rps);
-    runGarbageSocketTimeoutThread(socketList, stats, &socketTimeout);
+    run15MinutesThread(torrentList, &arguments->interval, &rps);
+    runGarbageSocketTimeoutThread(socketList, stats, &arguments->socketTimeout);
 
     printf("Join TCP Thread\n");
     pthread_join(tcpServerThread, NULL);
