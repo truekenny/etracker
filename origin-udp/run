@@ -1,0 +1,11 @@
+#!/bin/bash
+
+gcc _client_udp.c ../string.c -o client.o
+
+for i in {1..500}
+do
+    ./client.o &
+done
+
+wait
+echo end

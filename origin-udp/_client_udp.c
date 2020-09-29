@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 #include "../string.h"
 
+#define DEBUG 0
 #define PORT        3000
 #define MAXLINE     1024
 #define MSG_CONFIRM 0
@@ -69,8 +70,8 @@ int main() {
 
         int n, len;
 
-        printf("Send : index=%d size=%d\n", i, helloSize[i]);
-        printHex(hello[i], helloSize[i]);
+        DEBUG && printf("Send : index=%d size=%d\n", i, helloSize[i]);
+        DEBUG && printHex(hello[i], helloSize[i]);
 
         sendto(sockfd, (const char *) hello[i], helloSize[i],
                MSG_CONFIRM, (const struct sockaddr *) &servaddr,
@@ -80,8 +81,8 @@ int main() {
                      MSG_WAITALL, (struct sockaddr *) &servaddr,
                      (unsigned int *) &len);
         buffer[n] = '\0';
-        printf("Receive : %d\n", i);
-        printHex(buffer, n);
+        DEBUG && printf("Receive : %d\n", i);
+        DEBUG && printHex(buffer, n);
 
         close(sockfd);
     }
