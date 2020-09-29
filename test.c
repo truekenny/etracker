@@ -103,7 +103,7 @@ int testList() {
            c_countChanges->countMalloc + c_countChanges->countCalloc - c_countChanges->countFree);
 
     struct list *list = NULL;
-    list = initList(NULL, 2, STARTING_NEST, 2, ENABLE_SEMAPHORE, LITTLE_ENDIAN);
+    list = initList(NULL, 2, STARTING_NEST, 2, ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
 
     // Обхожу пустой список
     mapList(list, NULL, &listPrintCallback);

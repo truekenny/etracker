@@ -54,9 +54,17 @@ int main(int argc, char *argv[]) {
     c_initSem();
 
     // vars
-    struct list *queueList = initList(NULL, 0, STARTING_NEST, sizeof(int), ENABLE_SEMAPHORE, LITTLE_ENDIAN);
-    struct list *socketList = initList(NULL, 1, STARTING_NEST, sizeof(int), ENABLE_SEMAPHORE, LITTLE_ENDIAN);
-    struct list *torrentList = initList(NULL, 2, STARTING_NEST, PARAM_VALUE_LENGTH, ENABLE_SEMAPHORE, LITTLE_ENDIAN);
+    struct list *queueList = initList(NULL, 0, STARTING_NEST, sizeof(int),
+            ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
+    struct list **socketLists = c_calloc(arguments->workers, sizeof(void *));
+
+    for (int threadNumber = 0; threadNumber < arguments->workers; threadNumber++) {
+        socketLists[threadNumber] =
+                initList(NULL, 1, STARTING_NEST, sizeof(int),
+                         ENABLE_SEMAPHORE_LEAF | ENABLE_SEMAPHORE_GLOBAL, LITTLE_ENDIAN);
+    }
+    struct list *torrentList = initList(NULL, 2, STARTING_NEST, PARAM_VALUE_LENGTH,
+            ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
 
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
@@ -76,7 +84,7 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->torrentList = torrentList;
     serverTcpArgs->stats = stats;
     serverTcpArgs->port = arguments->port;
-    serverTcpArgs->socketList = socketList;
+    serverTcpArgs->socketLists = socketLists;
     serverTcpArgs->interval = &arguments->interval;
     serverTcpArgs->rps = &rps;
     serverTcpArgs->workers = arguments->workers;
@@ -111,7 +119,7 @@ int main(int argc, char *argv[]) {
     setNobody();
 
     run15MinutesThread(torrentList, &arguments->interval, &rps);
-    runGarbageSocketTimeoutThread(socketList, stats, &arguments->socketTimeout);
+    runGarbageSocketTimeoutThread(socketLists, stats, &arguments->socketTimeout, arguments->workers);
 
     printf("Join TCP Thread\n");
     pthread_join(tcpServerThread, NULL);

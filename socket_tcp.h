@@ -14,7 +14,7 @@ struct serverTcpArgs {
     struct list *queueList;
     struct list *torrentList;
 
-    struct list *socketList;
+    struct list **socketLists;
 
     unsigned int *interval;
     struct rps *rps;

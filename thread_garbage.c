@@ -22,9 +22,10 @@ struct i15MinutesArgs {
 };
 
 struct garbageSocketTimeoutArgs {
-    struct list *socketList;
+    struct list **socketLists;
     struct stats *stats;
     unsigned short *socketTimeout;
+    long workers;
     long maxTimeAllow; // Временная переменная, чтобы не считать это значение для каждого подключения
 };
 
@@ -33,29 +34,13 @@ void *i15MinutesHandler(void *_args);
 void *garbageSocketTimeoutHandler(void *_args);
 
 void run15MinutesThread(struct list *torrentList, unsigned int *interval, struct rps *rps) {
-    pthread_attr_t tattr;
-    pthread_t tid;
-    int ret;
-    int newPriority = 5;
-    struct sched_param param;
-
     struct i15MinutesArgs *i15MinutesArgs = c_calloc(1, sizeof(struct i15MinutesArgs));
     i15MinutesArgs->torrentList = torrentList;
     i15MinutesArgs->interval = interval;
     i15MinutesArgs->rps = rps;
 
-    ret = pthread_attr_init(&tattr);
-    ret = pthread_attr_getschedparam(&tattr, &param);
-
-    if (param.sched_priority > newPriority) {
-        printf("Garbage data thread change priority %d -> %d\n", param.sched_priority, newPriority);
-        param.sched_priority = newPriority;
-    } else {
-        printf("Garbage data thread NO change priority %d -> %d\n", param.sched_priority, newPriority);
-    }
-
-    ret = pthread_attr_setschedparam(&tattr, &param);
-    ret = pthread_create(&tid, &tattr, i15MinutesHandler, (void *) i15MinutesArgs);
+    pthread_t tid;
+    pthread_create(&tid, NULL, i15MinutesHandler, (void *) i15MinutesArgs);
 }
 
 void *i15MinutesHandler(void *_args) {
@@ -85,30 +70,15 @@ void *i15MinutesHandler(void *_args) {
     return 0;
 }
 
-void runGarbageSocketTimeoutThread(struct list *socketList, struct stats *stats, unsigned short *socketTimeout) {
-    pthread_attr_t tattr;
-    pthread_t tid;
-    int ret;
-    int newPriority = 5;
-    struct sched_param param;
-
+void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stats, unsigned short *socketTimeout, long workers) {
     struct garbageSocketTimeoutArgs *garbageSocketTimeoutArgs = c_calloc(1, sizeof(struct garbageSocketTimeoutArgs));
-    garbageSocketTimeoutArgs->socketList = socketList;
+    garbageSocketTimeoutArgs->socketLists = socketLists;
     garbageSocketTimeoutArgs->stats = stats;
     garbageSocketTimeoutArgs->socketTimeout = socketTimeout;
+    garbageSocketTimeoutArgs->workers = workers;
 
-    ret = pthread_attr_init(&tattr);
-    ret = pthread_attr_getschedparam(&tattr, &param);
-
-    if (param.sched_priority > newPriority) {
-        printf("Garbage socket pool thread change priority %d -> %d\n", param.sched_priority, newPriority);
-        param.sched_priority = newPriority;
-    } else {
-        printf("Garbage socket pool thread NO change priority %d -> %d\n", param.sched_priority, newPriority);
-    }
-
-    ret = pthread_attr_setschedparam(&tattr, &param);
-    ret = pthread_create(&tid, &tattr, garbageSocketTimeoutHandler, (void *) garbageSocketTimeoutArgs);
+    pthread_t tid;
+    pthread_create(&tid, NULL, garbageSocketTimeoutHandler, (void *) garbageSocketTimeoutArgs);
 }
 
 unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item, void *args) {
@@ -138,16 +108,25 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
 }
 
 void *garbageSocketTimeoutHandler(void *_args) {
-    struct list *socketList = ((struct garbageSocketTimeoutArgs *) _args)->socketList;
+    struct list **socketLists = ((struct garbageSocketTimeoutArgs *) _args)->socketLists;
+    long workers = ((struct garbageSocketTimeoutArgs *) _args)->workers;
 
     while (1) {
-        unsigned short *socketTimeout = ((struct garbageSocketTimeoutArgs *) _args)->socketTimeout;
-        /*
-         * 1 – это одна секунда дополнительного времени, который сборщит таймаут подключений даёт клиенту,
-         * чтобы тот сам закрыл подключение, которое он считает ненужным (по заголоаку Keep-Alive)
-         */
-        ((struct garbageSocketTimeoutArgs *) _args)->maxTimeAllow = time(NULL) - *socketTimeout - 1;
-        mapList(socketList, _args, &garbageSocketTimeoutCallback);
+        for (int workerNumber = 0; workerNumber < workers; ++workerNumber) {
+            struct list *socketList = socketLists[workerNumber];
+
+            waitSemaphoreLeaf(socketList);
+
+            unsigned short *socketTimeout = ((struct garbageSocketTimeoutArgs *) _args)->socketTimeout;
+            /*
+             * 1 – это одна секунда дополнительного времени, который сборщит таймаут подключений даёт клиенту,
+             * чтобы тот сам закрыл подключение, которое он считает ненужным (по заголоаку Keep-Alive)
+             */
+            ((struct garbageSocketTimeoutArgs *) _args)->maxTimeAllow = time(NULL) - *socketTimeout - 1;
+
+            mapList(socketList, _args, &garbageSocketTimeoutCallback);
+            postSemaphoreLeaf(socketList);
+        }
 
         sleep(GARBAGE_SOCKET_POOL_TIME);
 

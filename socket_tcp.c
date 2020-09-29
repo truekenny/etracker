@@ -25,7 +25,7 @@ void *serverTcpHandler(void *args) {
     struct list *queueList = ((struct serverTcpArgs *) args)->queueList;
     struct list *torrentList = ((struct serverTcpArgs *) args)->torrentList;
     unsigned short port = ((struct serverTcpArgs *) args)->port;
-    struct list *socketList = ((struct serverTcpArgs *) args)->socketList;
+    struct list **socketLists = ((struct serverTcpArgs *) args)->socketLists;
     unsigned int *interval = ((struct serverTcpArgs *) args)->interval;
     struct rps *rps = ((struct serverTcpArgs *) args)->rps;
     long workers = ((struct serverTcpArgs *) args)->workers;
@@ -85,7 +85,7 @@ void *serverTcpHandler(void *args) {
 
         clientTcpArgs->equeue = equeue[threadNumber] = initEqueue();
 
-        clientTcpArgs->socketList = socketList;
+        clientTcpArgs->socketList = socketLists[threadNumber];
 
         clientTcpArgs->interval = interval;
         clientTcpArgs->rps = rps;
@@ -112,7 +112,7 @@ void *serverTcpHandler(void *args) {
 
     struct sockaddr_in clientAddr;
     socklen_t sockAddrSize = sizeof(struct sockaddr_in);
-    unsigned long currentThread = 0;
+    long currentThread = 0;
 
     while (1) {
         clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &sockAddrSize);
@@ -136,9 +136,16 @@ void *serverTcpHandler(void *args) {
 
         stats->accept_pass++;
 
-        int equeueThread = equeue[(currentThread++) % workers];
+        currentThread++;
+        if (currentThread == workers)
+            currentThread = 0;
 
-        updateSocketL(socketList, clientSocket, equeueThread, 1);
+        int equeueThread = equeue[currentThread];
+
+        // todo нужен ли здесь глобальный семафор?
+        //waitSemaphoreLeaf(socketLists[equeueThread]);
+        updateSocketL(socketLists[currentThread], clientSocket, equeueThread, 1);
+        //postSemaphoreLeaf(socketLists[equeueThread]);
 
         addClientEqueue(equeueThread, clientSocket);
         DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");

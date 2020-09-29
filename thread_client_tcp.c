@@ -374,6 +374,8 @@ void *clientTcpHandler(void *args) {
     deleteSocketListArgs.stats = stats;
 
     while (1) {
+        waitSemaphoreLeaf(socketList);
+
         int nev = checkEqueue(equeue, &eevent);
 
         DEBUG_KQUEUE && printf("thread_client_tcp.c: go nev=%d\n", nev);
@@ -404,6 +406,8 @@ void *clientTcpHandler(void *args) {
 
         // Закрываю сокеты, которые требуют это
         mapList(deleteSocketList, &deleteSocketListArgs, &deleteSocketListCallback);
+
+        postSemaphoreLeaf(socketList);
 
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;

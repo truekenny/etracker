@@ -67,7 +67,10 @@ struct list *initList(struct list *list, unsigned char level, unsigned char nest
         }
     }
 
-    if (level == 0 && list->semaphoreEnabled) {
+    if (
+            (level == 0 && list->semaphoreEnabled & ENABLE_SEMAPHORE_LEAF)
+            || (nest == STARTING_NEST && list->semaphoreEnabled & ENABLE_SEMAPHORE_GLOBAL)
+            ) {
         list->semaphore = c_calloc(1, sizeof(struct rk_sema));
         rk_sema_init(list->semaphore, 1);
     }
@@ -92,7 +95,10 @@ void freeList(struct list *list, unsigned char firstRecursion) {
         c_free(list->list);
     }
 
-    if (level == 0 && list->semaphoreEnabled) {
+    if (
+            (level == 0 && list->semaphoreEnabled & ENABLE_SEMAPHORE_LEAF)
+            || (firstRecursion && list->semaphoreEnabled & ENABLE_SEMAPHORE_GLOBAL)
+            ) {
         rk_sema_destroy(list->semaphore);
         c_free(list->semaphore);
     }
