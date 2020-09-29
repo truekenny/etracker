@@ -2,54 +2,55 @@
 #define SC6_STATS_H
 
 #include <time.h>
+#include <stdatomic.h>
 #include "block.h"
 #include "rps.h"
 
 struct stats {
     time_t time;
-    unsigned int http_200;
-    unsigned int http_400;
-    unsigned int http_401;
-    unsigned int http_403;
-    unsigned int http_404;
-    unsigned int http_405;
-    unsigned int http_408;
-    unsigned int http_413;
+    atomic_uint http_200;
+    atomic_uint http_400;
+    atomic_uint http_401;
+    atomic_uint http_403;
+    atomic_uint http_404;
+    atomic_uint http_405;
+    atomic_uint http_408;
+    atomic_uint http_413;
 
-    unsigned int close_failed;
-    unsigned int send_failed;
-    unsigned int recv_failed;
-    unsigned int recv_failed_read_0;
-    unsigned int recv_failed_read_sub_0;
-    unsigned int recv_failed_read_not_equal;
-    unsigned int accept_failed;
+    atomic_uint close_failed;
+    atomic_uint send_failed;
+    atomic_uint recv_failed;
+    atomic_uint recv_failed_read_0;
+    atomic_uint recv_failed_read_sub_0;
+    atomic_uint recv_failed_read_not_equal;
+    atomic_uint accept_failed;
 
-    unsigned int close_pass;
-    unsigned int send_pass;
-    unsigned int recv_pass;
-    unsigned int accept_pass;
+    atomic_uint close_pass;
+    atomic_uint send_pass;
+    atomic_uint recv_pass;
+    atomic_uint accept_pass;
 
-    unsigned int send_failed_udp;
-    unsigned int recv_failed_udp;
+    atomic_uint send_failed_udp;
+    atomic_uint recv_failed_udp;
 
-    unsigned int send_pass_udp;
-    unsigned int recv_pass_udp;
+    atomic_uint send_pass_udp;
+    atomic_uint recv_pass_udp;
 
-    unsigned int keep_alive;
-    unsigned int no_keep_alive;
+    atomic_uint keep_alive;
+    atomic_uint no_keep_alive;
 
-    unsigned long long recv_bytes;
-    unsigned long long sent_bytes;
+    atomic_ullong recv_bytes;
+    atomic_ullong sent_bytes;
 
-    unsigned long long recv_bytes_udp;
-    unsigned long long sent_bytes_udp;
+    atomic_ullong recv_bytes_udp;
+    atomic_ullong sent_bytes_udp;
 
-    unsigned int announce;
-    unsigned int scrape;
+    atomic_uint announce;
+    atomic_uint scrape;
 
-    unsigned int connect_udp;
-    unsigned int announce_udp;
-    unsigned int scrape_udp;
+    atomic_uint connect_udp;
+    atomic_uint announce_udp;
+    atomic_uint scrape_udp;
 };
 
 void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval, struct rps *rps);

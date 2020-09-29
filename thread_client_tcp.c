@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdatomic.h>
 #include "thread_client_tcp.h"
 #include "sem.h"
 #include "alloc.h"
@@ -54,7 +55,7 @@ void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
     struct stats *stats = ((struct clientTcpArgs *) args)->stats;
     int equeue = ((struct clientTcpArgs *) args)->equeue;
     struct list *socketList = ((struct clientTcpArgs *) args)->socketList;
-    unsigned int *interval = ((struct clientTcpArgs *) args)->interval;
+    _Atomic(unsigned int) *interval = ((struct clientTcpArgs *) args)->interval;
     struct rps *rps = ((struct clientTcpArgs *) args)->rps;
     struct block *authorizationHeader = ((struct clientTcpArgs *) args)->authorizationHeader;
     unsigned int *maxPeersPerResponse = ((struct clientTcpArgs *) args)->maxPeersPerResponse;

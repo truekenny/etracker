@@ -5,7 +5,7 @@
 
 #define MIN_INTERVAL 239
 
-void updateInterval(struct block *block, unsigned int *interval) {
+void updateInterval(struct block *block, _Atomic(unsigned int) *interval) {
     double load[3];
 
     if (getloadavg(load, 3) == -1) {

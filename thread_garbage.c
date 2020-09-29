@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdatomic.h>
 #include "thread_garbage.h"
 #include "alloc.h"
 #include "data_garbage.h"
@@ -17,7 +18,7 @@
 
 struct i15MinutesArgs {
     struct list *torrentList;
-    unsigned int *interval;
+    _Atomic(unsigned int) *interval;
     struct rps *rps;
 };
 
@@ -33,7 +34,7 @@ void *i15MinutesHandler(void *_args);
 
 void *garbageSocketTimeoutHandler(void *_args);
 
-void run15MinutesThread(struct list *torrentList, unsigned int *interval, struct rps *rps) {
+void run15MinutesThread(struct list *torrentList, _Atomic(unsigned int) *interval, struct rps *rps) {
     struct i15MinutesArgs *i15MinutesArgs = c_calloc(1, sizeof(struct i15MinutesArgs));
     i15MinutesArgs->torrentList = torrentList;
     i15MinutesArgs->interval = interval;
@@ -45,7 +46,7 @@ void run15MinutesThread(struct list *torrentList, unsigned int *interval, struct
 
 void *i15MinutesHandler(void *_args) {
     struct list *torrentList = ((struct i15MinutesArgs *) _args)->torrentList;
-    unsigned int *interval = ((struct i15MinutesArgs *) _args)->interval;
+    _Atomic(unsigned int) *interval = ((struct i15MinutesArgs *) _args)->interval;
     struct rps *rps = ((struct i15MinutesArgs *) _args)->rps;
     c_free(_args);
 

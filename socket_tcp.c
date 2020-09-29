@@ -8,6 +8,7 @@
 #include <memory.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdatomic.h>
 #include "socket_tcp.h"
 #include "thread_client_tcp.h"
 #include "socket.h"
@@ -26,7 +27,7 @@ void *serverTcpHandler(void *args) {
     struct list *torrentList = ((struct serverTcpArgs *) args)->torrentList;
     unsigned short port = ((struct serverTcpArgs *) args)->port;
     struct list **socketLists = ((struct serverTcpArgs *) args)->socketLists;
-    unsigned int *interval = ((struct serverTcpArgs *) args)->interval;
+    _Atomic(unsigned int) *interval = ((struct serverTcpArgs *) args)->interval;
     struct rps *rps = ((struct serverTcpArgs *) args)->rps;
     long workers = ((struct serverTcpArgs *) args)->workers;
     unsigned int *maxPeersPerResponse = ((struct serverTcpArgs *) args)->maxPeersPerResponse;

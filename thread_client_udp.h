@@ -1,6 +1,7 @@
 #ifndef SC6_THREAD_CLIENT_UDP_H
 #define SC6_THREAD_CLIENT_UDP_H
 
+#include <stdatomic.h>
 #include <arpa/inet.h>
 #include "udp_request.h"
 #include "rps.h"
@@ -9,7 +10,7 @@ struct clientUdpArgs {
     int serverSocket;
     struct list *torrentList;
     struct stats *stats;
-    unsigned int *interval;
+    _Atomic(unsigned int) *interval;
 
     unsigned int threadNumber;
 

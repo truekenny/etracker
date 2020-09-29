@@ -1,9 +1,11 @@
 #ifndef SC6_ARGUMENT_H
 #define SC6_ARGUMENT_H
 
+#include <stdatomic.h>
+
 struct arguments {
     unsigned short port;
-    unsigned int interval;
+    _Atomic (unsigned int) interval;
     long workers;
     unsigned int maxPeersPerResponse;
     unsigned short socketTimeout;

@@ -4,6 +4,7 @@
 #include <memory.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdatomic.h>
 #include "socket_udp.h"
 #include "alloc.h"
 #include "thread_client_udp.h"
@@ -57,7 +58,7 @@ void *serverUdpHandler(void *args) {
     struct stats *stats = ((struct serverUdpArgs *) args)->stats;
     struct list *torrentList = ((struct serverUdpArgs *) args)->torrentList;
     unsigned short serverPort = ((struct serverUdpArgs *) args)->port;
-    unsigned int *interval = ((struct serverUdpArgs *) args)->interval;
+    _Atomic(unsigned int) *interval = ((struct serverUdpArgs *) args)->interval;
     struct rps *rps = ((struct serverUdpArgs *) args)->rps;
     long workers = ((struct serverUdpArgs *) args)->workers;
     unsigned int *maxPeersPerResponse = ((struct serverUdpArgs *) args)->maxPeersPerResponse;

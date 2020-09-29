@@ -1,6 +1,7 @@
 #ifndef SC6_THREAD_CLIENT_TCP_H
 #define SC6_THREAD_CLIENT_TCP_H
 
+#include <stdatomic.h>
 #include "stats.h"
 #include "socket_garbage.h"
 #include "rps.h"
@@ -19,7 +20,7 @@ struct clientTcpArgs {
 
     struct list *socketList;
 
-    unsigned int *interval;
+    _Atomic(unsigned int) *interval;
     struct rps *rps;
     struct block *authorizationHeader;
 

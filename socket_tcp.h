@@ -1,6 +1,7 @@
 #ifndef SC6_SOCKET_TCP_H
 #define SC6_SOCKET_TCP_H
 
+#include <stdatomic.h>
 #include "stats.h"
 #include "sem.h"
 #include "queue.h"
@@ -16,7 +17,7 @@ struct serverTcpArgs {
 
     struct list **socketLists;
 
-    unsigned int *interval;
+    _Atomic(unsigned int) *interval;
     struct rps *rps;
 
     long workers;

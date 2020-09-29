@@ -5,7 +5,7 @@
 #include "stats.h"
 #include "list.h"
 
-void run15MinutesThread(struct list *torrentList, unsigned int *interval, struct rps *rps);
+void run15MinutesThread(struct list *torrentList, _Atomic(unsigned int) *interval, struct rps *rps);
 
 void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stats, unsigned short *socketTimeout, long workers);
 

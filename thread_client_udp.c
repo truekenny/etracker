@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
+#include <stdatomic.h>
 #include "thread_client_udp.h"
 #include "alloc.h"
 #include "uri.h"
@@ -21,7 +22,7 @@ void *clientUdpHandler(void *args) {
     int serverSocket = clientUdpArgs->serverSocket;
     struct list *torrentList = clientUdpArgs->torrentList;
     struct stats *stats = clientUdpArgs->stats;
-    unsigned int *interval = clientUdpArgs->interval;
+    _Atomic(unsigned int) *interval = clientUdpArgs->interval;
 
     pthread_cond_t *signalRequest = clientUdpArgs->signalRequest;
     pthread_mutex_t *mutexSignalRequest = clientUdpArgs->mutexSignalRequest;

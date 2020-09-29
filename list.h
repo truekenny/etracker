@@ -1,6 +1,7 @@
 #ifndef SC6_LIST_H
 #define SC6_LIST_H
 
+#include <stdatomic.h>
 #include "sem.h"
 
 #define STARTING_NEST 0
@@ -37,7 +38,7 @@ struct list {
     unsigned char semaphoreEnabled;
     struct rk_sema *semaphore;
 
-    struct item *firstItem;
+    _Atomic (struct item *) firstItem;
 };
 
 void waitSemaphoreLeaf(struct list *leaf);
@@ -54,7 +55,7 @@ struct list *initList(struct list *list, unsigned char level, unsigned char nest
 void freeList(struct list *list, unsigned char firstRecursion);
 
 unsigned char mapList(struct list *list, void *args,
-        unsigned char (*callback)(struct list *list, struct item *item, void *args));
+                      unsigned char (*callback)(struct list *list, struct item *item, void *args));
 
 void printList(struct list *list, unsigned char nest);
 
