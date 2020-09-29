@@ -13,10 +13,10 @@
 
 ### Run
 
-    ./etracker [port]
+    ./etracker [-p port]
     ./etracker --help
 
-Example: `./etracker 6969`
+Example: `./etracker -p 6969`
 The port is indicated simultaneously for TCP and UDP.
 
 ### Interfaces
