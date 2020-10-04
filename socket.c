@@ -58,7 +58,7 @@ void renderHttpMessage(struct block *block, int code, char *message, size_t size
 
     if (code != 200) {
         body = initBlock();
-        addFormatStringBlock(body, 1000,
+        addFormatStringBlock(body, size + 1000,
                              "d"
                              "14:failure reason"
                              "%zu:%s"
