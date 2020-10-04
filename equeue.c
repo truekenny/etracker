@@ -1,6 +1,11 @@
 #include <stddef.h>
 #include "equeue.h"
 
+#include <sys/time.h>
+
+// 0.05 секунды (здесь не может быть >= 1 секунда)
+#define WAIT_TIMEOUT 50
+
 int initEqueue() {
 #ifdef __APPLE__
     return kqueue();
@@ -46,9 +51,13 @@ void deleteClientEqueue(int equeue, int clientSocket) {
 
 int checkEqueue(int equeue, struct Eevent *eevent) {
 #ifdef __APPLE__
-    return kevent(equeue, NULL, 0, eevent->evList, EVENTS_EACH_LOOP, NULL);
+    struct timespec timespec;
+    timespec.tv_sec = 0;
+    timespec.tv_nsec = WAIT_TIMEOUT * 1000000;
+
+    return kevent(equeue, NULL, 0, eevent->evList, EVENTS_EACH_LOOP, &timespec);
 #else
-    return epoll_wait(equeue, eevent->evList, EVENTS_EACH_LOOP, -1);
+    return epoll_wait(equeue, eevent->evList, EVENTS_EACH_LOOP, WAIT_TIMEOUT);
 #endif
 }
 

@@ -406,8 +406,10 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
             postSemaphoreLeaf(socketLeaf);
         } // for
 
-        // Закрываю сокеты, которые требуют это
-        mapList(deleteSocketList, &deleteSocketListArgs, &deleteSocketListCallback);
+        if (nev) {
+            // Закрываю сокеты, которые требуют это
+            mapList(deleteSocketList, &deleteSocketListArgs, &deleteSocketListCallback);
+        }
 
         postSemaphoreLeaf(socketList);
 

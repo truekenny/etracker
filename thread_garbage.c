@@ -120,7 +120,7 @@ void *garbageSocketTimeoutHandler(void *_args) {
 
             unsigned short *socketTimeout = ((struct garbageSocketTimeoutArgs *) _args)->socketTimeout;
             /*
-             * 1 – это одна секунда дополнительного времени, который сборщит таймаут подключений даёт клиенту,
+             * 1 – это одна секунда дополнительного времени, который сборщик таймаут подключений даёт клиенту,
              * чтобы тот сам закрыл подключение, которое он считает ненужным (по заголоаку Keep-Alive)
              */
             ((struct garbageSocketTimeoutArgs *) _args)->maxTimeAllow = time(NULL) - *socketTimeout - 1;
