@@ -20,6 +20,8 @@ struct i15MinutesArgs {
     struct list *torrentList;
     _Atomic(unsigned int) *interval;
     struct rps *rps;
+    unsigned int minInterval;
+    unsigned int maxInterval;
 };
 
 struct garbageSocketTimeoutArgs {
@@ -30,32 +32,37 @@ struct garbageSocketTimeoutArgs {
     long maxTimeAllow; // Временная переменная, чтобы не считать это значение для каждого подключения
 };
 
-void *i15MinutesHandler(void *_args);
+void *i15MinutesHandler(struct i15MinutesArgs *args);
 
-void *garbageSocketTimeoutHandler(void *_args);
+void *garbageSocketTimeoutHandler(struct garbageSocketTimeoutArgs *_args);
 
-void run15MinutesThread(struct list *torrentList, _Atomic(unsigned int) *interval, struct rps *rps) {
+void run15MinutesThread(struct list *torrentList, _Atomic(unsigned int) *interval, struct rps *rps,
+                        unsigned int minInterval, unsigned int maxInterval) {
     struct i15MinutesArgs *i15MinutesArgs = c_calloc(1, sizeof(struct i15MinutesArgs));
     i15MinutesArgs->torrentList = torrentList;
     i15MinutesArgs->interval = interval;
     i15MinutesArgs->rps = rps;
+    i15MinutesArgs->minInterval = minInterval;
+    i15MinutesArgs->maxInterval = maxInterval;
 
     pthread_t tid;
-    pthread_create(&tid, NULL, i15MinutesHandler, (void *) i15MinutesArgs);
+    pthread_create(&tid, NULL, (void *(*)(void *)) i15MinutesHandler, i15MinutesArgs);
 }
 
-void *i15MinutesHandler(void *_args) {
-    struct list *torrentList = ((struct i15MinutesArgs *) _args)->torrentList;
-    _Atomic(unsigned int) *interval = ((struct i15MinutesArgs *) _args)->interval;
-    struct rps *rps = ((struct i15MinutesArgs *) _args)->rps;
-    c_free(_args);
+void *i15MinutesHandler(struct i15MinutesArgs *args) {
+    struct list *torrentList = args->torrentList;
+    _Atomic(unsigned int) *interval = args->interval;
+    struct rps *rps = args->rps;
+    unsigned int minInterval = args->minInterval;
+    unsigned int maxInterval = args->maxInterval;
+    c_free(args);
 
     while (1) {
         struct block *block = initBlock();
 
         runGarbageCollectorL(block, torrentList);
         addStringBlock(block, "  ", 2);
-        updateInterval(block, interval);
+        updateInterval(block, interval, minInterval, maxInterval);
 
         addFormatStringBlock(block, 100, "  RPS: %.2f\n\x00", getRps(rps));
         printf("%s", block->data);
@@ -79,7 +86,7 @@ void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stat
     garbageSocketTimeoutArgs->workers = workers;
 
     pthread_t tid;
-    pthread_create(&tid, NULL, garbageSocketTimeoutHandler, (void *) garbageSocketTimeoutArgs);
+    pthread_create(&tid, NULL, (void *(*)(void *)) garbageSocketTimeoutHandler, garbageSocketTimeoutArgs);
 }
 
 unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item, void *args) {
@@ -108,9 +115,9 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
     return 0;
 }
 
-void *garbageSocketTimeoutHandler(void *_args) {
-    struct list **socketLists = ((struct garbageSocketTimeoutArgs *) _args)->socketLists;
-    long workers = ((struct garbageSocketTimeoutArgs *) _args)->workers;
+void *garbageSocketTimeoutHandler(struct garbageSocketTimeoutArgs *_args) {
+    struct list **socketLists = _args->socketLists;
+    long workers = _args->workers;
 
     while (1) {
         for (int workerNumber = 0; workerNumber < workers; ++workerNumber) {
@@ -118,12 +125,12 @@ void *garbageSocketTimeoutHandler(void *_args) {
 
             waitSemaphoreLeaf(socketList);
 
-            unsigned short *socketTimeout = ((struct garbageSocketTimeoutArgs *) _args)->socketTimeout;
+            unsigned short *socketTimeout = _args->socketTimeout;
             /*
              * 1 – это одна секунда дополнительного времени, который сборщик таймаут подключений даёт клиенту,
              * чтобы тот сам закрыл подключение, которое он считает ненужным (по заголоаку Keep-Alive)
              */
-            ((struct garbageSocketTimeoutArgs *) _args)->maxTimeAllow = time(NULL) - *socketTimeout - 1;
+            _args->maxTimeAllow = time(NULL) - *socketTimeout - 1;
 
             mapList(socketList, _args, &garbageSocketTimeoutCallback);
             postSemaphoreLeaf(socketList);

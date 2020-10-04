@@ -34,20 +34,14 @@ void setNobody();
 int main(int argc, char *argv[]) {
     printf("Revision: %s\n", REVISION);
 
-    if (MAX_ALIVE_TIME < MAX_INTERVAL) {
-        printf("Bad idea: MAX_ALIVE_TIME < MAX_INTERVAL\n");
-
-        exit(18);
-    }
-
     setlocale(LC_NUMERIC, "");
 
     struct arguments *arguments = parseArguments(argc, argv);
 
     printf("Starting configuration: port = %d, interval = %d, workers = %ld, maxPeersPerResponse = %u, "
-           "socketTimeout = %u, keepAlive = %u\n",
+           "socketTimeout = %u, keepAlive = %u, minInterval = %u, maxInterval = %u\n",
            arguments->port, arguments->interval, arguments->workers, arguments->maxPeersPerResponse,
-           arguments->socketTimeout, arguments->keepAlive);
+           arguments->socketTimeout, arguments->keepAlive, arguments->minInterval, arguments->maxInterval);
 
     printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 
@@ -55,7 +49,7 @@ int main(int argc, char *argv[]) {
 
     // vars
     struct list *queueList = initList(NULL, 0, STARTING_NEST, sizeof(int),
-            ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
+                                      ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
     struct list **socketLists = c_calloc(arguments->workers, sizeof(void *));
 
     for (int threadNumber = 0; threadNumber < arguments->workers; threadNumber++) {
@@ -64,7 +58,7 @@ int main(int argc, char *argv[]) {
                          ENABLE_SEMAPHORE_LEAF | ENABLE_SEMAPHORE_GLOBAL, LITTLE_ENDIAN);
     }
     struct list *torrentList = initList(NULL, 2, STARTING_NEST, PARAM_VALUE_LENGTH,
-            ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
+                                        ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
 
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
@@ -119,7 +113,7 @@ int main(int argc, char *argv[]) {
     sleep(1);
     setNobody();
 
-    run15MinutesThread(torrentList, &arguments->interval, &rps);
+    run15MinutesThread(torrentList, &arguments->interval, &rps, arguments->minInterval, arguments->maxInterval);
     runGarbageSocketTimeoutThread(socketLists, stats, &arguments->socketTimeout, arguments->workers);
 
     printf("Join TCP Thread\n");

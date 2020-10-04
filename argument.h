@@ -11,6 +11,8 @@ struct arguments {
     unsigned short socketTimeout;
     unsigned char keepAlive;
     char *charset;
+    unsigned int minInterval;
+    unsigned int maxInterval;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);

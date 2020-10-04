@@ -3,9 +3,8 @@
 #include <unistd.h>
 #include "interval.h"
 
-#define MIN_INTERVAL 239
-
-void updateInterval(struct block *block, _Atomic(unsigned int) *interval) {
+void updateInterval(struct block *block, _Atomic(unsigned int) *interval,
+        unsigned int minInterval, unsigned int maxInterval) {
     double load[3];
 
     if (getloadavg(load, 3) == -1) {
@@ -15,8 +14,8 @@ void updateInterval(struct block *block, _Atomic(unsigned int) *interval) {
     double maxAllowLoadAverage = ((double) sysconf(_SC_NPROCESSORS_ONLN)) - 0.5;
 
     unsigned int localInterval = *interval + ((load[2] < maxAllowLoadAverage) ? (-STEP_INTERVAL) : STEP_INTERVAL);
-    localInterval = (localInterval > MAX_INTERVAL) ? MAX_INTERVAL : localInterval;
-    localInterval = (localInterval < MIN_INTERVAL) ? MIN_INTERVAL : localInterval;
+    localInterval = (localInterval > maxInterval) ? maxInterval : localInterval;
+    localInterval = (localInterval < minInterval) ? minInterval : localInterval;
 
     if (block != NULL)
         addFormatStringBlock(block, 1000,

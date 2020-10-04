@@ -14,16 +14,30 @@
 #define KEEP_ALIVE_NAME             6
 #define HELP_NAME                   7
 #define CHARSET_NAME                8
+#define MIN_INTERVAL_NAME           9
+#define MAX_INTERVAL_NAME          10
 
 #define DEFAULT_PORT                3000
 #define DEFAULT_INTERVAL            1799
 #define DEFAULT_MAX_PEER_PER_RESULT 60
 #define DEFAULT_SOCKET_TIMEOUT      3
 #define DEFAULT_KEEP_ALIVE          0
+#define DEFAULT_MIN_INTERVAL        239
+#define DEFAULT_MAX_INTERVAL        1799
 
 unsigned int getName(char *name);
 
 void showHelp();
+
+unsigned int minMaxUnsignedInt(unsigned int min, unsigned int value, unsigned int max) {
+    if (value < min)
+        value = min;
+
+    if (value > max)
+        value = max;
+
+    return value;
+}
 
 struct arguments *parseArguments(int argc, char *argv[]) {
     // Первый аргумент не может быть числом – скорей всего используется старый формат
@@ -38,6 +52,8 @@ struct arguments *parseArguments(int argc, char *argv[]) {
     arguments->maxPeersPerResponse = DEFAULT_MAX_PEER_PER_RESULT;
     arguments->socketTimeout = DEFAULT_SOCKET_TIMEOUT;
     arguments->keepAlive = DEFAULT_KEEP_ALIVE;
+    arguments->minInterval = DEFAULT_MIN_INTERVAL;
+    arguments->maxInterval = DEFAULT_MAX_INTERVAL;
 
     for (int index = 0; index < argc; index++) {
         char *argumentName = argv[index];
@@ -68,14 +84,26 @@ struct arguments *parseArguments(int argc, char *argv[]) {
             case CHARSET_NAME:
                 arguments->charset = (index == argc - 1) ? NULL : argv[index + 1];
                 break;
+            case MIN_INTERVAL_NAME:
+                arguments->minInterval = argumentValue;
+                break;
+            case MAX_INTERVAL_NAME:
+                arguments->maxInterval = argumentValue;
+                break;
         }
     }
+
+    arguments->minInterval = minMaxUnsignedInt(DEFAULT_MIN_INTERVAL, arguments->minInterval, DEFAULT_MAX_INTERVAL);
+    arguments->maxInterval = minMaxUnsignedInt(arguments->minInterval, arguments->maxInterval, DEFAULT_MAX_INTERVAL);
 
     if (!arguments->port
         || !arguments->interval
         || !arguments->workers
         || !arguments->maxPeersPerResponse
-        || !arguments->socketTimeout)
+        || !arguments->socketTimeout
+        || !arguments->minInterval
+        || !arguments->maxInterval
+            )
         showHelp();
 
     return arguments;
@@ -96,8 +124,12 @@ unsigned int getName(char *name) {
         return KEEP_ALIVE_NAME;
     } else if (!strcmp(name, "-h") || !strcmp(name, "--help")) {
         return HELP_NAME;
-    }else if (!strcmp(name, "--charset")) {
+    } else if (!strcmp(name, "--charset")) {
         return CHARSET_NAME;
+    } else if (!strcmp(name, "--min-interval")) {
+        return MIN_INTERVAL_NAME;
+    } else if (!strcmp(name, "--max-interval")) {
+        return MAX_INTERVAL_NAME;
     }
 
     return UNKNOWN_NAME;
@@ -131,19 +163,27 @@ void showHelp() {
             "     -k      Enable http's keep alive, default disable.\n"
             "\n"
             "     --charset\n"
-            "             Charset for stats page only.\n"
+            "             Charset for stats page only, default none.\n"
+            "\n"
+            "     --min-interval\n"
+            "             Minimum interval to be reached based on load_avg, default %d.\n"
+            "\n"
+            "     --max-interval\n"
+            "             Maximum interval to be reached based on load_avg, default %d.\n"
             "\n"
             "EXAMPLES\n"
             "\n"
             "     etracker\n"
             "     etracker -p 80\n"
             "     etracker --port 80\n"
-            "     etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k --charset utf-8\n"
+            "     etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k --charset utf-8 --min-interval 299 --max-interval 1799\n"
             "     etracker --help\n",
             DEFAULT_PORT,
             DEFAULT_INTERVAL,
             DEFAULT_MAX_PEER_PER_RESULT,
-            DEFAULT_SOCKET_TIMEOUT
+            DEFAULT_SOCKET_TIMEOUT,
+            DEFAULT_MIN_INTERVAL,
+            DEFAULT_MAX_INTERVAL
     );
 
     exit(223);
