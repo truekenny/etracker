@@ -10,11 +10,12 @@ FSANITIZE_THREAD=-g -fsanitize=thread
 REVISION=`test -d .git && git rev-parse --short HEAD`
 RM_SERVER=rm -rf etracker.dSYM
 RM_CLIENT=rm -rf client.o.dSYM
+OPTIMIZE=-march=native -O2 -pipe
 
 all:
 	$(RM_SERVER)
 	$(RM_CLIENT)
-	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast
+	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" $(OPTIMIZE)
 	$(CC) client.c -o client.o
 tidy:
 	$(RM_SERVER)
@@ -28,7 +29,7 @@ tidy-max:
 		 $(FSANITIZE_ADDRESS)
 server:
 	$(RM_SERVER)
-	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" -Ofast
+	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" $(OPTIMIZE)
 debug:
 	$(RM_SERVER)
 	$(CC) $(SERVER_FILES) $(SERVER_OUTPUT) $(SERVER_CFLAGS) -DREVISION=\"$(REVISION)\" $(FSANITIZE_ADDRESS)
