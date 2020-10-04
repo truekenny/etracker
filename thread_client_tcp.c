@@ -117,7 +117,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         return;
     }
 
-    updateRps(rps);
+    updateRps(rps, RPS_TCP);
 
     updateSocketL(socketList, currentSocket, equeue, 0);
 

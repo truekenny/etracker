@@ -67,7 +67,8 @@ void *i15MinutesHandler(struct i15MinutesArgs *args) {
         addStringBlock(block, "  ", 2);
         updateInterval(block, interval, minInterval, maxInterval);
 
-        addFormatStringBlock(block, 100, "  RPS: %.2f\n\x00", getRps(rps));
+        addFormatStringBlock(block, 100, "  RPS: %.2f/%.2f\n\x00",
+                             getRps(rps, RPS_TCP), getRps(rps, RPS_UDP));
         printf("%s", block->data);
 
         freeBlock(block);

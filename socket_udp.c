@@ -149,7 +149,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
         }
 
 
-        updateRps(rps);
+        updateRps(rps, RPS_UDP);
         stats->recv_pass_udp++;
         stats->recv_bytes_udp += receivedSize;
 

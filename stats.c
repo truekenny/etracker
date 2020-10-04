@@ -30,7 +30,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "interval = %'d\n"
                          "active_sockets = %'d (rlimit %'llu/%'llu)\n\n"
 
-                         "requests_per_second = %.2f\n\n"
+                         "requests_per_second = tcp: %.2f, udp: %.2f\n\n"
 
                          "rusage.ru_maxrss = %'12ld\n\n"
 
@@ -94,7 +94,8 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          stats->accept_pass - stats->close_pass - stats->close_failed,
                          rlimit.rlim_cur, rlimit.rlim_max,
 
-                         getRps(rps),
+                         getRps(rps, RPS_TCP),
+                         getRps(rps, RPS_UDP),
 
                          rusage.ru_maxrss,
 
