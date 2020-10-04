@@ -13,6 +13,7 @@
 #define SOCKET_TIMEOUT_NAME         5
 #define KEEP_ALIVE_NAME             6
 #define HELP_NAME                   7
+#define CHARSET_NAME                8
 
 #define DEFAULT_PORT                3000
 #define DEFAULT_INTERVAL            1799
@@ -64,6 +65,9 @@ struct arguments *parseArguments(int argc, char *argv[]) {
             case HELP_NAME:
                 showHelp();
                 break;
+            case CHARSET_NAME:
+                arguments->charset = (index == argc - 1) ? NULL : argv[index + 1];
+                break;
         }
     }
 
@@ -92,6 +96,8 @@ unsigned int getName(char *name) {
         return KEEP_ALIVE_NAME;
     } else if (!strcmp(name, "-h") || !strcmp(name, "--help")) {
         return HELP_NAME;
+    }else if (!strcmp(name, "--charset")) {
+        return CHARSET_NAME;
     }
 
     return UNKNOWN_NAME;
@@ -103,7 +109,7 @@ void showHelp() {
             "     etracker -- Open-source BitTorrent tracker\n"
             "\n"
             "SYNOPSIS\n"
-            "     etracker [-p port] [-i interval] [-w workers] [-e peers] [-t timeout] [-k] [-h]\n"
+            "     etracker [-p port] [-i interval] [-w workers] [-e peers] [-t timeout] [-k] [-h] [--charset charset]\n"
             "\n"
             "DESCRIPTION\n"
             "     Run BitTorrent tracker with interfaces:\n"
@@ -124,12 +130,15 @@ void showHelp() {
             "\n"
             "     -k      Enable http's keep alive, default disable.\n"
             "\n"
+            "     --charset\n"
+            "             Charset for stats page only.\n"
+            "\n"
             "EXAMPLES\n"
             "\n"
             "     etracker\n"
             "     etracker -p 80\n"
             "     etracker --port 80\n"
-            "     etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k\n"
+            "     etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k --charset utf-8\n"
             "     etracker --help\n",
             DEFAULT_PORT,
             DEFAULT_INTERVAL,

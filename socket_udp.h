@@ -17,6 +17,6 @@ struct serverUdpArgs {
     unsigned int *maxPeersPerResponse;
 };
 
-void *serverUdpHandler(void *args);
+void *serverUdpHandler(struct serverUdpArgs *args);
 
 #endif //SC6_SOCKET_UDP_H

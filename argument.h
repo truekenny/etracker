@@ -10,6 +10,7 @@ struct arguments {
     unsigned int maxPeersPerResponse;
     unsigned short socketTimeout;
     unsigned char keepAlive;
+    char *charset;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);

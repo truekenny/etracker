@@ -20,15 +20,16 @@ struct clientTcpArgs {
 
     struct list *socketList;
 
-    _Atomic(unsigned int) *interval;
+    _Atomic (unsigned int) *interval;
     struct rps *rps;
     struct block *authorizationHeader;
 
     unsigned int *maxPeersPerResponse;
     unsigned short *socketTimeout;
     unsigned char *keepAlive;
+    char *charset;
 };
 
-void *clientTcpHandler(void *);
+void *clientTcpHandler(struct clientTcpArgs *);
 
 #endif //SC6_THREAD_CLIENT_TCP_H

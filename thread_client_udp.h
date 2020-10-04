@@ -24,6 +24,6 @@ struct clientUdpArgs {
     unsigned int *maxPeersPerResponse;
 };
 
-void *clientUdpHandler(void *);
+void *clientUdpHandler(struct clientUdpArgs *);
 
 #endif //SC6_THREAD_CLIENT_UDP_H

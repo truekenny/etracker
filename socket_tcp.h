@@ -17,15 +17,16 @@ struct serverTcpArgs {
 
     struct list **socketLists;
 
-    _Atomic(unsigned int) *interval;
+    _Atomic (unsigned int) *interval;
     struct rps *rps;
 
     long workers;
     unsigned int *maxPeersPerResponse;
     unsigned short *socketTimeout;
     unsigned char *keepAlive;
+    char *charset;
 };
 
-void *serverTcpHandler(void *args);
+void *serverTcpHandler(struct serverTcpArgs *args);
 
 #endif //SC6_SOCKET_TCP_H

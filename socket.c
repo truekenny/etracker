@@ -15,7 +15,7 @@
  * @param size
  */
 void renderHttpMessage(struct block *block, int code, char *message, size_t size, int canKeepAlive,
-        unsigned short socketTimeout, struct stats *stats) {
+                       unsigned short socketTimeout, struct stats *stats, char *charset) {
     struct block *body = {0};
 
     // First line headers
@@ -72,13 +72,18 @@ void renderHttpMessage(struct block *block, int code, char *message, size_t size
     // End of headers
     if (canKeepAlive) {
         addStringBlock(block, "Connection: Keep-Alive\r\n", 24);
-        addFormatStringBlock(block, 100,"Keep-Alive: timeout=%u, max=1000\r\n", socketTimeout);
+        addFormatStringBlock(block, 100, "Keep-Alive: timeout=%u, max=1000\r\n", socketTimeout);
     } else {
         addStringBlock(block, "Connection: Close\r\n", 19);
     }
 
-    addFormatStringBlock(block, 1000, "Content-Type: text/plain\r\n"
-                                      "Content-Length: %zu\r\n"
+    if (charset == NULL) {
+        addFormatStringBlock(block, 1000, "Content-Type: text/plain\r\n");
+    } else {
+        addFormatStringBlock(block, 1000, "Content-Type: text/plain; charset=%s\r\n", charset);
+    }
+
+    addFormatStringBlock(block, 1000, "Content-Length: %zu\r\n"
                                       "Server: github.com/truekenny/etracker\r\n"
                                       "\r\n",
                          size

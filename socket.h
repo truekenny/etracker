@@ -10,7 +10,7 @@
 void setTimeout(int socket);
 
 void renderHttpMessage(struct block *block, int code, char *message, size_t size, int canKeepAlive,
-                       unsigned short socketTimeout, struct stats *stats);
+                       unsigned short socketTimeout, struct stats *stats, char *charset);
 
 ssize_t send_(int socket, void *message, size_t size, struct stats *stats);
 

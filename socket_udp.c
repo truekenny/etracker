@@ -44,7 +44,7 @@ void checkSize() {
     }
 }
 
-void *serverUdpHandler(void *args) {
+void *serverUdpHandler(struct serverUdpArgs *args) {
     checkSize();
     struct udpRequest
             *firstRequest = {0},
@@ -55,13 +55,13 @@ void *serverUdpHandler(void *args) {
     struct rk_sema semaphoreRequest = {0};
     rk_sema_init(&semaphoreRequest, 1);
 
-    struct stats *stats = ((struct serverUdpArgs *) args)->stats;
-    struct list *torrentList = ((struct serverUdpArgs *) args)->torrentList;
-    unsigned short serverPort = ((struct serverUdpArgs *) args)->port;
-    _Atomic(unsigned int) *interval = ((struct serverUdpArgs *) args)->interval;
-    struct rps *rps = ((struct serverUdpArgs *) args)->rps;
-    long workers = ((struct serverUdpArgs *) args)->workers;
-    unsigned int *maxPeersPerResponse = ((struct serverUdpArgs *) args)->maxPeersPerResponse;
+    struct stats *stats = args->stats;
+    struct list *torrentList = args->torrentList;
+    unsigned short serverPort = args->port;
+    _Atomic(unsigned int) *interval = args->interval;
+    struct rps *rps = args->rps;
+    long workers = args->workers;
+    unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
     c_free(args);
 
     int serverSocket;
@@ -112,7 +112,7 @@ void *serverUdpHandler(void *args) {
 
         // Поток
         pthread_t udpClientThread;
-        if (pthread_create(&udpClientThread, NULL, clientUdpHandler, (void *) clientUdpArgs) != 0) {
+        if (pthread_create(&udpClientThread, NULL, (void *(*)(void *)) clientUdpHandler, clientUdpArgs) != 0) {
             perror("Could not create UDP announce thread");
 
             exit(203);

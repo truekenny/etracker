@@ -48,19 +48,20 @@ unsigned char deleteSocketListCallback(struct list *list, struct item *item, voi
     return 0;
 }
 
-void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
-    int threadNumber = ((struct clientTcpArgs *) args)->threadNumber;
-    struct list *queueList = ((struct clientTcpArgs *) args)->queueList;
-    struct list *torrentList = ((struct clientTcpArgs *) args)->torrentList;
-    struct stats *stats = ((struct clientTcpArgs *) args)->stats;
-    int equeue = ((struct clientTcpArgs *) args)->equeue;
-    struct list *socketList = ((struct clientTcpArgs *) args)->socketList;
-    _Atomic(unsigned int) *interval = ((struct clientTcpArgs *) args)->interval;
-    struct rps *rps = ((struct clientTcpArgs *) args)->rps;
-    struct block *authorizationHeader = ((struct clientTcpArgs *) args)->authorizationHeader;
-    unsigned int *maxPeersPerResponse = ((struct clientTcpArgs *) args)->maxPeersPerResponse;
-    unsigned short *socketTimeout = ((struct clientTcpArgs *) args)->socketTimeout;
-    unsigned char *keepAlive = ((struct clientTcpArgs *) args)->keepAlive;
+void processRead(struct clientTcpArgs *args, int currentSocket, struct list *deleteSocketList) {
+    int threadNumber = args->threadNumber;
+    struct list *queueList = args->queueList;
+    struct list *torrentList = args->torrentList;
+    struct stats *stats = args->stats;
+    int equeue = args->equeue;
+    struct list *socketList = args->socketList;
+    _Atomic (unsigned int) *interval = args->interval;
+    struct rps *rps = args->rps;
+    struct block *authorizationHeader = args->authorizationHeader;
+    unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
+    unsigned short *socketTimeout = args->socketTimeout;
+    unsigned char *keepAlive = args->keepAlive;
+    char *charset = args->charset;
 
     unsigned char *pCurrentSocket = (unsigned char *) &currentSocket;
 
@@ -76,7 +77,7 @@ void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
         // printf("recv has full buffer\n");
 
         struct block *block = initBlock();
-        renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats);
+        renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats, NULL);
         send_(currentSocket, block->data, block->size, stats);
         freeBlock(block);
 
@@ -199,10 +200,10 @@ void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
 
             if (!query.has_info_hash) {
                 renderHttpMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive,
-                                  *socketTimeout, stats);
+                                  *socketTimeout, stats, NULL);
             } else if (!query.port) {
                 renderHttpMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
-                                  *socketTimeout, stats);
+                                  *socketTimeout, stats, NULL);
             } else {
                 // struct torrent *torrent;
                 struct block *block = initBlock();
@@ -223,7 +224,7 @@ void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
                 postSemaphoreLeaf(leaf);
 
                 renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                                  *socketTimeout, stats);
+                                  *socketTimeout, stats, NULL);
                 freeBlock(block);
             }
         } else if (startsWith("GET /set", readBuffer)) {
@@ -268,11 +269,11 @@ void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
 
                 renderHttpMessage(writeBlock, 200,
                                   block->data, block->size,
-                                  canKeepAlive, *socketTimeout, stats);
+                                  canKeepAlive, *socketTimeout, stats, NULL);
                 freeBlock(block);
             } else {
                 renderHttpMessage(writeBlock, 401, "Authorization Failure", 21, canKeepAlive,
-                                  *socketTimeout, stats);
+                                  *socketTimeout, stats, NULL);
             }
         } else if (startsWith("GET /stats", readBuffer)) {
             struct block *block = initBlock();
@@ -284,18 +285,18 @@ void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
             }
 
             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                              *socketTimeout, stats);
+                              *socketTimeout, stats, charset);
             freeBlock(block);
         } else if (DEBUG && startsWith("GET /garbage", readBuffer)) {
             struct block *block = initBlock();
             runGarbageCollectorL(block, torrentList);
             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                              *socketTimeout, stats);
+                              *socketTimeout, stats, NULL);
             freeBlock(block);
         } else if (startsWith("GET / ", readBuffer)) {
             renderHttpMessage(writeBlock, 200,
                               "github.com/truekenny/etracker - open-source BitTorrent tracker\n", 63,
-                              canKeepAlive, *socketTimeout, stats);
+                              canKeepAlive, *socketTimeout, stats, NULL);
         } else if (startsWith("GET /scrape", readBuffer)) {
             stats->scrape++;
 
@@ -306,18 +307,18 @@ void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
 
             if (!hashes->size && !ENABLE_FULL_SCRAPE) {
                 renderHttpMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
-                                  *socketTimeout, stats);
+                                  *socketTimeout, stats, NULL);
             } else {
                 renderScrapeTorrentsPublic(block, torrentList, hashes, &query);
                 renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                                  *socketTimeout, stats);
+                                  *socketTimeout, stats, NULL);
             }
 
             freeBlock(hashes);
             freeBlock(block);
         } else {
             renderHttpMessage(writeBlock, 404, "Page not found", 14, canKeepAlive,
-                              *socketTimeout, stats);
+                              *socketTimeout, stats, NULL);
         }
 
         if (canKeepAlive) {
@@ -328,7 +329,7 @@ void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
     } // isHttp
     else {
         renderHttpMessage(writeBlock, 405, readBuffer, readSize, canKeepAlive,
-                          *socketTimeout, stats);
+                          *socketTimeout, stats, NULL);
         DEBUG && printf("< %s", readBuffer);
     }
 
@@ -354,19 +355,19 @@ void processRead(void *args, int currentSocket, struct list *deleteSocketList) {
  * @param args
  * @return
  */
-void *clientTcpHandler(void *args) {
-    // int threadNumber = ((struct clientTcpArgs *) args)->threadNumber;
-    // struct list *queueList = ((struct clientTcpArgs *) args)->queueList;
-    // struct list *torrentList = ((struct clientTcpArgs *) args)->torrentList;
-    struct stats *stats = ((struct clientTcpArgs *) args)->stats;
-    int equeue = ((struct clientTcpArgs *) args)->equeue;
-    struct list *socketList = ((struct clientTcpArgs *) args)->socketList;
-    // unsigned int *interval = ((struct clientTcpArgs *) args)->interval;
-    // struct rps *rps = ((struct clientTcpArgs *) args)->rps;
-    // struct block *authorizationHeader = ((struct clientTcpArgs *) args)->authorizationHeader;
-    // unsigned int *maxPeersPerResponse = ((struct clientTcpArgs *) args)->maxPeersPerResponse;
-    // unsigned short *socketTimeout = ((struct clientTcpArgs *) args)->socketTimeout;
-    // unsigned char *keepAlive = ((struct clientTcpArgs *) args)->keepAlive;
+void *clientTcpHandler(struct clientTcpArgs *args) {
+    // int threadNumber = args->threadNumber;
+    // struct list *queueList = args->queueList;
+    // struct list *torrentList = args->torrentList;
+    struct stats *stats = args->stats;
+    int equeue = args->equeue;
+    struct list *socketList = args->socketList;
+    // unsigned int *interval = args->interval;
+    // struct rps *rps = args->rps;
+    // struct block *authorizationHeader = args->authorizationHeader;
+    // unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
+    // unsigned short *socketTimeout = args->socketTimeout;
+    // unsigned char *keepAlive = args->keepAlive;
 
     struct Eevent eevent;
     struct list *deleteSocketList = initList(NULL, 0, STARTING_NEST, sizeof(int), DISABLE_SEMAPHORE, LITTLE_ENDIAN);

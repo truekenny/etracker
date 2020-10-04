@@ -21,18 +21,19 @@
 #define SOCKET_QUEUE_LENGTH 150
 #define EVENTS_EACH_LOOP 32
 
-void *serverTcpHandler(void *args) {
-    struct stats *stats = ((struct serverTcpArgs *) args)->stats;
-    struct list *queueList = ((struct serverTcpArgs *) args)->queueList;
-    struct list *torrentList = ((struct serverTcpArgs *) args)->torrentList;
-    unsigned short port = ((struct serverTcpArgs *) args)->port;
-    struct list **socketLists = ((struct serverTcpArgs *) args)->socketLists;
-    _Atomic(unsigned int) *interval = ((struct serverTcpArgs *) args)->interval;
-    struct rps *rps = ((struct serverTcpArgs *) args)->rps;
-    long workers = ((struct serverTcpArgs *) args)->workers;
-    unsigned int *maxPeersPerResponse = ((struct serverTcpArgs *) args)->maxPeersPerResponse;
-    unsigned short *socketTimeout = ((struct serverTcpArgs *) args)->socketTimeout;
-    unsigned char *keepAlive = ((struct serverTcpArgs *) args)->keepAlive;
+void *serverTcpHandler(struct serverTcpArgs *args) {
+    struct stats *stats = args->stats;
+    struct list *queueList = args->queueList;
+    struct list *torrentList = args->torrentList;
+    unsigned short port = args->port;
+    struct list **socketLists = args->socketLists;
+    _Atomic(unsigned int) *interval = args->interval;
+    struct rps *rps = args->rps;
+    long workers = args->workers;
+    unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
+    unsigned short *socketTimeout = args->socketTimeout;
+    unsigned char *keepAlive = args->keepAlive;
+    char *charset = args->charset;
 
     c_free(args);
 
@@ -95,8 +96,9 @@ void *serverTcpHandler(void *args) {
         clientTcpArgs->maxPeersPerResponse = maxPeersPerResponse;
         clientTcpArgs->socketTimeout = socketTimeout;
         clientTcpArgs->keepAlive = keepAlive;
+        clientTcpArgs->charset = charset;
 
-        if (pthread_create(&tcpClientThread, NULL, clientTcpHandler, (void *) clientTcpArgs) != 0) {
+        if (pthread_create(&tcpClientThread, NULL, (void *(*)(void *)) clientTcpHandler, clientTcpArgs) != 0) {
             perror("Could not create TCP thread");
 
             exit(5);

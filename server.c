@@ -91,8 +91,9 @@ int main(int argc, char *argv[]) {
     serverTcpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
     serverTcpArgs->socketTimeout = &arguments->socketTimeout;
     serverTcpArgs->keepAlive = &arguments->keepAlive;
+    serverTcpArgs->charset = arguments->charset;
 
-    if (pthread_create(&tcpServerThread, NULL, serverTcpHandler, (void *) serverTcpArgs) != 0) {
+    if (pthread_create(&tcpServerThread, NULL, (void *(*)(void *)) serverTcpHandler, serverTcpArgs) != 0) {
         perror("Could not create thread");
 
         return 101;
@@ -108,7 +109,7 @@ int main(int argc, char *argv[]) {
     serverUdpArgs->workers = arguments->workers;
     serverUdpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
 
-    if (pthread_create(&udpServerThread, NULL, serverUdpHandler, (void *) serverUdpArgs) != 0) {
+    if (pthread_create(&udpServerThread, NULL, (void *(*)(void *)) serverUdpHandler, serverUdpArgs) != 0) {
         perror("Could not create thread");
 
         return 102;

@@ -15,22 +15,21 @@
 #define DEBUG 0
 #define MSG_CONFIRM_ 0
 
-void *clientUdpHandler(void *args) {
+void *clientUdpHandler(struct clientUdpArgs *args) {
     int sockAddrSize = sizeof(struct sockaddr_in);
-    struct clientUdpArgs *clientUdpArgs = (struct clientUdpArgs *) args;
 
-    int serverSocket = clientUdpArgs->serverSocket;
-    struct list *torrentList = clientUdpArgs->torrentList;
-    struct stats *stats = clientUdpArgs->stats;
-    _Atomic(unsigned int) *interval = clientUdpArgs->interval;
+    int serverSocket = args->serverSocket;
+    struct list *torrentList = args->torrentList;
+    struct stats *stats = args->stats;
+    _Atomic (unsigned int) *interval = args->interval;
 
-    pthread_cond_t *signalRequest = clientUdpArgs->signalRequest;
-    pthread_mutex_t *mutexSignalRequest = clientUdpArgs->mutexSignalRequest;
-    struct udpRequest **firstRequest = clientUdpArgs->firstRequest;
-    struct udpRequest **lastRequest = clientUdpArgs->lastRequest;
-    struct rk_sema *semaphoreRequest = clientUdpArgs->semaphoreRequest;
-    unsigned int threadNumber = clientUdpArgs->threadNumber;
-    unsigned int *maxPeersPerResponse = clientUdpArgs->maxPeersPerResponse;
+    pthread_cond_t *signalRequest = args->signalRequest;
+    pthread_mutex_t *mutexSignalRequest = args->mutexSignalRequest;
+    struct udpRequest **firstRequest = args->firstRequest;
+    struct udpRequest **lastRequest = args->lastRequest;
+    struct rk_sema *semaphoreRequest = args->semaphoreRequest;
+    unsigned int threadNumber = args->threadNumber;
+    unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
 
     c_free(args);
 
@@ -83,7 +82,7 @@ void *clientUdpHandler(void *args) {
                                sockAddrSize) == -1) {
                         stats->send_failed_udp++;
 
-                        if(DEBUG)
+                        if (DEBUG)
                             perror("sendto failed");
                     } else {
                         stats->send_pass_udp++;
