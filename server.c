@@ -38,10 +38,20 @@ int main(int argc, char *argv[]) {
 
     struct arguments *arguments = parseArguments(argc, argv);
 
-    printf("Starting configuration: port = %d, interval = %d, workers = %ld, maxPeersPerResponse = %u, "
-           "socketTimeout = %u, keepAlive = %u, minInterval = %u, maxInterval = %u\n",
+    printf("Starting configuration:\n"
+           "  port = %d\n"
+           "  interval = %d\n"
+           "  workers = %ld\n"
+           "  maxPeersPerResponse = %u\n"
+           "  socketTimeout = %u\n"
+           "  keepAlive = %u\n"
+           "  minInterval = %u\n"
+           "  maxInterval = %u\n"
+           "  noTcp = %u\n"
+           "  noUdp = %u\n",
            arguments->port, arguments->interval, arguments->workers, arguments->maxPeersPerResponse,
-           arguments->socketTimeout, arguments->keepAlive, arguments->minInterval, arguments->maxInterval);
+           arguments->socketTimeout, arguments->keepAlive, arguments->minInterval, arguments->maxInterval,
+           arguments->noTcp, arguments->noUdp);
 
     printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 
@@ -73,40 +83,44 @@ int main(int argc, char *argv[]) {
 
     // Start TCP
     pthread_t tcpServerThread;
-    struct serverTcpArgs *serverTcpArgs = (struct serverTcpArgs *) c_malloc(sizeof(struct serverTcpArgs));
-    serverTcpArgs->queueList = queueList;
-    serverTcpArgs->torrentList = torrentList;
-    serverTcpArgs->stats = stats;
-    serverTcpArgs->port = arguments->port;
-    serverTcpArgs->socketLists = socketLists;
-    serverTcpArgs->interval = &arguments->interval;
-    serverTcpArgs->rps = &rps;
-    serverTcpArgs->workers = arguments->workers;
-    serverTcpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
-    serverTcpArgs->socketTimeout = &arguments->socketTimeout;
-    serverTcpArgs->keepAlive = &arguments->keepAlive;
-    serverTcpArgs->charset = arguments->charset;
+    if (!arguments->noTcp) {
+        struct serverTcpArgs *serverTcpArgs = (struct serverTcpArgs *) c_malloc(sizeof(struct serverTcpArgs));
+        serverTcpArgs->queueList = queueList;
+        serverTcpArgs->torrentList = torrentList;
+        serverTcpArgs->stats = stats;
+        serverTcpArgs->port = arguments->port;
+        serverTcpArgs->socketLists = socketLists;
+        serverTcpArgs->interval = &arguments->interval;
+        serverTcpArgs->rps = &rps;
+        serverTcpArgs->workers = arguments->workers;
+        serverTcpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
+        serverTcpArgs->socketTimeout = &arguments->socketTimeout;
+        serverTcpArgs->keepAlive = &arguments->keepAlive;
+        serverTcpArgs->charset = arguments->charset;
 
-    if (pthread_create(&tcpServerThread, NULL, (void *(*)(void *)) serverTcpHandler, serverTcpArgs) != 0) {
-        perror("Could not create thread");
+        if (pthread_create(&tcpServerThread, NULL, (void *(*)(void *)) serverTcpHandler, serverTcpArgs) != 0) {
+            perror("Could not create thread");
 
-        return 101;
+            return 101;
+        }
     }
     // Start UDP
     pthread_t udpServerThread;
-    struct serverUdpArgs *serverUdpArgs = (struct serverUdpArgs *) c_malloc(sizeof(struct serverUdpArgs));
-    serverUdpArgs->torrentList = torrentList;
-    serverUdpArgs->stats = stats;
-    serverUdpArgs->port = arguments->port;
-    serverUdpArgs->interval = &arguments->interval;
-    serverUdpArgs->rps = &rps;
-    serverUdpArgs->workers = arguments->workers;
-    serverUdpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
+    if (!arguments->noUdp) {
+        struct serverUdpArgs *serverUdpArgs = (struct serverUdpArgs *) c_malloc(sizeof(struct serverUdpArgs));
+        serverUdpArgs->torrentList = torrentList;
+        serverUdpArgs->stats = stats;
+        serverUdpArgs->port = arguments->port;
+        serverUdpArgs->interval = &arguments->interval;
+        serverUdpArgs->rps = &rps;
+        serverUdpArgs->workers = arguments->workers;
+        serverUdpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
 
-    if (pthread_create(&udpServerThread, NULL, (void *(*)(void *)) serverUdpHandler, serverUdpArgs) != 0) {
-        perror("Could not create thread");
+        if (pthread_create(&udpServerThread, NULL, (void *(*)(void *)) serverUdpHandler, serverUdpArgs) != 0) {
+            perror("Could not create thread");
 
-        return 102;
+            return 102;
+        }
     }
 
     // Надо успеть забиндить порт, а затем уже сбрасывать права
@@ -116,10 +130,15 @@ int main(int argc, char *argv[]) {
     run15MinutesThread(torrentList, &arguments->interval, &rps, arguments->minInterval, arguments->maxInterval);
     runGarbageSocketTimeoutThread(socketLists, stats, &arguments->socketTimeout, arguments->workers);
 
-    printf("Join TCP Thread\n");
-    pthread_join(tcpServerThread, NULL);
-    printf("Join UDP Thread\n");
-    pthread_join(udpServerThread, NULL);
+    if (!arguments->noTcp) {
+        printf("Join TCP Thread\n");
+        pthread_join(tcpServerThread, NULL);
+    }
+
+    if (!arguments->noUdp) {
+        printf("Join UDP Thread\n");
+        pthread_join(udpServerThread, NULL);
+    }
 
     printf("Bye-Bye\n");
 

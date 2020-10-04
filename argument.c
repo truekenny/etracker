@@ -16,6 +16,8 @@
 #define CHARSET_NAME                8
 #define MIN_INTERVAL_NAME           9
 #define MAX_INTERVAL_NAME          10
+#define NO_TCP_NAME                11
+#define NO_UDP_NAME                12
 
 #define DEFAULT_PORT                3000
 #define DEFAULT_INTERVAL            1799
@@ -90,6 +92,12 @@ struct arguments *parseArguments(int argc, char *argv[]) {
             case MAX_INTERVAL_NAME:
                 arguments->maxInterval = argumentValue;
                 break;
+            case NO_TCP_NAME:
+                arguments->noTcp = 1;
+                break;
+            case NO_UDP_NAME:
+                arguments->noUdp = 1;
+                break;
         }
     }
 
@@ -103,6 +111,7 @@ struct arguments *parseArguments(int argc, char *argv[]) {
         || !arguments->socketTimeout
         || !arguments->minInterval
         || !arguments->maxInterval
+        || (arguments->noTcp && arguments->noUdp)
             )
         showHelp();
 
@@ -130,6 +139,10 @@ unsigned int getName(char *name) {
         return MIN_INTERVAL_NAME;
     } else if (!strcmp(name, "--max-interval")) {
         return MAX_INTERVAL_NAME;
+    } else if (!strcmp(name, "--no-tcp")) {
+        return NO_TCP_NAME;
+    } else if (!strcmp(name, "--no-udp")) {
+        return NO_UDP_NAME;
     }
 
     return UNKNOWN_NAME;
@@ -141,7 +154,8 @@ void showHelp() {
             "     etracker -- Open-source BitTorrent tracker\n"
             "\n"
             "SYNOPSIS\n"
-            "     etracker [-p port] [-i interval] [-w workers] [-e peers] [-t timeout] [-k] [-h] [--charset charset]\n"
+            "     etracker [-p port] [-i interval] [-w workers] [-e peers] [-t timeout] [-k] [-h]\n"
+            "         [--charset charset] [--no-tcp] [--no-udp]\n"
             "\n"
             "DESCRIPTION\n"
             "     Run BitTorrent tracker with interfaces:\n"
@@ -171,12 +185,18 @@ void showHelp() {
             "     --max-interval\n"
             "             Maximum interval to be reached based on load_avg, default %d.\n"
             "\n"
+            "     --no-tcp\n"
+            "             Disable TCP, default TCP enabled.\n"
+            "\n"
+            "     --no-udp\n"
+            "             Disable UDP, default UDP enabled.\n"
+            "\n"
             "EXAMPLES\n"
             "\n"
             "     etracker\n"
             "     etracker -p 80\n"
-            "     etracker --port 80\n"
-            "     etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k --charset utf-8 --min-interval 299 --max-interval 1799\n"
+            "     etracker --port 80 --no-tcp --max-interval 1799\n"
+            "     etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k --charset utf-8 --min-interval 299\n"
             "     etracker --help\n",
             DEFAULT_PORT,
             DEFAULT_INTERVAL,

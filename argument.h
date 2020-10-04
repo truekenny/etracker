@@ -13,6 +13,8 @@ struct arguments {
     char *charset;
     unsigned int minInterval;
     unsigned int maxInterval;
+    unsigned char noTcp;
+    unsigned char noUdp;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);
