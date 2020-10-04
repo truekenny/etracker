@@ -328,6 +328,12 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
                               *socketTimeout, stats, NULL, "image/png");
             freeBlock(block);
+        } else if (startsWith("GET /robots.txt", readBuffer)) {
+            struct block *block = initBlock();
+            addFileBlock(block, 2000, "web/robots.txt");
+            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+                              *socketTimeout, stats, NULL, NULL);
+            freeBlock(block);
         } else {
             // todo: Перенести чтение web файлов сюда
             renderHttpMessage(writeBlock, 404, "Page not found", 14, canKeepAlive,
