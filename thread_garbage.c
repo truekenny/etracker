@@ -12,6 +12,7 @@
 #include "list.h"
 #include "socket.h"
 #include "block.h"
+#include "thread.h"
 
 #define DEBUG 0
 #define GARBAGE_SOCKET_POOL_TIME 1
@@ -50,6 +51,8 @@ void run15MinutesThread(struct list *torrentList, _Atomic(unsigned int) *interva
 }
 
 void *i15MinutesHandler(struct i15MinutesArgs *args) {
+    pthreadSetName(pthread_self(), "Garbage i15");
+
     struct list *torrentList = args->torrentList;
     _Atomic(unsigned int) *interval = args->interval;
     struct rps *rps = args->rps;
@@ -116,6 +119,8 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
 }
 
 void *garbageSocketTimeoutHandler(struct garbageSocketTimeoutArgs *_args) {
+    pthreadSetName(pthread_self(), "Garbage socket");
+
     struct list **socketLists = _args->socketLists;
     long workers = _args->workers;
 

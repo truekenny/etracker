@@ -2,7 +2,7 @@ CC=gcc
 SERVER_FILES=server.c queue.c sem.c alloc.c uri.c socket.c string.c thread_client_tcp.c time.c block.c \
 	stats.c socket_tcp.c socket_udp.c thread_garbage.c data_structure.c data_garbage.c thread_client_udp.c \
 	socket_udp_structure.c equeue.c socket_garbage.c interval.c udp_request.c rps.c list.c data.c basic.c \
-	base64.c argument.c
+	base64.c argument.c thread.c
 SERVER_OUTPUT=-o etracker
 SERVER_CFLAGS=-pthread -lm
 FSANITIZE_ADDRESS=-g -fsanitize=address

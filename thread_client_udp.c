@@ -11,11 +11,14 @@
 #include "stats.h"
 #include "string.h"
 #include "data.h"
+#include "thread.h"
 
 #define DEBUG 0
 #define MSG_CONFIRM_ 0
 
 void *clientUdpHandler(struct clientUdpArgs *args) {
+    pthreadSetName(pthread_self(), "UDP worker");
+
     int sockAddrSize = sizeof(struct sockaddr_in);
 
     int serverSocket = args->serverSocket;

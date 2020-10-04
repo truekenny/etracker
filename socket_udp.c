@@ -11,6 +11,7 @@
 #include "socket_udp_structure.h"
 #include "string.h"
 #include "udp_request.h"
+#include "thread.h"
 
 #define DEBUG 0
 // Размер заголовка пакета scrape + 74 x info_hash (по протоколу это максимальное кол-во)
@@ -45,6 +46,8 @@ void checkSize() {
 }
 
 void *serverUdpHandler(struct serverUdpArgs *args) {
+    pthreadSetName(pthread_self(), "UDP listen");
+
     checkSize();
     struct udpRequest
             *firstRequest = {0},

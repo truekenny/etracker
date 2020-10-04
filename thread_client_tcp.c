@@ -18,6 +18,7 @@
 #include "equeue.h"
 #include "data.h"
 #include "basic.h"
+#include "thread.h"
 
 #define DEBUG 0
 #define DEBUG_KQUEUE 0
@@ -375,6 +376,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
  * @return
  */
 void *clientTcpHandler(struct clientTcpArgs *args) {
+    pthreadSetName(pthread_self(), "TCP worker");
+
     // int threadNumber = args->threadNumber;
     // struct list *queueList = args->queueList;
     // struct list *torrentList = args->torrentList;

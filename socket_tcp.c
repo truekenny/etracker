@@ -15,6 +15,7 @@
 #include "alloc.h"
 #include "equeue.h"
 #include "socket_garbage.h"
+#include "thread.h"
 
 #define DEBUG 0
 #define DEBUG_KQUEUE 0
@@ -22,6 +23,8 @@
 #define EVENTS_EACH_LOOP 32
 
 void *serverTcpHandler(struct serverTcpArgs *args) {
+    pthreadSetName(pthread_self(), "TCP listen");
+
     struct stats *stats = args->stats;
     struct list *queueList = args->queueList;
     struct list *torrentList = args->torrentList;
