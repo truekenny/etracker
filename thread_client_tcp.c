@@ -27,7 +27,7 @@
  * Если включить, это влияет очень сильно на CPU
  * Возможно из-за роста sockPool
  */
-#define RECEIVED_MESSAGE_LENGTH 2000
+#define RECEIVED_MESSAGE_LENGTH 4000
 
 struct deleteSocketListArgs {
     struct list *socketList;
