@@ -34,9 +34,12 @@ void setNobody();
 int main(int argc, char *argv[]) {
     printf("Revision: %s\n", REVISION);
 
-    setlocale(LC_NUMERIC, "");
-
     struct arguments *arguments = parseArguments(argc, argv);
+
+    if (arguments->locale == NULL)
+        setlocale(LC_NUMERIC, "");
+    else
+        setlocale(LC_NUMERIC, arguments->locale);
 
     printf("Starting configuration:\n"
            "  port = %d\n"
@@ -48,10 +51,13 @@ int main(int argc, char *argv[]) {
            "  minInterval = %u\n"
            "  maxInterval = %u\n"
            "  noTcp = %u\n"
-           "  noUdp = %u\n",
+           "  noUdp = %u\n"
+           "  charset = %s\n"
+           "  locale = %s\n"
+           ,
            arguments->port, arguments->interval, arguments->workers, arguments->maxPeersPerResponse,
            arguments->socketTimeout, arguments->keepAlive, arguments->minInterval, arguments->maxInterval,
-           arguments->noTcp, arguments->noUdp);
+           arguments->noTcp, arguments->noUdp, arguments->charset, arguments->locale);
 
     printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 

@@ -18,6 +18,7 @@
 #define MAX_INTERVAL_NAME          10
 #define NO_TCP_NAME                11
 #define NO_UDP_NAME                12
+#define LOCALE_NAME                13
 
 #define DEFAULT_PORT                3000
 #define DEFAULT_INTERVAL            1799
@@ -98,6 +99,9 @@ struct arguments *parseArguments(int argc, char *argv[]) {
             case NO_UDP_NAME:
                 arguments->noUdp = 1;
                 break;
+            case LOCALE_NAME:
+                arguments->locale = (index == argc - 1) ? NULL : argv[index + 1];
+                break;
         }
     }
 
@@ -143,6 +147,8 @@ unsigned int getName(char *name) {
         return NO_TCP_NAME;
     } else if (!strcmp(name, "--no-udp")) {
         return NO_UDP_NAME;
+    } else if (!strcmp(name, "--locale")) {
+        return LOCALE_NAME;
     }
 
     return UNKNOWN_NAME;
@@ -155,7 +161,7 @@ void showHelp() {
             "\n"
             "SYNOPSIS\n"
             "     etracker [-p port] [-i interval] [-w workers] [-e peers] [-t timeout] [-k] [-h]\n"
-            "         [--charset charset] [--no-tcp] [--no-udp]\n"
+            "         [--charset charset] [--no-tcp] [--no-udp] [--locale locale]\n"
             "\n"
             "DESCRIPTION\n"
             "     Run BitTorrent tracker with interfaces:\n"
@@ -190,6 +196,7 @@ void showHelp() {
             "\n"
             "     --charset\n"
             "             Charset for stats page only, default none.\n"
+            "             Only for stats page.\n"
             "\n"
             "     --min-interval\n"
             "             Minimum interval to be reached based on load_avg, default %d.\n"
@@ -203,6 +210,10 @@ void showHelp() {
             "     --no-udp\n"
             "             Disable UDP, default UDP enable.\n"
             "\n"
+            "     --locale\n"
+            "             Locale for stats page, default current terminal's locale.\n"
+            "             If your stats page is a little broken, then I recommend the `en_US.UTF-8` locale.\n"
+            "\n"
             "     --help\n"
             "     -h\n"
             "             This help.\n"
@@ -211,6 +222,7 @@ void showHelp() {
             "\n"
             "     etracker\n"
             "     etracker -p 80\n"
+            "     etracker -p 80 --locale en_US.UTF-8\n"
             "     etracker --port 80 --no-tcp --max-interval 1799\n"
             "     etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k --charset utf-8 --min-interval 299\n"
             "     etracker --help\n",

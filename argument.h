@@ -15,6 +15,7 @@ struct arguments {
     unsigned int maxInterval;
     unsigned char noTcp;
     unsigned char noUdp;
+    char *locale;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);
