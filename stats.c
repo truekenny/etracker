@@ -23,13 +23,14 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
 
     addFormatStringBlock(block, 4500,
                          "github.com/truekenny/etracker - open-source BitTorrent tracker (%s)\n\n"
-                         "start_time = %.24s\n" "thread_number = %d\n\n"
+                         "start_time = %.24s (%dd)\n"
+                         "thread_number = %d\n\n"
 
                          "load_avg = %.2f %.2f %.2f\n"
                          "interval = %'d\n"
-                         "active_socket_count: %'d (rlimit %'llu/%'llu)\n\n"
+                         "active_sockets = %'d (rlimit %'llu/%'llu)\n\n"
 
-                         "request_per_second_count ~ %.2f\n\n"
+                         "requests_per_second = %.2f\n\n"
 
                          "rusage.ru_maxrss = %'12ld\n\n"
 
@@ -85,7 +86,8 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "stats.announce_udp = %'12d\n"
                          "stats.scrape_udp   = %'12d\n\n",
                          REVISION,
-                         ctime(&stats->time), threadNumber,
+                         ctime(&stats->time), (time(NULL) - stats->time) / 86400,
+                         threadNumber,
 
                          load[0], load[1], load[2],
                          interval,
