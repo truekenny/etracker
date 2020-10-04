@@ -15,7 +15,7 @@
  * @param size
  */
 void renderHttpMessage(struct block *block, int code, char *message, size_t size, int canKeepAlive,
-                       unsigned short socketTimeout, struct stats *stats, char *charset) {
+                       unsigned short socketTimeout, struct stats *stats, char *charset, char *contentType) {
     struct block *body = {0};
 
     // First line headers
@@ -77,10 +77,14 @@ void renderHttpMessage(struct block *block, int code, char *message, size_t size
         addStringBlock(block, "Connection: Close\r\n", 19);
     }
 
-    if (charset == NULL) {
+    if (charset == NULL && contentType == NULL) {
         addFormatStringBlock(block, 1000, "Content-Type: text/plain\r\n");
-    } else {
+    } else if (charset == NULL && contentType != NULL) {
+        addFormatStringBlock(block, 1000, "Content-Type: %s\r\n", contentType);
+    } else if (charset != NULL && contentType == NULL) {
         addFormatStringBlock(block, 1000, "Content-Type: text/plain; charset=%s\r\n", charset);
+    } else if (charset != NULL && contentType != NULL) {
+        addFormatStringBlock(block, 1000, "Content-Type: %s; charset=%s\r\n", contentType, charset);
     }
 
     addFormatStringBlock(block, 1000, "Content-Length: %zu\r\n"

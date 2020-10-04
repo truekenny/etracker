@@ -64,6 +64,18 @@ void addFormatStringBlock(struct block *block, unsigned int requiredSpace, char 
     block->data[block->size] = 0;
 }
 
+void addFileBlock(struct block *block, unsigned int requiredSpace, char *filename) {
+    reAllocBlock(block, requiredSpace);
+
+    FILE *file = fopen(filename, "rb");
+
+    block->size += fread(&block->data[block->size], 1, requiredSpace, file);
+    fclose(file);
+
+    // Для printf
+    block->data[block->size] = 0;
+}
+
 void reAllocBlock(struct block *block, unsigned int requiredSpace) {
     /*
      * Проверка свободного места

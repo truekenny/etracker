@@ -17,4 +17,6 @@ void addStringBlock(struct block *block, void *string, unsigned int requiredSpac
 
 void addFormatStringBlock(struct block *block, unsigned int requiredSpace, char* format, ...);
 
+void addFileBlock(struct block *block, unsigned int requiredSpace, char *filename);
+
 #endif //SC6_BLOCK_H

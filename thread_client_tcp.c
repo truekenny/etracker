@@ -77,7 +77,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         // printf("recv has full buffer\n");
 
         struct block *block = initBlock();
-        renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats, NULL);
+        renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats, NULL, NULL);
         send_(currentSocket, block->data, block->size, stats);
         freeBlock(block);
 
@@ -200,10 +200,10 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
             if (!query.has_info_hash) {
                 renderHttpMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive,
-                                  *socketTimeout, stats, NULL);
+                                  *socketTimeout, stats, NULL, NULL);
             } else if (!query.port) {
                 renderHttpMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
-                                  *socketTimeout, stats, NULL);
+                                  *socketTimeout, stats, NULL, NULL);
             } else {
                 // struct torrent *torrent;
                 struct block *block = initBlock();
@@ -224,7 +224,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 postSemaphoreLeaf(leaf);
 
                 renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                                  *socketTimeout, stats, NULL);
+                                  *socketTimeout, stats, NULL, NULL);
                 freeBlock(block);
             }
         } else if (startsWith("GET /set", readBuffer)) {
@@ -269,11 +269,11 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
                 renderHttpMessage(writeBlock, 200,
                                   block->data, block->size,
-                                  canKeepAlive, *socketTimeout, stats, NULL);
+                                  canKeepAlive, *socketTimeout, stats, NULL, NULL);
                 freeBlock(block);
             } else {
                 renderHttpMessage(writeBlock, 401, "Authorization Failure", 21, canKeepAlive,
-                                  *socketTimeout, stats, NULL);
+                                  *socketTimeout, stats, NULL, NULL);
             }
         } else if (startsWith("GET /stats", readBuffer)) {
             struct block *block = initBlock();
@@ -285,18 +285,18 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             }
 
             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                              *socketTimeout, stats, charset);
+                              *socketTimeout, stats, charset, NULL);
             freeBlock(block);
         } else if (DEBUG && startsWith("GET /garbage", readBuffer)) {
             struct block *block = initBlock();
             runGarbageCollectorL(block, torrentList);
             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                              *socketTimeout, stats, NULL);
+                              *socketTimeout, stats, NULL, NULL);
             freeBlock(block);
         } else if (startsWith("GET / ", readBuffer)) {
             renderHttpMessage(writeBlock, 200,
                               "github.com/truekenny/etracker - open-source BitTorrent tracker\n", 63,
-                              canKeepAlive, *socketTimeout, stats, NULL);
+                              canKeepAlive, *socketTimeout, stats, NULL, NULL);
         } else if (startsWith("GET /scrape", readBuffer)) {
             stats->scrape++;
 
@@ -307,18 +307,31 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
             if (!hashes->size && !ENABLE_FULL_SCRAPE) {
                 renderHttpMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
-                                  *socketTimeout, stats, NULL);
+                                  *socketTimeout, stats, NULL, NULL);
             } else {
                 renderScrapeTorrentsPublic(block, torrentList, hashes, &query);
                 renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                                  *socketTimeout, stats, NULL);
+                                  *socketTimeout, stats, NULL, NULL);
             }
 
             freeBlock(hashes);
             freeBlock(block);
+        } else if (startsWith("GET /favicon.", readBuffer)) {
+            struct block *block = initBlock();
+            addFileBlock(block, 2000, "web/favicon.ico");
+            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+                              *socketTimeout, stats, NULL, "image/x-icon");
+            freeBlock(block);
+        } else if (startsWith("GET /apple-touch-icon.", readBuffer)) {
+            struct block *block = initBlock();
+            addFileBlock(block, 2000, "web/apple-touch-icon.png");
+            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+                              *socketTimeout, stats, NULL, "image/png");
+            freeBlock(block);
         } else {
+            // todo: Перенести чтение web файлов сюда
             renderHttpMessage(writeBlock, 404, "Page not found", 14, canKeepAlive,
-                              *socketTimeout, stats, NULL);
+                              *socketTimeout, stats, NULL, NULL);
         }
 
         if (canKeepAlive) {
@@ -329,7 +342,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     } // isHttp
     else {
         renderHttpMessage(writeBlock, 405, readBuffer, readSize, canKeepAlive,
-                          *socketTimeout, stats, NULL);
+                          *socketTimeout, stats, NULL, NULL);
         DEBUG && printf("< %s", readBuffer);
     }
 
