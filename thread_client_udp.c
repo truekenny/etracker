@@ -51,7 +51,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
         }
 
         struct block *block = udpRequest->block;
-        struct sockaddr_in *clientAddr = udpRequest->clientAddr;
+        struct sockaddr_in clientAddr = udpRequest->clientAddr;
         unsigned int receiveCount = udpRequest->receiveCount;
 
         { // Проверка формата
@@ -77,7 +77,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     // printHex((char *) &connectResponse, connectResponseSize);
 
                     if (sendto(serverSocket, (const char *) &connectResponse, connectResponseSize,
-                               MSG_CONFIRM_, (const struct sockaddr *) clientAddr,
+                               MSG_CONFIRM_, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
                         stats->send_failed_udp++;
                     } else {
@@ -95,7 +95,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                 memcpy(query->info_hash, announceRequest->info_hash, PARAM_VALUE_LENGTH);
                 memcpy(query->peer_id, announceRequest->peer_id, PARAM_VALUE_LENGTH);
                 query->numwant = htonl(announceRequest->num_want);
-                query->ip = clientAddr->sin_addr.s_addr;
+                query->ip = clientAddr.sin_addr.s_addr;
                 query->transaction_id = announceRequest->transaction_id;
 
                 if (query->numwant > *maxPeersPerResponse)
@@ -121,7 +121,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
 
                     // printHex(writeBlock->data, writeBlock->size);
                     if (sendto(serverSocket, writeBlock->data, writeBlock->size,
-                               MSG_CONFIRM_, (const struct sockaddr *) clientAddr,
+                               MSG_CONFIRM_, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
                         perror("Sendto failed");
                         stats->send_failed_udp++;
@@ -153,7 +153,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
 
                     // printHex(writeBlock->data, writeBlock->size);
                     if (sendto(serverSocket, writeBlock->data, writeBlock->size,
-                               MSG_CONFIRM_, (const struct sockaddr *) clientAddr,
+                               MSG_CONFIRM_, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
                         perror("Sendto failed");
                         stats->send_failed_udp++;

@@ -148,7 +148,6 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
             continue;
         }
 
-
         updateRps(rps, RPS_UDP);
         stats->recv_pass_udp++;
         stats->recv_bytes_udp += receivedSize;
@@ -160,13 +159,8 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
         struct block *block = initBlock();
         addStringBlock(block, receivedMessage, receivedSize);
 
-        struct sockaddr_in *pClientAddr;
-
-        pClientAddr = c_calloc(1, sizeof(struct sockaddr_in));
-        memcpy(pClientAddr, &clientAddr, sizeof(struct sockaddr_in));
-
         rk_sema_wait(&semaphoreRequest);
-        addUdpRequest(&firstRequest, &lastRequest, pClientAddr, block, receiveCount);
+        addUdpRequest(&firstRequest, &lastRequest, clientAddr, block, receiveCount);
         rk_sema_post(&semaphoreRequest);
 
         // SIGNAL
