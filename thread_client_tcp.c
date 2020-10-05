@@ -286,7 +286,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             }
 
             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                              *socketTimeout, stats, charset, NULL);
+                              *socketTimeout, stats, charset, "text/html");
             freeBlock(block);
         } else if (DEBUG && startsWith("GET /garbage", readBuffer)) {
             struct block *block = initBlock();

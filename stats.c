@@ -22,6 +22,15 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
     getrusage(RUSAGE_SELF, &rusage);
 
     addFormatStringBlock(block, 4500,
+                         "<!DOCTYPE html>\n"
+                         "<html lang='en'>"
+                         "<head>"
+                         "<title>etracker stats</title>"
+                         "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+                         "</head>"
+                         "<body>"
+                         "<div style='white-space: pre-wrap; font-family: monospace;'>"
+
                          "github.com/truekenny/etracker - open-source BitTorrent tracker (%s)\n\n"
                          "start_time = %.24s (%dd)\n"
                          "thread_number = %d\n\n"
@@ -84,7 +93,11 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
 
                          "stats.connect_udp  = %'12d\n"
                          "stats.announce_udp = %'12d\n"
-                         "stats.scrape_udp   = %'12d\n\n",
+                         "stats.scrape_udp   = %'12d\n\n"
+
+                         "</div>"
+                         "</body>"
+                         "</html>",
                          REVISION,
                          ctime(&stats->time), (time(NULL) - stats->time) / 86400,
                          threadNumber,
