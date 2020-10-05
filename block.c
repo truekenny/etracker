@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include "block.h"
 #include "alloc.h"
+#include "math.h"
 
 #define DEBUG 0
 // Начальный размер памяти
@@ -12,9 +13,10 @@
 #define MIN_FREE_ALLOCATE_SIZE 2000
 // Каждый раз расширяю память минимум в два раза
 #define MIN_RE_ALLOC_MULTIPLY 2
-#define max(a, b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
 void reAllocBlock(struct block *block, unsigned int requiredSpace);
+
+void checkSizeBlock(struct block *block);
 
 struct block *initBlock() {
     struct block *block = c_calloc(1, sizeof(struct block));
@@ -50,6 +52,8 @@ void addStringBlock(struct block *block, void *string, unsigned int requiredSpac
 
     // Для printf
     block->data[block->size] = 0;
+
+    checkSizeBlock(block);
 }
 
 void addFormatStringBlock(struct block *block, unsigned int requiredSpace, char *format, ...) {
@@ -62,6 +66,8 @@ void addFormatStringBlock(struct block *block, unsigned int requiredSpace, char 
 
     // Для printf
     block->data[block->size] = 0;
+
+    checkSizeBlock(block);
 }
 
 void addFileBlock(struct block *block, unsigned int requiredSpace, char *filename) {
@@ -74,6 +80,8 @@ void addFileBlock(struct block *block, unsigned int requiredSpace, char *filenam
 
     // Для printf
     block->data[block->size] = 0;
+
+    checkSizeBlock(block);
 }
 
 void reAllocBlock(struct block *block, unsigned int requiredSpace) {
@@ -96,4 +104,11 @@ void reAllocBlock(struct block *block, unsigned int requiredSpace) {
         block->data = c_realloc(block->data, newAlloc);
         block->allocated = newAlloc;
     }
+}
+
+void checkSizeBlock(struct block *block) {
+    if (block->size < block->allocated)
+        return;
+
+    printf("block->size >= block->allocated\n");
 }

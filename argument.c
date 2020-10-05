@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "argument.h"
 #include "alloc.h"
+#include "math.h"
 
 #define UNKNOWN_NAME                0
 #define PORT_NAME                   1
@@ -25,22 +26,12 @@
 #define DEFAULT_MAX_PEER_PER_RESULT 60
 #define DEFAULT_SOCKET_TIMEOUT      3
 #define DEFAULT_KEEP_ALIVE          0
-#define DEFAULT_MIN_INTERVAL        239
-#define DEFAULT_MAX_INTERVAL        1799
+#define DEFAULT_MIN_INTERVAL        239u
+#define DEFAULT_MAX_INTERVAL        1799u
 
 unsigned int getName(char *name);
 
 void showHelp();
-
-unsigned int minMaxUnsignedInt(unsigned int min, unsigned int value, unsigned int max) {
-    if (value < min)
-        value = min;
-
-    if (value > max)
-        value = max;
-
-    return value;
-}
 
 struct arguments *parseArguments(int argc, char *argv[]) {
     // Первый аргумент не может быть числом – скорей всего используется старый формат
@@ -105,8 +96,10 @@ struct arguments *parseArguments(int argc, char *argv[]) {
         }
     }
 
-    arguments->minInterval = minMaxUnsignedInt(DEFAULT_MIN_INTERVAL, arguments->minInterval, DEFAULT_MAX_INTERVAL);
-    arguments->maxInterval = minMaxUnsignedInt(arguments->minInterval, arguments->maxInterval, DEFAULT_MAX_INTERVAL);
+    arguments->minInterval = max(DEFAULT_MIN_INTERVAL, arguments->minInterval);
+    arguments->minInterval = min(DEFAULT_MAX_INTERVAL, arguments->minInterval);
+    arguments->maxInterval = max(arguments->minInterval, arguments->maxInterval);
+    arguments->maxInterval = min(DEFAULT_MAX_INTERVAL, arguments->maxInterval);
 
     if (!arguments->port
         || !arguments->interval
