@@ -39,9 +39,14 @@ void freeBlock(struct block *block) {
 }
 
 struct block *resetBlock(struct block *block) {
-    freeBlock(block);
+    if (block == NULL)
+        return initBlock();
 
-    return initBlock();
+
+    block->size = 0;
+    block->data[0] = 0;
+
+    return block;
 }
 
 void addStringBlock(struct block *block, void *string, unsigned int requiredSpace) {

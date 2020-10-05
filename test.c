@@ -18,8 +18,8 @@ int main() {
 
     printf("testBase64 complete = %d\n", testBase64());
     printf("testSem complete = %d\n", testSem());
-    printf("testList complete = %d\n", testList());
     printf("testBlock complete = %d\n", testBlock());
+    printf("testList complete = %d\n", testList());
 }
 
 int testBase64() {
@@ -61,6 +61,8 @@ int testBase64() {
     result = base64_encode(input);
     printf("base64_encode(123) > MTIz > %s\n", result->data);
     freeBlock(result);
+
+    freeBlock(input);
 
     return 1;
 }
@@ -225,6 +227,8 @@ int testBlock() {
         printf("%c", block->data[i]);
     }
     printf("\n");
+
+    freeBlock(block);
 
     return 1;
 }
