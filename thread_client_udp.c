@@ -36,9 +36,10 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
 
     c_free(args);
 
-    struct block *writeBlock = initBlock();
-    struct block *hashes = initBlock();
-
+    struct block *sendBlock = initBlock();
+    struct block *scrapeBlock = initBlock();
+    struct block *announceBlock = initBlock();
+    struct block *hashesBlock = initBlock();
 
     while (1) {
         rk_sema_wait(semaphoreRequest);
@@ -105,7 +106,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     query.numwant = *maxPeersPerResponse;
 
                 { // аннонс
-                    writeBlock = resetBlock(writeBlock);
+                    sendBlock = resetBlock(sendBlock);
 
                     struct list *leaf = getLeaf(torrentList, query.info_hash);
                     waitSemaphoreLeaf(leaf);
@@ -116,15 +117,15 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     } else {
                         torrent = setPeerPublic(torrentList, &query);
                     }
-                    renderAnnouncePublic(writeBlock, torrent, &query, *interval);
+                    renderAnnouncePublic(sendBlock, announceBlock, torrent, &query, *interval);
 
                     postSemaphoreLeaf(leaf);
 
-                    stats->sent_bytes_udp += writeBlock->size;
+                    stats->sent_bytes_udp += sendBlock->size;
 
                     // printHex(writeBlock->data, writeBlock->size);
 
-                    if (sendto(serverSocket, writeBlock->data, writeBlock->size,
+                    if (sendto(serverSocket, sendBlock->data, sendBlock->size,
                                MSG_CONFIRM_, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
                         perror("Sendto failed");
@@ -139,21 +140,22 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
 
                 unsigned int hashCount = (block->size - sizeof(struct scrapeRequest)) / PARAM_VALUE_LENGTH;
 
-                hashes = resetBlock(hashes);
-                addStringBlock(hashes,
+                hashesBlock = resetBlock(hashesBlock);
+                addStringBlock(hashesBlock,
                                &((char *) scrapeRequest)[sizeof(struct scrapeRequest)],
                                hashCount * PARAM_VALUE_LENGTH);
 
                 {  // scrape
-                    writeBlock = resetBlock(writeBlock);
+                    sendBlock = resetBlock(sendBlock);
                     struct query query = {};
                     query.udp = 1;
                     query.transaction_id = scrapeRequest->transaction_id;
-                    renderScrapeTorrentsPublic(writeBlock, torrentList, hashes, &query);
+                    renderScrapeTorrentsPublic(sendBlock, scrapeBlock, torrentList, hashesBlock, &query);
 
                     // printHex(writeBlock->data, writeBlock->size);
+                    stats->sent_bytes_udp += sendBlock->size;
 
-                    if (sendto(serverSocket, writeBlock->data, writeBlock->size,
+                    if (sendto(serverSocket, sendBlock->data, sendBlock->size,
                                MSG_CONFIRM_, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
                         perror("Sendto failed");
@@ -170,6 +172,11 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;
     } // while 1
+
+    freeBlock(sendBlock);
+    freeBlock(scrapeBlock);
+    freeBlock(announceBlock);
+    freeBlock(hashesBlock);
 
     return 0;
 }

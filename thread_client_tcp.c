@@ -45,7 +45,9 @@ unsigned char deleteSocketListCallback(struct list *list, struct item *item, voi
     return 0;
 }
 
-void processRead(struct clientTcpArgs *args, int currentSocket, struct list *deleteSocketList) {
+void processRead(struct clientTcpArgs *args, int currentSocket, struct list *deleteSocketList,
+                 struct block *sendBlock, struct block *dataBlock, struct block *announceBlock,
+                 struct block *scrapeBlock, struct block *hashesBlock) {
     int threadNumber = args->threadNumber;
     struct list *torrentList = args->torrentList;
     struct stats *stats = args->stats;
@@ -68,17 +70,15 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
     // Запрос превышает лимит, прерываю такие сокеты
     if (readSize >= RECEIVED_MESSAGE_LENGTH) {
-        struct block *block = initBlock();
-        renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats, NULL, NULL);
-        send_(currentSocket, block->data, block->size, stats);
-        freeBlock(block);
+        dataBlock = resetBlock(dataBlock);
+        renderHttpMessage(dataBlock, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats, NULL, NULL);
+        send_(currentSocket, dataBlock->data, dataBlock->size, stats);
 
         setHash(deleteSocketList, pCurrentSocket);
-
         stats->recv_failed++;
 
         return;
-    }
+    } // oversize
 
     if (readSize == 0) {
         // Client close connection
@@ -86,7 +86,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         setHash(deleteSocketList, pCurrentSocket);
 
         return;
-    }
+    } // close connection
 
     if (readSize < 0) {
         // Обычно Connection reset by peer, реже Bad File Descriptor, возможно еще что-нибудь
@@ -96,7 +96,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         setHash(deleteSocketList, pCurrentSocket);
 
         return;
-    }
+    } // read error
 
     if (strstr(readBuffer, "\r\n\r\n") == NULL) {
 
@@ -125,11 +125,11 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         setHash(deleteSocketList, pCurrentSocket);
 
         return;
-    }
+    } // read error
 
     _Bool isHttp = 0;
     int canKeepAlive = 0;
-    struct block *writeBlock = initBlock();
+    sendBlock = resetBlock(sendBlock);
 
     stats->recv_bytes += readSize;
     stats->recv_pass++;
@@ -152,7 +152,6 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             stats->announce++;
 
             struct query query = {};
-
             struct sockaddr_in peer = {};
             socklen_t socklen = sizeof(peer);
             getpeername(currentSocket, (struct sockaddr *) &peer, &socklen); // client
@@ -167,13 +166,13 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 query.numwant = *maxPeersPerResponse;
 
             if (!query.has_info_hash) {
-                renderHttpMessage(writeBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive,
+                renderHttpMessage(sendBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive,
                                   *socketTimeout, stats, NULL, NULL);
             } else if (!query.port) {
-                renderHttpMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
+                renderHttpMessage(sendBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
                                   *socketTimeout, stats, NULL, NULL);
             } else {
-                struct block *block = initBlock();
+                dataBlock = resetBlock(dataBlock);
 
                 struct list *leaf = getLeaf(torrentList, query.info_hash);
                 waitSemaphoreLeaf(leaf);
@@ -186,15 +185,15 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                     torrent = setPeerPublic(torrentList, &query);
                 }
 
-                renderAnnouncePublic(block, torrent, &query, *interval);
+                renderAnnouncePublic(dataBlock, announceBlock, torrent, &query, *interval);
 
                 postSemaphoreLeaf(leaf);
 
-                renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+                renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
                                   *socketTimeout, stats, NULL, NULL);
-                freeBlock(block);
             }
-        } else if (startsWith("GET /set", readBuffer)) {
+        } // announce
+        else if (startsWith("GET /set", readBuffer)) {
             if (authorizationHeader->size == 0)
                 getAuthorizationHeader(authorizationHeader);
 
@@ -202,8 +201,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 struct query query = {};
                 parseUri(&query, NULL, readBuffer);
 
-                struct block *block = initBlock();
-                addFormatStringBlock(block, 500,
+                dataBlock = resetBlock(dataBlock);
+                addFormatStringBlock(dataBlock, 500,
                                      "Before request:"
                                      "  keep_alive = %2u"
                                      "  interval = %4u"
@@ -223,7 +222,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 if (query.keep_alive)
                     *keepAlive = query.keep_alive == 1;
 
-                addFormatStringBlock(block, 500,
+                addFormatStringBlock(dataBlock, 500,
                                      "After  request:"
                                      "  keep_alive = %2u"
                                      "  interval = %4u"
@@ -234,68 +233,67 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                                      *maxPeersPerResponse,
                                      *socketTimeout);
 
-                renderHttpMessage(writeBlock, 200,
-                                  block->data, block->size,
+                renderHttpMessage(sendBlock, 200,
+                                  dataBlock->data, dataBlock->size,
                                   canKeepAlive, *socketTimeout, stats, NULL, NULL);
-                freeBlock(block);
             } else {
-                renderHttpMessage(writeBlock, 401, "Authorization Failure", 21, canKeepAlive,
+                renderHttpMessage(sendBlock, 401, "Authorization Failure", 21, canKeepAlive,
                                   *socketTimeout, stats, NULL, NULL);
             }
-        } else if (startsWith("GET /stats", readBuffer)) {
-            struct block *block = initBlock();
+        } // set
+        else if (startsWith("GET /stats", readBuffer)) {
+            dataBlock = resetBlock(dataBlock);
 
-            formatStats(threadNumber, block, stats, *interval, rps);
+            formatStats(threadNumber, dataBlock, stats, *interval, rps);
 
-            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
                               *socketTimeout, stats, charset, "text/html");
-            freeBlock(block);
-        } else if (startsWith("GET / ", readBuffer)) {
-            renderHttpMessage(writeBlock, 200,
+        } // stats
+        else if (startsWith("GET / ", readBuffer)) {
+            renderHttpMessage(sendBlock, 200,
                               "github.com/truekenny/etracker - open-source BitTorrent tracker\n", 63,
                               canKeepAlive, *socketTimeout, stats, NULL, NULL);
-        } else if (startsWith("GET /scrape", readBuffer)) {
+        } // root
+        else if (startsWith("GET /scrape", readBuffer)) {
             stats->scrape++;
 
             struct query query = {};
-            struct block *hashes = initBlock();
-            struct block *block = initBlock();
-            parseUri(&query, hashes, readBuffer);
+            hashesBlock = resetBlock(hashesBlock);
+            dataBlock = resetBlock(dataBlock);
+            parseUri(&query, hashesBlock, readBuffer);
 
-            if (!hashes->size && !ENABLE_FULL_SCRAPE) {
-                renderHttpMessage(writeBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
+            if (!hashesBlock->size && !ENABLE_FULL_SCRAPE) {
+                renderHttpMessage(sendBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
                                   *socketTimeout, stats, NULL, NULL);
             } else {
-                renderScrapeTorrentsPublic(block, torrentList, hashes, &query);
-                renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+                renderScrapeTorrentsPublic(dataBlock, scrapeBlock, torrentList, hashesBlock, &query);
+                renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
                                   *socketTimeout, stats, NULL, NULL);
             }
-
-            freeBlock(hashes);
-            freeBlock(block);
-        } else if (startsWith("GET /favicon.", readBuffer)) {
-            struct block *block = initBlock();
-            addFileBlock(block, 2000, "web/favicon.ico");
-            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+        } // scrape
+        else if (startsWith("GET /favicon.", readBuffer)) {
+            dataBlock = resetBlock(dataBlock);
+            addFileBlock(dataBlock, 2000, "web/favicon.ico");
+            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
                               *socketTimeout, stats, NULL, "image/x-icon");
-            freeBlock(block);
-        } else if (startsWith("GET /apple-touch-icon.", readBuffer)) {
-            struct block *block = initBlock();
-            addFileBlock(block, 2000, "web/apple-touch-icon.png");
-            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+        } // favicon
+        else if (startsWith("GET /apple-touch-icon.", readBuffer)) {
+            dataBlock = resetBlock(dataBlock);
+            addFileBlock(dataBlock, 2000, "web/apple-touch-icon.png");
+            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
                               *socketTimeout, stats, NULL, "image/png");
-            freeBlock(block);
-        } else if (startsWith("GET /robots.txt", readBuffer)) {
-            struct block *block = initBlock();
-            addFileBlock(block, 2000, "web/robots.txt");
-            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
+        } // apple-icon
+        else if (startsWith("GET /robots.txt", readBuffer)) {
+            dataBlock = resetBlock(dataBlock);
+            addFileBlock(dataBlock, 2000, "web/robots.txt");
+            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
                               *socketTimeout, stats, NULL, NULL);
-            freeBlock(block);
-        } else {
+        } // robots
+        else {
             // todo: Перенести чтение web файлов сюда
-            renderHttpMessage(writeBlock, 404, "Page not found", 14, canKeepAlive,
+            renderHttpMessage(sendBlock, 404, "Page not found", 14, canKeepAlive,
                               *socketTimeout, stats, NULL, NULL);
-        }
+        } // not found
 
         if (canKeepAlive) {
             stats->keep_alive++;
@@ -304,13 +302,11 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         }
     } // isHttp
     else {
-        renderHttpMessage(writeBlock, 405, readBuffer, readSize, canKeepAlive,
+        renderHttpMessage(sendBlock, 405, readBuffer, readSize, canKeepAlive,
                           *socketTimeout, stats, NULL, NULL);
     }
 
-    send_(currentSocket, writeBlock->data, writeBlock->size, stats);
-    // Ответ дан - удаляю
-    freeBlock(writeBlock);
+    send_(currentSocket, sendBlock->data, sendBlock->size, stats);
 
     if (!canKeepAlive) {
         setHash(deleteSocketList, pCurrentSocket);
@@ -343,6 +339,12 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
     deleteSocketListArgs.socketList = socketList;
     deleteSocketListArgs.stats = stats;
 
+    struct block *sendBlock = initBlock();
+    struct block *dataBlock = initBlock();
+    struct block *announceBlock = initBlock();
+    struct block *scrapeBlock = initBlock();
+    struct block *hashesBlock = initBlock();
+
     while (1) {
         waitSemaphoreLeaf(socketList);
 
@@ -363,7 +365,8 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
             } else if (isEof(&eevent, index)) {
                 setHash(deleteSocketList, pCurrentSocket);
             } else if (isRead(&eevent, index)) {
-                processRead(args, currentSocket, deleteSocketList);
+                processRead(args, currentSocket, deleteSocketList, sendBlock, dataBlock, announceBlock, scrapeBlock,
+                            hashesBlock);
             }
 
             postSemaphoreLeaf(socketLeaf);
@@ -382,6 +385,11 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
 
     freeList(deleteSocketList, 1);
     c_free(args);
+    freeBlock(sendBlock);
+    freeBlock(dataBlock);
+    freeBlock(announceBlock);
+    freeBlock(scrapeBlock);
+    freeBlock(hashesBlock);
 
     if (pthread_detach(pthread_self()) != 0) {
         perror("Could not detach thread");

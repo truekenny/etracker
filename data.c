@@ -114,14 +114,14 @@ void renderAnnouncePeersL(struct block *block, struct list *peerList, struct que
  * @param query
  * @param interval
  */
-void renderAnnounceTorrentL(struct block *block, struct item *torrent, struct query *query, unsigned int interval) {
+void renderAnnounceTorrentL(struct block *block, struct block *announceBlock, struct item *torrent, struct query *query, unsigned int interval) {
     struct torrentDataL torrentDataL = {};
     if (torrent != NULL)
         memcpy(&torrentDataL, torrent->data, sizeof(struct torrentDataL));
 
     struct list *peerList = torrentDataL.peerList;
-    struct block *peerBlock = initBlock();
-    renderAnnouncePeersL(peerBlock, peerList, query);
+    announceBlock = resetBlock(announceBlock);
+    renderAnnouncePeersL(announceBlock, peerList, query);
 
     if (query->udp) {}
     else if (query->compact) {
@@ -137,7 +137,7 @@ void renderAnnounceTorrentL(struct block *block, struct item *torrent, struct qu
                              torrentDataL.incomplete,
                              torrentDataL.downloaded,
                              interval,
-                             peerBlock->size
+                             announceBlock->size
         );
     } else {
         addFormatStringBlock(block, 500,
@@ -155,7 +155,7 @@ void renderAnnounceTorrentL(struct block *block, struct item *torrent, struct qu
         );
     }
 
-    addStringBlock(block, peerBlock->data, peerBlock->size);
+    addStringBlock(block, announceBlock->data, announceBlock->size);
 
     if (!query->udp) {
         if (!query->compact) {
@@ -164,8 +164,6 @@ void renderAnnounceTorrentL(struct block *block, struct item *torrent, struct qu
 
         addStringBlock(block, "e", sizeof(char));
     }
-
-    freeBlock(peerBlock);
 }
 
 /**
@@ -175,7 +173,7 @@ void renderAnnounceTorrentL(struct block *block, struct item *torrent, struct qu
  * @param query
  * @param interval
  */
-void renderAnnouncePublic(struct block *block, struct item *torrent, struct query *query, unsigned int interval) {
+void renderAnnouncePublic(struct block *block, struct block *announceBlock, struct item *torrent, struct query *query, unsigned int interval) {
     struct torrentDataL torrentDataL = {};
     if (torrent != NULL)
         memcpy(&torrentDataL, torrent->data, sizeof(struct torrentDataL));
@@ -193,7 +191,7 @@ void renderAnnouncePublic(struct block *block, struct item *torrent, struct quer
 
     }
 
-    renderAnnounceTorrentL(block, torrent, query, interval);
+    renderAnnounceTorrentL(block, announceBlock, torrent, query, interval);
 }
 
 /**
@@ -260,8 +258,8 @@ unsigned char renderScrapeTorrentsCallback(struct list *list, struct item *torre
  * @param query
  */
 void
-renderScrapeTorrentsPublic(struct block *block, struct list *torrentList, struct block *hashes, struct query *query) {
-    struct block *torrentBlock = initBlock();
+renderScrapeTorrentsPublic(struct block *block, struct block *scrapeBlock, struct list *torrentList, struct block *hashes, struct query *query) {
+    scrapeBlock = resetBlock(scrapeBlock);
 
     _Bool udp = query->udp;
 
@@ -280,7 +278,7 @@ renderScrapeTorrentsPublic(struct block *block, struct list *torrentList, struct
     if (hashes->size == 0 && ENABLE_FULL_SCRAPE) {
         struct renderScrapeTorrentsCallbackL renderScrapeTorrentsCallbackL = {};
         renderScrapeTorrentsCallbackL.query = query;
-        renderScrapeTorrentsCallbackL.block = torrentBlock;
+        renderScrapeTorrentsCallbackL.block = scrapeBlock;
         mapList(torrentList, &renderScrapeTorrentsCallbackL, &renderScrapeTorrentsCallback);
 
     } else {
@@ -293,20 +291,18 @@ renderScrapeTorrentsPublic(struct block *block, struct list *torrentList, struct
             waitSemaphoreLeaf(leaf);
 
             struct item *torrent = getHash(torrentList, hash);
-            renderScrapeTorrentL(torrentBlock, torrent, hash, udp);
+            renderScrapeTorrentL(scrapeBlock, torrent, hash, udp);
 
             postSemaphoreLeaf(leaf);
         }
     }
 
-    addStringBlock(block, torrentBlock->data, torrentBlock->size);
+    addStringBlock(block, scrapeBlock->data, scrapeBlock->size);
 
     if (!udp) {
         addStringBlock(block, "e"
                               "e", 2);
     }
-
-    freeBlock(torrentBlock);
 }
 
 /**
