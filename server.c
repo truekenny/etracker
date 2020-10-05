@@ -8,7 +8,6 @@
 #include <sys/socket.h>
 #include <pwd.h>
 #include <locale.h>
-#include "queue.h"
 #include "sem.h"
 #include "alloc.h"
 #include "socket.h"
@@ -26,8 +25,6 @@
 #if !defined(REVISION)
 #define REVISION "UNKNOWN"
 #endif
-
-#define DEBUG 0
 
 void setNobody();
 
@@ -64,8 +61,6 @@ int main(int argc, char *argv[]) {
     c_initSem();
 
     // vars
-    struct list *queueList = initList(NULL, 0, STARTING_NEST, sizeof(int),
-                                      ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
     struct list **socketLists = c_calloc(arguments->workers, sizeof(void *));
 
     for (int threadNumber = 0; threadNumber < arguments->workers; threadNumber++) {
@@ -91,7 +86,6 @@ int main(int argc, char *argv[]) {
     pthread_t tcpServerThread;
     if (!arguments->noTcp) {
         struct serverTcpArgs *serverTcpArgs = (struct serverTcpArgs *) c_malloc(sizeof(struct serverTcpArgs));
-        serverTcpArgs->queueList = queueList;
         serverTcpArgs->torrentList = torrentList;
         serverTcpArgs->stats = stats;
         serverTcpArgs->port = arguments->port;

@@ -4,7 +4,6 @@
 #include <arpa/inet.h>
 #include "uri.h"
 
-#define DEBUG 0
 #define URI_PATH 0
 #define QUERY_PARAM 1
 #define QUERY_VALUE 2
@@ -18,19 +17,6 @@ void getParam(struct query *query, struct block *block, char *param, char *value
  * @param message
  */
 void parseUri(struct query *query, struct block *block, char *message) {
-    DEBUG && printf("Uri:\n");
-
-    if (DEBUG) {
-        char firstLine[FIRST_LINE_LENGTH] = {0};
-
-        int len = strchr(message, '\r') - message;
-        if (len < FIRST_LINE_LENGTH) {
-            memcpy(firstLine, message, len);
-            printf("%d %s\n", query->threadNumber, firstLine);
-        } else
-            printf("Len of first line = %d\n", len);
-    }
-
     char path[PATH_LENGTH + 1] = {0},
             param[PARAM_VALUE_LENGTH + 1] = {0},
             value[PARAM_VALUE_LENGTH + 1] = {0};
@@ -42,17 +28,14 @@ void parseUri(struct query *query, struct block *block, char *message) {
     for (unsigned long i = strlen("GET "); i < strlen(message); i++) {
         char current = message[i];
         if (current == ' ') {
-            DEBUG && printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
-                            strcmp(param, "123456"));
             getParam(query, block, &param[0], &value[0]);
             break;
         }
-        DEBUG && printf("%lu=%c\n", i, current);
+
         if (status == URI_PATH) {
             if (current == '?') {
                 status = QUERY_PARAM;
-                DEBUG && printf("Path:%s, %lu\n", path, strlen(path));
-                DEBUG && printf("Status=PARAM\n");
+
                 continue;
             }
             if ((len = strlen(path)) < PATH_LENGTH) {
@@ -67,8 +50,6 @@ void parseUri(struct query *query, struct block *block, char *message) {
             continue;
         }
         if (current == '&') {
-            DEBUG && printf("Param:%s=Value:%s, %lu %lu %d\n", param, value, strlen(param), strlen(value),
-                            strcmp(param, "123456"));
             getParam(query, block, &param[0], &value[0]);
 
             memset(&param, 0, PARAM_VALUE_LENGTH);
@@ -95,15 +76,12 @@ void parseUri(struct query *query, struct block *block, char *message) {
 
                 // 0x41 => 'A'
                 current = (char) strtol(percentChars, NULL, 16);
-
-                DEBUG && printf("Decode %s -> %c\n", percentChars, current);
             }
 
             value[len] = current;
             len++;
         }
     }
-    DEBUG && printf(".\n");
 }
 
 /**

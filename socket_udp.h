@@ -3,7 +3,6 @@
 
 #include <stdatomic.h>
 #include "stats.h"
-#include "queue.h"
 #include "rps.h"
 
 struct serverUdpArgs {

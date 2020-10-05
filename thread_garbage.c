@@ -14,7 +14,6 @@
 #include "block.h"
 #include "thread.h"
 
-#define DEBUG 0
 #define GARBAGE_SOCKET_POOL_TIME 1
 
 struct i15MinutesArgs {
@@ -104,8 +103,6 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
     struct socketData *socketData = item->data;
     struct stats *stats = ((struct garbageSocketTimeoutArgs *) args)->stats;
     long maxTimeAllow = ((struct garbageSocketTimeoutArgs *) args)->maxTimeAllow;
-
-    // printf("%ld < %ld\n", socketData->time, maxTimeAllow);
 
     if (socketData->time < maxTimeAllow) {
         struct block *block = initBlock();

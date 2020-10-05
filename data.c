@@ -386,8 +386,6 @@ struct item *setPeerPublic(struct list *torrentList, struct query *query) {
 void changeTorrentStatsL(struct item *torrent, unsigned char oldEvent, unsigned char newEvent) {
     struct torrentDataL *torrentDataL = torrent->data;
 
-    // printf("s d%d i%d c%d, o%d n%d\n", torrentDataL->downloaded, torrentDataL->incomplete, torrentDataL->complete, oldEvent, newEvent);
-
     if (oldEvent == EVENT_ID_NONE) {
         // Новый пир
         if (newEvent == EVENT_ID_COMPLETED) {
@@ -414,8 +412,6 @@ void changeTorrentStatsL(struct item *torrent, unsigned char oldEvent, unsigned 
             torrentDataL->incomplete--;
         }
     }
-
-    // printf("e d%d i%d c%d, o%d n%d\n", torrentDataL->downloaded, torrentDataL->incomplete, torrentDataL->complete, oldEvent, newEvent);
 }
 
 void int2ip(char *dest, unsigned int source) {

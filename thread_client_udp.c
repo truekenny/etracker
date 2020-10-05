@@ -12,8 +12,8 @@
 #include "string.h"
 #include "data.h"
 #include "thread.h"
+#include "sem.h"
 
-#define DEBUG 0
 #define MSG_CONFIRM_ 0
 
 void *clientUdpHandler(struct clientUdpArgs *args) {
@@ -31,7 +31,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
     struct udpRequest **firstRequest = args->firstRequest;
     struct udpRequest **lastRequest = args->lastRequest;
     struct rk_sema *semaphoreRequest = args->semaphoreRequest;
-    unsigned int threadNumber = args->threadNumber;
+    // unsigned int threadNumber = args->threadNumber;
     unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
 
     c_free(args);
@@ -43,16 +43,11 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
         rk_sema_post(semaphoreRequest);
 
         if (udpRequest == NULL) {
-            DEBUG && printf("thread_client_tcp.c: Before signal %d\n", threadNumber);
             pthread_mutex_lock(mutexSignalRequest);
             pthread_cond_wait(signalRequest, mutexSignalRequest);
             pthread_mutex_unlock(mutexSignalRequest);
-            DEBUG && printf("thread_client_tcp.c: After signal %d\n", threadNumber);
 
             continue;
-        } else {
-            DEBUG && printf("thread_client_tcp.c: Ready request found %d, sock = %d\n", threadNumber,
-                            udpRequest->clientAddr->sin_addr.s_addr);
         }
 
         struct block *block = udpRequest->block;
@@ -70,7 +65,6 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
             struct scrapeRequest *scrapeRequest = (struct scrapeRequest *) block->data;
 
             if (block->size == connectRequestSize) {
-                DEBUG && printf("UDP Connect\n");
                 stats->connect_udp++;
 
                 struct connectRequest *connectRequest = (struct connectRequest *) block->data;
@@ -79,20 +73,18 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     connectResponse.connection_id = receiveCount;
 
                     stats->sent_bytes_udp += connectResponseSize;
-                    DEBUG && printHex((char *) &connectResponse, connectResponseSize);
+
+                    // printHex((char *) &connectResponse, connectResponseSize);
+
                     if (sendto(serverSocket, (const char *) &connectResponse, connectResponseSize,
                                MSG_CONFIRM_, (const struct sockaddr *) clientAddr,
                                sockAddrSize) == -1) {
                         stats->send_failed_udp++;
-
-                        if (DEBUG)
-                            perror("sendto failed");
                     } else {
                         stats->send_pass_udp++;
                     }
                 }
             } else if (block->size >= announceRequestSize && htonl(announceRequest->action) == ACTION_ANNOUNCE) {
-                DEBUG && printf("UDP Announce\n");
                 stats->announce_udp++;
 
                 // Аргументы потока
@@ -110,7 +102,6 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     query->numwant = *maxPeersPerResponse;
 
                 { // аннонс
-                    // struct torrent *torrent = {0};
                     struct block *writeBlock = initBlock();
 
                     struct list *leaf = getLeaf(torrentList, query->info_hash);
@@ -128,7 +119,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
 
                     stats->sent_bytes_udp += writeBlock->size;
 
-                    DEBUG && printHex(writeBlock->data, writeBlock->size);
+                    // printHex(writeBlock->data, writeBlock->size);
                     if (sendto(serverSocket, writeBlock->data, writeBlock->size,
                                MSG_CONFIRM_, (const struct sockaddr *) clientAddr,
                                sockAddrSize) == -1) {
@@ -144,11 +135,9 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                 } // аннонс
 
             } else if (block->size > scrapeRequestSize && htonl(scrapeRequest->action) == ACTION_SCRAPE) {
-                DEBUG && printf("UDP Scrape\n");
                 stats->scrape_udp++;
 
                 unsigned int hashCount = (block->size - sizeof(struct scrapeRequest)) / PARAM_VALUE_LENGTH;
-                DEBUG && printf("Hashes = %d\n", hashCount);
 
                 struct block *hashes = initBlock();
                 addStringBlock(hashes,
@@ -162,7 +151,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     query->transaction_id = scrapeRequest->transaction_id;
                     renderScrapeTorrentsPublic(writeBlock, torrentList, hashes, query);
 
-                    DEBUG && printHex(writeBlock->data, writeBlock->size);
+                    // printHex(writeBlock->data, writeBlock->size);
                     if (sendto(serverSocket, writeBlock->data, writeBlock->size,
                                MSG_CONFIRM_, (const struct sockaddr *) clientAddr,
                                sockAddrSize) == -1) {
@@ -171,17 +160,12 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     } else {
                         stats->send_pass_udp++;
                     }
-
-
                     c_free(query);
                     freeBlock(writeBlock);
                 }  // scrape
-
                 freeBlock(hashes);
             } // income packet scrape check
-
         } // Проверка формата
-
 
         freeUdpRequest(udpRequest);
 

@@ -1,5 +1,5 @@
 CC=gcc
-SERVER_FILES=server.c queue.c sem.c alloc.c uri.c socket.c string.c thread_client_tcp.c time.c block.c \
+SERVER_FILES=server.c sem.c alloc.c uri.c socket.c string.c thread_client_tcp.c time.c block.c \
 	stats.c socket_tcp.c socket_udp.c thread_garbage.c data_structure.c data_garbage.c thread_client_udp.c \
 	socket_udp_structure.c equeue.c socket_garbage.c interval.c udp_request.c rps.c list.c data.c basic.c \
 	base64.c argument.c thread.c math.c
@@ -38,7 +38,7 @@ client:
 	$(CC) -Wall -W -Werror client.c -o client.o
 test:
 	$(CC) -Werror \
-		test.c queue.c alloc.c block.c list.c sem.c base64.c \
+		test.c alloc.c block.c list.c sem.c base64.c \
 		-o test.o
 clear:
 	$(RM_SERVER)

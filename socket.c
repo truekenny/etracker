@@ -5,8 +5,6 @@
 #include "socket.h"
 #include "block.h"
 
-#define DEBUG 0
-
 /**
  * Рендер сообщения по сокету
  * @param request
@@ -100,11 +98,6 @@ void renderHttpMessage(struct block *block, int code, char *message, size_t size
         addStringBlock(block, body->data, body->size);
         freeBlock(body);
     }
-
-    // ssize_t result = send_(socket, block->data, block->size, stats);
-
-    DEBUG && printf("%s\n", message);
-    //freeBlock(block);
 }
 
 ssize_t send_(int socket, void *message, size_t size, struct stats *stats) {
@@ -113,7 +106,6 @@ ssize_t send_(int socket, void *message, size_t size, struct stats *stats) {
     ssize_t result = send(socket, message, size, MSG_DONTWAIT | MSG_NOSIGNAL);
     if (result == -1) {
         stats->send_failed++;
-        if (DEBUG) perror("Send failed");
     } else
         stats->send_pass++;
 

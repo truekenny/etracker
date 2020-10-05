@@ -6,7 +6,6 @@
 #include "alloc.h"
 #include "math.h"
 
-#define DEBUG 0
 // Начальный размер памяти
 #define START_ALLOCATE_SIZE 2000
 // Минимальный размер оставшейся свободной памяти (если выделяеься точный предел)
@@ -104,8 +103,6 @@ void reAllocBlock(struct block *block, unsigned int requiredSpace) {
             block->allocated * MIN_RE_ALLOC_MULTIPLY);
 
     if (newAlloc) {
-        DEBUG && printf("ReAlloc block: %d -> %d\n", block->allocated, newAlloc);
-
         block->data = c_realloc(block->data, newAlloc);
         block->allocated = newAlloc;
     }

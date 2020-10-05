@@ -12,8 +12,8 @@
 #include "string.h"
 #include "udp_request.h"
 #include "thread.h"
+#include "sem.h"
 
-#define DEBUG 0
 // Размер заголовка пакета scrape + 74 x info_hash (по протоколу это максимальное кол-во)
 #define RECEIVED_UDP_MESSAGE_LENGTH 1496
 #define MSG_CONFIRM_ 0
@@ -155,7 +155,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
 
         receiveCount++;
 
-        DEBUG && printHex(receivedMessage, receivedSize);
+        // printHex(receivedMessage, receivedSize);
 
         struct block *block = initBlock();
         addStringBlock(block, receivedMessage, receivedSize);
@@ -170,7 +170,6 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
         rk_sema_post(&semaphoreRequest);
 
         // SIGNAL
-        DEBUG && printf("socket_udp.c: Signal Read\n");
         pthread_mutex_lock(&mutexSignalRequest);
         pthread_cond_signal(&signalRequest);
         pthread_mutex_unlock(&mutexSignalRequest);

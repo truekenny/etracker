@@ -5,8 +5,6 @@
 #include "socket.h"
 #include "equeue.h"
 
-#define DEBUG 0
-
 void updateSocketL(struct list *socketList, int socket, int equeue, _Bool useSemaphore) {
     unsigned char *pSocket = (unsigned char *) &socket;
 

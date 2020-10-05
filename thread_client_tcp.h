@@ -12,7 +12,6 @@
  */
 struct clientTcpArgs {
     int threadNumber;
-    struct list *queueList;
     struct list *torrentList;
     struct stats *stats;
 

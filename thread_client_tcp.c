@@ -9,7 +9,6 @@
 #include "thread_client_tcp.h"
 #include "sem.h"
 #include "alloc.h"
-#include "queue.h"
 #include "string.h"
 #include "uri.h"
 #include "data_garbage.h"
@@ -20,9 +19,6 @@
 #include "basic.h"
 #include "thread.h"
 
-#define DEBUG 0
-#define DEBUG_KQUEUE 0
-#define QUEUE_ENABLE 0
 /*
  * Если включить, это влияет очень сильно на CPU
  * Возможно из-за роста sockPool
@@ -51,7 +47,6 @@ unsigned char deleteSocketListCallback(struct list *list, struct item *item, voi
 
 void processRead(struct clientTcpArgs *args, int currentSocket, struct list *deleteSocketList) {
     int threadNumber = args->threadNumber;
-    struct list *queueList = args->queueList;
     struct list *torrentList = args->torrentList;
     struct stats *stats = args->stats;
     int equeue = args->equeue;
@@ -66,23 +61,18 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
     unsigned char *pCurrentSocket = (unsigned char *) &currentSocket;
 
-    DEBUG_KQUEUE && printf("thread_client_tcp.c: Read %d\n", currentSocket);
     // Read from socket.
     char readBuffer[RECEIVED_MESSAGE_LENGTH + 1];
     memset(readBuffer, 0, sizeof(readBuffer));
     ssize_t readSize = recv(currentSocket, readBuffer, RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL | MSG_PEEK);
-    DEBUG_KQUEUE && printf("thread_client_tcp.c: read %zu bytes fd=%d \n", readSize, currentSocket);
 
     // Запрос превышает лимит, прерываю такие сокеты
     if (readSize >= RECEIVED_MESSAGE_LENGTH) {
-        // printf("recv has full buffer\n");
-
         struct block *block = initBlock();
         renderHttpMessage(block, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats, NULL, NULL);
         send_(currentSocket, block->data, block->size, stats);
         freeBlock(block);
 
-        // deleteSocketItemL(socketItem, stats);
         setHash(deleteSocketList, pCurrentSocket);
 
         stats->recv_failed++;
@@ -92,10 +82,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
     if (readSize == 0) {
         // Client close connection
-
         stats->recv_failed_read_0++;
-
-        // deleteSocketItemL(socketItem, stats);
         setHash(deleteSocketList, pCurrentSocket);
 
         return;
@@ -106,7 +93,6 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         stats->recv_failed++;
         stats->recv_failed_read_sub_0++;
 
-        // deleteSocketItemL(socketItem, stats);
         setHash(deleteSocketList, pCurrentSocket);
 
         return;
@@ -136,42 +122,23 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                ctime((time_t *) &now), beforeReadSize, readSize);
         perror("Second recv failed");
 
-        // deleteSocketItemL(socketItem, stats);
         setHash(deleteSocketList, pCurrentSocket);
 
         return;
     }
 
-    DEBUG_KQUEUE && printf("thread_client_tcp.c: IN %d", threadNumber);
-
-    if (QUEUE_ENABLE) {
-        addQueueList(queueList, threadNumber);
-    }
-
-    DEBUG && printf("Handler: sock:%d number:%d\n", currentSocket, threadNumber);
-
     _Bool isHttp = 0;
     int canKeepAlive = 0;
     struct block *writeBlock = initBlock();
 
-    DEBUG && printf("> %s", readBuffer);
-
     stats->recv_bytes += readSize;
     stats->recv_pass++;
 
-    if (DEBUG && startsWith("stop", readBuffer)) {
-        printf("STOP\n");
-        exit(40);
-    }
-
     if (startsWith("GET ", readBuffer)) {
         isHttp = 1;
-        DEBUG && printf("isHttp = 1\n");
     }
 
     if (isHttp) {
-        DEBUG && printf("Message complete\n");
-
         canKeepAlive = *keepAlive
                        && (
                                (
@@ -206,7 +173,6 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 renderHttpMessage(writeBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
                                   *socketTimeout, stats, NULL, NULL);
             } else {
-                // struct torrent *torrent;
                 struct block *block = initBlock();
 
                 struct list *leaf = getLeaf(torrentList, query.info_hash);
@@ -281,18 +247,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
             formatStats(threadNumber, block, stats, *interval, rps);
 
-            if (QUEUE_ENABLE) {
-                printQueueList(block, queueList);
-            }
-
             renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
                               *socketTimeout, stats, charset, "text/html");
-            freeBlock(block);
-        } else if (DEBUG && startsWith("GET /garbage", readBuffer)) {
-            struct block *block = initBlock();
-            runGarbageCollectorL(block, torrentList);
-            renderHttpMessage(writeBlock, 200, block->data, block->size, canKeepAlive,
-                              *socketTimeout, stats, NULL, NULL);
             freeBlock(block);
         } else if (startsWith("GET / ", readBuffer)) {
             renderHttpMessage(writeBlock, 200,
@@ -350,22 +306,13 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     else {
         renderHttpMessage(writeBlock, 405, readBuffer, readSize, canKeepAlive,
                           *socketTimeout, stats, NULL, NULL);
-        DEBUG && printf("< %s", readBuffer);
     }
-
-    if (QUEUE_ENABLE) {
-        deleteQueueList(queueList, threadNumber);
-    }
-
-    DEBUG && printf("Recv bytes: %zu\n", readSize);
-    DEBUG_KQUEUE && printf("thread_client_tcp.c: Write %d, keep=%d\n", threadNumber, canKeepAlive);
 
     send_(currentSocket, writeBlock->data, writeBlock->size, stats);
     // Ответ дан - удаляю
     freeBlock(writeBlock);
 
     if (!canKeepAlive) {
-        // deleteSocketItemL(socketItem, stats);
         setHash(deleteSocketList, pCurrentSocket);
     }
 }
@@ -379,7 +326,6 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
     pthreadSetName(pthread_self(), "TCP worker");
 
     // int threadNumber = args->threadNumber;
-    // struct list *queueList = args->queueList;
     // struct list *torrentList = args->torrentList;
     struct stats *stats = args->stats;
     int equeue = args->equeue;
@@ -402,8 +348,6 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
 
         int nev = checkEqueue(equeue, &eevent);
 
-        DEBUG_KQUEUE && printf("thread_client_tcp.c: go nev=%d\n", nev);
-
         for (int index = 0; index < nev; index++) {
             int currentSocket = getSocketEqueue(&eevent, index);
 
@@ -417,9 +361,6 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
 
                 printf("%.19s thread_client_tpc.c: socketItem not found\n", ctime((time_t *) &now));
             } else if (isEof(&eevent, index)) {
-                DEBUG_KQUEUE && printf("thread_client_tcp.c: Disconnect\n");
-
-                // deleteSocketItemL(socketItem, stats);
                 setHash(deleteSocketList, pCurrentSocket);
             } else if (isRead(&eevent, index)) {
                 processRead(args, currentSocket, deleteSocketList);

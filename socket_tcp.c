@@ -17,8 +17,6 @@
 #include "socket_garbage.h"
 #include "thread.h"
 
-#define DEBUG 0
-#define DEBUG_KQUEUE 0
 #define SOCKET_QUEUE_LENGTH 150
 #define EVENTS_EACH_LOOP 32
 
@@ -26,7 +24,6 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     pthreadSetName(pthread_self(), "TCP listen");
 
     struct stats *stats = args->stats;
-    struct list *queueList = args->queueList;
     struct list *torrentList = args->torrentList;
     unsigned short port = args->port;
     struct list **socketLists = args->socketLists;
@@ -52,7 +49,6 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
 
         exit(2);
     }
-    DEBUG && puts("Socket created");
 
     //Prepare the sockaddr_in structure
     serverAddr.sin_family = AF_INET;
@@ -73,7 +69,6 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
 
         exit(4);
     }
-    DEBUG && puts("Bind done");
 
     int *equeue = c_calloc(workers, sizeof(int));
 
@@ -84,7 +79,6 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
 
         struct clientTcpArgs *clientTcpArgs = (struct clientTcpArgs *) c_malloc(sizeof(struct clientTcpArgs));
         clientTcpArgs->threadNumber = threadNumber;
-        clientTcpArgs->queueList = queueList;
         clientTcpArgs->torrentList = torrentList;
         clientTcpArgs->stats = stats;
 
@@ -132,10 +126,6 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
 
         if (clientSocket < 0) {
             stats->accept_failed++;
-            /*
-             * Отображает слишком много ошибок
-             * perror("Accept failed");
-             */
 
             continue;
         }
@@ -148,22 +138,13 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
 
         int equeueThread = equeue[currentThread];
 
-        // todo нужен ли здесь глобальный семафор?
-        //waitSemaphoreLeaf(socketLists[equeueThread]);
         updateSocketL(socketLists[currentThread], clientSocket, equeueThread, 1);
-        //postSemaphoreLeaf(socketLists[equeueThread]);
 
         addClientEqueue(equeueThread, clientSocket);
-        DEBUG_KQUEUE && printf("socket_tcp.c: Got connection!\n");
 
         int flags = fcntl(clientSocket, F_GETFL, 0);
-        if (flags < 0) {
-            if (DEBUG)
-                perror("Flags failed");
-        } else
+        if (flags >= 0)
             fcntl(clientSocket, F_SETFL, flags | O_NONBLOCK);
-
-        DEBUG && puts("Handler assigned");
 
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;
