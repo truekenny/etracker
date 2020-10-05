@@ -36,6 +36,9 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
 
     c_free(args);
 
+    struct block *writeBlock = initBlock();
+    struct block *hashes = initBlock();
+
 
     while (1) {
         rk_sema_wait(semaphoreRequest);
@@ -88,38 +91,39 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                 stats->announce_udp++;
 
                 // Аргументы потока
-                struct query *query = c_calloc(1, sizeof(struct query));
-                query->udp = 1;
-                query->port = announceRequest->port;
-                query->event = htonl(announceRequest->event);;
-                memcpy(query->info_hash, announceRequest->info_hash, PARAM_VALUE_LENGTH);
-                memcpy(query->peer_id, announceRequest->peer_id, PARAM_VALUE_LENGTH);
-                query->numwant = htonl(announceRequest->num_want);
-                query->ip = clientAddr.sin_addr.s_addr;
-                query->transaction_id = announceRequest->transaction_id;
+                struct query query = {};
+                query.udp = 1;
+                query.port = announceRequest->port;
+                query.event = htonl(announceRequest->event);
+                memcpy(query.info_hash, announceRequest->info_hash, PARAM_VALUE_LENGTH);
+                memcpy(query.peer_id, announceRequest->peer_id, PARAM_VALUE_LENGTH);
+                query.numwant = htonl(announceRequest->num_want);
+                query.ip = clientAddr.sin_addr.s_addr;
+                query.transaction_id = announceRequest->transaction_id;
 
-                if (query->numwant > *maxPeersPerResponse)
-                    query->numwant = *maxPeersPerResponse;
+                if (query.numwant > *maxPeersPerResponse)
+                    query.numwant = *maxPeersPerResponse;
 
                 { // аннонс
-                    struct block *writeBlock = initBlock();
+                    writeBlock = resetBlock(writeBlock);
 
-                    struct list *leaf = getLeaf(torrentList, query->info_hash);
+                    struct list *leaf = getLeaf(torrentList, query.info_hash);
                     waitSemaphoreLeaf(leaf);
 
                     struct item *torrent;
-                    if (query->event == EVENT_ID_STOPPED) {
-                        torrent = deletePeerPublic(torrentList, query);
+                    if (query.event == EVENT_ID_STOPPED) {
+                        torrent = deletePeerPublic(torrentList, &query);
                     } else {
-                        torrent = setPeerPublic(torrentList, query);
+                        torrent = setPeerPublic(torrentList, &query);
                     }
-                    renderAnnouncePublic(writeBlock, torrent, query, *interval);
+                    renderAnnouncePublic(writeBlock, torrent, &query, *interval);
 
                     postSemaphoreLeaf(leaf);
 
                     stats->sent_bytes_udp += writeBlock->size;
 
                     // printHex(writeBlock->data, writeBlock->size);
+
                     if (sendto(serverSocket, writeBlock->data, writeBlock->size,
                                MSG_CONFIRM_, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
@@ -128,10 +132,6 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     } else {
                         stats->send_pass_udp++;
                     }
-
-                    freeBlock(writeBlock);
-                    c_free(query);
-
                 } // аннонс
 
             } else if (block->size > scrapeRequestSize && htonl(scrapeRequest->action) == ACTION_SCRAPE) {
@@ -139,19 +139,20 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
 
                 unsigned int hashCount = (block->size - sizeof(struct scrapeRequest)) / PARAM_VALUE_LENGTH;
 
-                struct block *hashes = initBlock();
+                hashes = resetBlock(hashes);
                 addStringBlock(hashes,
                                &((char *) scrapeRequest)[sizeof(struct scrapeRequest)],
                                hashCount * PARAM_VALUE_LENGTH);
 
                 {  // scrape
-                    struct block *writeBlock = initBlock();
-                    struct query *query = c_calloc(1, sizeof(struct query));
-                    query->udp = 1;
-                    query->transaction_id = scrapeRequest->transaction_id;
-                    renderScrapeTorrentsPublic(writeBlock, torrentList, hashes, query);
+                    writeBlock = resetBlock(writeBlock);
+                    struct query query = {};
+                    query.udp = 1;
+                    query.transaction_id = scrapeRequest->transaction_id;
+                    renderScrapeTorrentsPublic(writeBlock, torrentList, hashes, &query);
 
                     // printHex(writeBlock->data, writeBlock->size);
+
                     if (sendto(serverSocket, writeBlock->data, writeBlock->size,
                                MSG_CONFIRM_, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
@@ -160,10 +161,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     } else {
                         stats->send_pass_udp++;
                     }
-                    c_free(query);
-                    freeBlock(writeBlock);
                 }  // scrape
-                freeBlock(hashes);
             } // income packet scrape check
         } // Проверка формата
 
