@@ -4,7 +4,7 @@ clear
 
 while true; do
   date
-  prlimit --core=-1: --nofile=64000: ./etracker -p 80 -i 299 -w 1 -e 300 -t 3 -k
+  prlimit --core=-1: ./etracker -p $1 -i 299 -w 1 -e 300 -t 3 -k --nofile 64000 --charset utf-8 --locale en_US.UTF-8
   echo Exit code: $?
   sleep 1
 done

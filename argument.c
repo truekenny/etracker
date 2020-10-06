@@ -20,6 +20,7 @@
 #define NO_TCP_NAME                11
 #define NO_UDP_NAME                12
 #define LOCALE_NAME                13
+#define NOFILE_NAME               14
 
 #define DEFAULT_PORT                3000
 #define DEFAULT_INTERVAL            1799
@@ -93,6 +94,9 @@ struct arguments *parseArguments(int argc, char *argv[]) {
             case LOCALE_NAME:
                 arguments->locale = (index == argc - 1) ? NULL : argv[index + 1];
                 break;
+            case NOFILE_NAME:
+                arguments->nofile = argumentValue;
+                break;
         }
     }
 
@@ -142,6 +146,8 @@ unsigned int getName(char *name) {
         return NO_UDP_NAME;
     } else if (!strcmp(name, "--locale")) {
         return LOCALE_NAME;
+    } else if (!strcmp(name, "--nofile")) {
+        return NOFILE_NAME;
     }
 
     return UNKNOWN_NAME;
@@ -154,7 +160,7 @@ void showHelp() {
             "\n"
             "SYNOPSIS\n"
             "     etracker [-p port] [-i interval] [-w workers] [-e peers] [-t timeout] [-k] [-h]\n"
-            "         [--charset charset] [--no-tcp] [--no-udp] [--locale locale]\n"
+            "         [--charset charset] [--no-tcp] [--no-udp] [--locale locale] [--nofile nofile]\n"
             "\n"
             "DESCRIPTION\n"
             "     Run BitTorrent tracker with interfaces:\n"
@@ -207,6 +213,12 @@ void showHelp() {
             "             Locale for stats page, default current terminal's locale.\n"
             "             If your stats page is a little broken, then I recommend the `en_US.UTF-8` locale.\n"
             "\n"
+            "     --nofile\n"
+            "             Change soft rlimit nofile.\n"
+            "             May be useful if you choose the keep-alive option.\n"
+            "             MacOS default 2500, maximum 10000.\n"
+            "             Debian default 1000, recommended 64000.\n"
+            "\n"
             "     --help\n"
             "     -h\n"
             "             This help.\n"
@@ -215,6 +227,7 @@ void showHelp() {
             "\n"
             "     etracker\n"
             "     etracker -p 80\n"
+            "     etracker -p 80 -k --nofile 10000\n"
             "     etracker -p 80 --locale en_US.UTF-8\n"
             "     etracker --port 80 --no-tcp --max-interval 1799\n"
             "     etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k --charset utf-8 --min-interval 299\n"

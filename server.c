@@ -8,6 +8,8 @@
 #include <sys/socket.h>
 #include <pwd.h>
 #include <locale.h>
+#include <sys/resource.h>
+#include <errno.h>
 #include "sem.h"
 #include "alloc.h"
 #include "socket.h"
@@ -27,6 +29,8 @@
 #endif
 
 void setNobody();
+
+void setLimit(rlim_t nofile);
 
 int main(int argc, char *argv[]) {
     printf("Revision: %s\n", REVISION);
@@ -50,15 +54,15 @@ int main(int argc, char *argv[]) {
            "  noTcp = %u\n"
            "  noUdp = %u\n"
            "  charset = %s\n"
-           "  locale = %s\n"
-           ,
+           "  locale = %s\n",
            arguments->port, arguments->interval, arguments->workers, arguments->maxPeersPerResponse,
            arguments->socketTimeout, arguments->keepAlive, arguments->minInterval, arguments->maxInterval,
            arguments->noTcp, arguments->noUdp, arguments->charset, arguments->locale);
 
     printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 
-    c_initSem();
+    c_initSem(); // Семафор для точного подсчёта alloc блоков
+    setLimit(arguments->nofile);
 
     // vars
     struct list **socketLists = c_calloc(arguments->workers, sizeof(void *));
@@ -158,4 +162,23 @@ void setNobody() {
             perror("Setuid failed");
         }
     };
+}
+
+void setLimit(rlim_t nofile) {
+    if (!nofile)
+        return;
+
+    struct rlimit rlimit;
+
+    if (getrlimit(RLIMIT_NOFILE, &rlimit) == 0) {
+        printf("Current RLIMIT_NOFILE -> soft=%'llu, hard=%'llu\n", rlimit.rlim_cur, rlimit.rlim_max);
+
+        rlimit.rlim_cur = nofile;
+
+        if (setrlimit(RLIMIT_NOFILE, &rlimit) != -1)
+            printf("New RLIMIT_NOFILE -> soft=%'llu, hard=%'llu\n", rlimit.rlim_cur, rlimit.rlim_max);
+        else
+            printf("setrlimit error: %d: %s (maybe %'llu too large)\n", errno, strerror(errno), nofile);
+    } else
+        printf("getrlimit error: %d: %s\n", errno, strerror(errno));
 }

@@ -2,6 +2,7 @@
 #define SC6_ARGUMENT_H
 
 #include <stdatomic.h>
+#include <sys/resource.h>
 
 struct arguments {
     unsigned short port;
@@ -16,6 +17,7 @@ struct arguments {
     unsigned char noTcp;
     unsigned char noUdp;
     char *locale;
+    rlim_t nofile;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);

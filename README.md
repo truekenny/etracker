@@ -16,7 +16,8 @@
     ./etracker [-p port]
     ./etracker --help
 
-Example: `./etracker -p 6969`
+Example: `./etracker -p 6969`<br>
+See the example in the [run](https://github.com/truekenny/etracker/blob/master/run) file.<br>
 The port is indicated simultaneously for TCP and UDP.
 
 ### Interfaces
