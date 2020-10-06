@@ -20,7 +20,7 @@
 #define NO_TCP_NAME                11
 #define NO_UDP_NAME                12
 #define LOCALE_NAME                13
-#define NOFILE_NAME               14
+#define NOFILE_NAME                14
 
 #define DEFAULT_PORT                3000
 #define DEFAULT_INTERVAL            1799

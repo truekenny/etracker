@@ -1,4 +1,4 @@
-## etracker - open-source BitTorrent tracker
+## &nbsp;<img src="https://raw.githubusercontent.com/truekenny/etracker/master/web/apple-touch-icon.png" width="16" height="16"> etracker - open-source BitTorrent tracker
 
 **etracker** aims for maximum stability and minimal resource usage.
 
@@ -17,7 +17,8 @@
     ./etracker --help
 
 Example: `./etracker -p 6969`<br>
-See the example in the [run](https://github.com/truekenny/etracker/blob/master/run) file.<br>
+See the shell script in the [run](https://github.com/truekenny/etracker/blob/master/run) file.
+Example use: `./run 6969`<br>
 The port is indicated simultaneously for TCP and UDP.
 
 ### Interfaces
@@ -34,7 +35,7 @@ The port is indicated simultaneously for TCP and UDP.
 
 ### Settings
 
-1. Optional *full scrape* (`data.c` `ENABLE_FULL_SCRAPE: 0 -> 1`).
+1. Optional *full scrape* (`data.h` `ENABLE_FULL_SCRAPE: 0 -> 1`).
 
 ### Statictics
 
