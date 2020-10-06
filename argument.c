@@ -21,6 +21,7 @@
 #define NO_UDP_NAME                12
 #define LOCALE_NAME                13
 #define NOFILE_NAME                14
+#define CORE_NAME                  15
 
 #define DEFAULT_PORT                3000
 #define DEFAULT_INTERVAL            1799
@@ -97,6 +98,9 @@ struct arguments *parseArguments(int argc, char *argv[]) {
             case NOFILE_NAME:
                 arguments->nofile = argumentValue;
                 break;
+            case CORE_NAME:
+                arguments->core = argumentValue;
+                break;
         }
     }
 
@@ -148,6 +152,8 @@ unsigned int getName(char *name) {
         return LOCALE_NAME;
     } else if (!strcmp(name, "--nofile")) {
         return NOFILE_NAME;
+    } else if (!strcmp(name, "--core")) {
+        return CORE_NAME;
     }
 
     return UNKNOWN_NAME;
@@ -218,6 +224,9 @@ void showHelp() {
             "             May be useful if you choose the keep-alive option.\n"
             "             MacOS default 2500, maximum 10000.\n"
             "             Debian default 1000, recommended 64000.\n"
+            "\n"
+            "     --core\n"
+            "             Change soft rlimit core (`-1` mean change soft to hard).\n"
             "\n"
             "     --help\n"
             "     -h\n"

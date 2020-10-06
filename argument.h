@@ -18,6 +18,7 @@ struct arguments {
     unsigned char noUdp;
     char *locale;
     rlim_t nofile;
+    long long core;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);

@@ -19,6 +19,7 @@
 Example: `./etracker -p 6969`<br>
 See the shell script in the [run](https://github.com/truekenny/etracker/blob/master/run) file.
 Example use: `./run 6969`<br>
+Shell with chroot for Debian: [run_chroot](https://github.com/truekenny/etracker/blob/master/run_chroot). <br>
 The port is indicated simultaneously for TCP and UDP.
 
 ### Interfaces

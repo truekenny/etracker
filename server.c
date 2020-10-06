@@ -30,17 +30,16 @@
 
 void setNobody();
 
-void setLimit(rlim_t nofile);
+void setLimit(long long soft, int limitName);
+
+void setLocale(char *locale);
 
 int main(int argc, char *argv[]) {
     printf("Revision: %s\n", REVISION);
 
     struct arguments *arguments = parseArguments(argc, argv);
 
-    if (arguments->locale == NULL)
-        setlocale(LC_NUMERIC, "");
-    else
-        setlocale(LC_NUMERIC, arguments->locale);
+    setLocale(arguments->locale);
 
     printf("Starting configuration:\n"
            "  port = %d\n"
@@ -62,7 +61,8 @@ int main(int argc, char *argv[]) {
     printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 
     c_initSem(); // Семафор для точного подсчёта alloc блоков
-    setLimit(arguments->nofile);
+    setLimit(arguments->nofile, RLIMIT_NOFILE);
+    setLimit(arguments->core, RLIMIT_CORE);
 
     // vars
     struct list **socketLists = c_calloc(arguments->workers, sizeof(void *));
@@ -164,21 +164,34 @@ void setNobody() {
     };
 }
 
-void setLimit(rlim_t nofile) {
-    if (!nofile)
+void setLimit(long long soft, int limitName) {
+    if (!soft)
         return;
 
     struct rlimit rlimit;
 
-    if (getrlimit(RLIMIT_NOFILE, &rlimit) == 0) {
-        printf("Current RLIMIT_NOFILE -> soft=%'llu, hard=%'llu\n", rlimit.rlim_cur, rlimit.rlim_max);
+    if (getrlimit(limitName, &rlimit) == 0) {
+        printf("Current %d -> soft=%'llu, hard=%'llu\n", limitName, rlimit.rlim_cur, rlimit.rlim_max);
 
-        rlimit.rlim_cur = nofile;
-
-        if (setrlimit(RLIMIT_NOFILE, &rlimit) != -1)
-            printf("New RLIMIT_NOFILE -> soft=%'llu, hard=%'llu\n", rlimit.rlim_cur, rlimit.rlim_max);
+        if (soft == -1)
+            rlimit.rlim_cur = rlimit.rlim_max;
         else
-            printf("setrlimit error: %d: %s (maybe %'llu too large)\n", errno, strerror(errno), nofile);
+            rlimit.rlim_cur = soft;
+
+        if (setrlimit(limitName, &rlimit) != -1)
+            printf("New %d -> soft=%'llu, hard=%'llu\n", limitName, rlimit.rlim_cur, rlimit.rlim_max);
+        else
+            printf("setrlimit error: %d: %s (maybe %'llu too large)\n", errno, strerror(errno), soft);
     } else
         printf("getrlimit error: %d: %s\n", errno, strerror(errno));
+}
+
+void setLocale(char *locale) {
+    char *_locale = "";
+
+    if(locale != NULL)
+        _locale = locale;
+
+    if (setlocale(LC_NUMERIC, _locale) == NULL)
+        printf("setlocale failed: %d: %s\n", errno, strerror(errno));
 }

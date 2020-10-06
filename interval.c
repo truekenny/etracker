@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include "interval.h"
 #include "math.h"
 
@@ -9,6 +11,8 @@ void updateInterval(struct block *block, _Atomic (unsigned int) *interval,
     double load[3];
 
     if (getloadavg(load, 3) == -1) {
+        printf("getloadavg failed: %d, %s\n", errno, strerror(errno));
+
         return;
     }
 
