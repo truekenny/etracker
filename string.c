@@ -11,9 +11,15 @@
  * @return _Bool Строка str начинается на pre
  */
 _Bool startsWith(const char *start, const char *string) {
-    size_t lenPre = strlen(start),
-            lenStr = strlen(string);
-    return lenStr < lenPre ? 0 : memcmp(start, string, lenPre) == 0;
+    size_t lenStart = strlen(start),
+            lenString = strlen(string);
+    return lenString < lenStart ? 0 : memcmp(start, string, lenStart) == 0;
+}
+
+_Bool endsWith(const char *end, const char *string) {
+    size_t lenEnd = strlen(end),
+            lenString = strlen(string);
+    return lenString < lenEnd ? 0 : memcmp(end, &string[lenString-lenEnd], lenEnd) == 0;
 }
 
 int printHex(char *string, unsigned int len) {

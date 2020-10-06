@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdatomic.h>
+#include <limits.h>
+#include <sys/stat.h>
 #include "thread_client_tcp.h"
 #include "sem.h"
 #include "alloc.h"
@@ -18,12 +20,15 @@
 #include "data.h"
 #include "basic.h"
 #include "thread.h"
+#include "math.h"
 
 /*
  * Если включить, это влияет очень сильно на CPU
  * Возможно из-за роста sockPool
  */
 #define RECEIVED_MESSAGE_LENGTH 4000
+
+#define MAX_FILE_SIZE 1000000
 
 struct deleteSocketListArgs {
     struct list *socketList;
@@ -60,6 +65,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     unsigned short *socketTimeout = args->socketTimeout;
     unsigned char *keepAlive = args->keepAlive;
     char *charset = args->charset;
+    char *webRoot = args->webRoot;
 
     unsigned char *pCurrentSocket = (unsigned char *) &currentSocket;
 
@@ -271,29 +277,55 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                                   *socketTimeout, stats, NULL, NULL);
             }
         } // scrape
-        else if (startsWith("GET /favicon.", readBuffer)) {
-            dataBlock = resetBlock(dataBlock);
-            addFileBlock(dataBlock, 2000, "web/favicon.ico");
-            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
-                              *socketTimeout, stats, NULL, "image/x-icon");
-        } // favicon
-        else if (startsWith("GET /apple-touch-icon.", readBuffer)) {
-            dataBlock = resetBlock(dataBlock);
-            addFileBlock(dataBlock, 2000, "web/apple-touch-icon.png");
-            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
-                              *socketTimeout, stats, NULL, "image/png");
-        } // apple-icon
-        else if (startsWith("GET /robots.txt", readBuffer)) {
-            dataBlock = resetBlock(dataBlock);
-            addFileBlock(dataBlock, 2000, "web/robots.txt");
-            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
-                              *socketTimeout, stats, NULL, NULL);
-        } // robots
         else {
-            // todo: Перенести чтение web файлов сюда
-            renderHttpMessage(sendBlock, 404, "Page not found", 14, canKeepAlive,
-                              *socketTimeout, stats, NULL, NULL);
-        } // not found
+            char *typeIco = "image/x-icon";
+            char *typePng = "image/png";
+            char *typeDefault = "text/plain";
+            char *typeFile = NULL;
+
+            struct query query = {};
+            parseUri(&query, NULL, readBuffer);
+            char absolute[PATH_MAX + 1];
+
+            // Файл существует
+            if (realpath(query.path, absolute) != NULL) {
+                // Находится в каталоге web
+                if (startsWith(webRoot, absolute)) {
+                    struct stat statFile;
+                    stat(absolute, &statFile);
+                    // Это обычный файл
+                    if (S_ISREG(statFile.st_mode)) {
+                        // Размер не больше предельного значения
+                        if (statFile.st_size < MAX_FILE_SIZE) {
+                            if (endsWith(".ico", absolute))
+                                typeFile = typeIco;
+                            else if (endsWith(".png", absolute))
+                                typeFile = typePng;
+                            else
+                                typeFile = typeDefault;
+
+                            dataBlock = resetBlock(dataBlock);
+                            addFileBlock(dataBlock, statFile.st_size, absolute);
+                            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
+                                              *socketTimeout, stats, NULL, typeFile);
+                        } else {
+                            renderHttpMessage(sendBlock, 507, "File size exceeds the allowed limit",
+                                              35, canKeepAlive, *socketTimeout, stats, NULL, NULL);
+                        }
+                    } else {
+                        renderHttpMessage(sendBlock, 404, "Page not found: Not a file", 26, canKeepAlive,
+                                          *socketTimeout, stats, NULL, NULL);
+                    }
+                } else {
+                    renderHttpMessage(sendBlock, 404, "Page not found: Secure error", 28, canKeepAlive,
+                                      *socketTimeout, stats, NULL, NULL);
+                }
+            } else {
+                addFormatStringBlock(dataBlock, 1000, "Page not found: %d: %s", errno, strerror(errno));
+                renderHttpMessage(sendBlock, 404, dataBlock->data, dataBlock->size, canKeepAlive,
+                                  *socketTimeout, stats, NULL, NULL);
+            }
+        } // default
 
         if (canKeepAlive) {
             stats->keep_alive++;

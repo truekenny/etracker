@@ -7,8 +7,6 @@
 #define URI_PATH 0
 #define QUERY_PARAM 1
 #define QUERY_VALUE 2
-#define PATH_LENGTH 50
-#define FIRST_LINE_LENGTH 1000
 
 void getParam(struct query *query, struct block *block, char *param, char *value);
 
@@ -17,9 +15,8 @@ void getParam(struct query *query, struct block *block, char *param, char *value
  * @param message
  */
 void parseUri(struct query *query, struct block *block, char *message) {
-    char path[PATH_LENGTH + 1] = {0},
-            param[PARAM_VALUE_LENGTH + 1] = {0},
-            value[PARAM_VALUE_LENGTH + 1] = {0};
+    char param[PARAM_VALUE_LENGTH + 1] = {0};
+    char value[PARAM_VALUE_LENGTH + 1] = {0};
     int status = URI_PATH;
     size_t len;
     short percent = 0;
@@ -38,8 +35,9 @@ void parseUri(struct query *query, struct block *block, char *message) {
 
                 continue;
             }
-            if ((len = strlen(path)) < PATH_LENGTH) {
-                path[len] = current;
+            if ((len = strlen(query->path)) < PATH_LENGTH) {
+                if(len != 0 || current != '/')
+                    query->path[len] = current;
             }
             continue;
         }
@@ -138,13 +136,13 @@ void getParam(struct query *query, struct block *block, char *param, char *value
         query->no_peer_id = 1;
     } else if (!strcmp(param, "numwant")) {
         query->numwant = atoi(value);
-    } else if(!strcmp(param, "interval")) {
+    } else if (!strcmp(param, "interval")) {
         query->interval = atoi(value);
-    } else if(!strcmp(param, "max_peers_response")) {
+    } else if (!strcmp(param, "max_peers_response")) {
         query->max_peers_per_response = atoi(value);
-    } else if(!strcmp(param, "socket_timeout")) {
+    } else if (!strcmp(param, "socket_timeout")) {
         query->socket_timeout = atoi(value);
-    } else if(!strcmp(param, "keep_alive")) {
+    } else if (!strcmp(param, "keep_alive")) {
         query->keep_alive = atoi(value);
     }
 }

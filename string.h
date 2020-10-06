@@ -3,6 +3,8 @@
 
 _Bool startsWith(const char *start, const char *string);
 
+_Bool endsWith(const char *end, const char *string);
+
 int printHex(char *string, unsigned int len);
 
 #endif //SC6_STRING_H

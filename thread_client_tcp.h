@@ -27,6 +27,8 @@ struct clientTcpArgs {
     unsigned short *socketTimeout;
     unsigned char *keepAlive;
     char *charset;
+
+    char *webRoot;
 };
 
 void *clientTcpHandler(struct clientTcpArgs *);

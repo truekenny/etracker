@@ -16,6 +16,7 @@
 #include "equeue.h"
 #include "socket_garbage.h"
 #include "thread.h"
+#include "uri.h"
 
 #define SOCKET_QUEUE_LENGTH 150
 #define EVENTS_EACH_LOOP 32
@@ -27,7 +28,7 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     struct list *torrentList = args->torrentList;
     unsigned short port = args->port;
     struct list **socketLists = args->socketLists;
-    _Atomic(unsigned int) *interval = args->interval;
+    _Atomic (unsigned int) *interval = args->interval;
     struct rps *rps = args->rps;
     long workers = args->workers;
     unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
@@ -36,6 +37,16 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     char *charset = args->charset;
 
     c_free(args);
+
+    chdir(WEB_PATH);
+    char webRoot[MAX_CWD + 1];
+
+    if (getcwd(webRoot, MAX_CWD) == NULL) {
+        perror("getcwd failed");
+        exit(66);
+    }
+    strcat(webRoot, SEPARATOR_PATH);
+    printf("webRoot: '%s'\n", webRoot);
 
     struct block *authorizationHeader = initBlock();
 
@@ -94,6 +105,7 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
         clientTcpArgs->socketTimeout = socketTimeout;
         clientTcpArgs->keepAlive = keepAlive;
         clientTcpArgs->charset = charset;
+        clientTcpArgs->webRoot = webRoot;
 
         if (pthread_create(&tcpClientThread, NULL, (void *(*)(void *)) clientTcpHandler, clientTcpArgs) != 0) {
             perror("Could not create TCP thread");

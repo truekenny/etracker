@@ -16,6 +16,7 @@ struct stats {
     atomic_uint http_405;
     atomic_uint http_408;
     atomic_uint http_413;
+    atomic_uint http_507;
 
     atomic_uint close_failed;
     atomic_uint send_failed;

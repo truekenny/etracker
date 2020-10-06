@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "block.h"
 #include "alloc.h"
 #include "math.h"
@@ -79,8 +80,19 @@ void addFileBlock(struct block *block, unsigned int requiredSpace, char *filenam
 
     FILE *file = fopen(filename, "rb");
 
-    block->size += fread(&block->data[block->size], 1, requiredSpace, file);
-    fclose(file);
+    if (file != NULL) {
+        size_t readSize = fread(&block->data[block->size], 1, requiredSpace, file);
+
+        if(readSize == requiredSpace) {
+            block->size += readSize;
+        } else {
+            printf("fread failed: %d: %s\n", errno, strerror(errno));
+        }
+
+        fclose(file);
+    } else {
+        printf("fopen failed: %d: %s\n", errno, strerror(errno));
+    }
 
     // Для printf
     block->data[block->size] = 0;

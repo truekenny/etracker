@@ -47,6 +47,10 @@ void renderHttpMessage(struct block *block, int code, char *message, size_t size
             stats->http_413++;
             addStringBlock(block, "HTTP/1.0 413 Request Entity Too Large\r\n", 39);
             break;
+        case 507:
+            stats->http_507++;
+            addStringBlock(block, "HTTP/1.0 507 Insufficient Storage\r\n", 35);
+            break;
         case 200:
         default:
             stats->http_200++;

@@ -22,7 +22,14 @@
 #define PARAM_VALUE_LENGTH 20
 #define DEFAULT_NUM_WANT 50
 
+#define PATH_LENGTH 200
+
+#define MAX_CWD 500
+#define WEB_PATH "web"
+#define SEPARATOR_PATH "/"
+
 struct query {
+    char path[PATH_LENGTH + 1];
     unsigned char has_info_hash;
     unsigned char info_hash[PARAM_VALUE_LENGTH];
     unsigned char event;
