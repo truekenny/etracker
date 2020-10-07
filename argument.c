@@ -22,6 +22,7 @@
 #define LOCALE_NAME                13
 #define NOFILE_NAME                14
 #define CORE_NAME                  15
+#define FAILED_NAME                16
 
 #define DEFAULT_PORT                3000
 #define DEFAULT_INTERVAL            1799
@@ -101,6 +102,9 @@ struct arguments *parseArguments(int argc, char *argv[]) {
             case CORE_NAME:
                 arguments->core = argumentValue;
                 break;
+            case FAILED_NAME:
+                arguments->failed = argumentValue;
+                break;
         }
     }
 
@@ -154,6 +158,8 @@ unsigned int getName(char *name) {
         return NOFILE_NAME;
     } else if (!strcmp(name, "--core")) {
         return CORE_NAME;
+    } else if (!strcmp(name, "-f")) {
+        return FAILED_NAME;
     }
 
     return UNKNOWN_NAME;

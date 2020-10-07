@@ -19,6 +19,7 @@ struct arguments {
     char *locale;
     rlim_t nofile;
     long long core;
+    int failed;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);

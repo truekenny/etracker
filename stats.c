@@ -32,7 +32,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "<div style='white-space: pre-wrap; font-family: monospace;'>"
 
                          "github.com/truekenny/etracker - open-source BitTorrent tracker (%s)\n\n"
-                         "start_time = %.24s (%dd)\n"
+                         "start_time = %.24s (%dd) (%df)\n"
                          "thread_number = %d\n\n"
 
                          "load_avg = %.2f %.2f %.2f\n"
@@ -99,7 +99,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "</body>"
                          "</html>",
                          REVISION,
-                         ctime(&stats->time), (time(NULL) - stats->time) / 86400,
+                         ctime(&stats->time), (time(NULL) - stats->time) / 86400, stats->failed,
                          threadNumber,
 
                          load[0], load[1], load[2],

@@ -77,6 +77,7 @@ int main(int argc, char *argv[]) {
 
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
+    stats->failed = arguments->failed;
 
     struct rps rps = {};
 
