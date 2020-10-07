@@ -20,6 +20,10 @@ mount -r -t proc proc proc/
 mkdir sys
 mount -r -t sysfs sys sys/
 
+# Для setlocale (локаль может быть отдельной директорией или в архиве)
+cp -L -r --parents /usr/lib/locale/en_US.utf8/ ./
+cp --parents /usr/lib/locale/locale-archive ./
+
 while true; do
   date
   chroot ./ /etracker -p $1 -i 239 -e 300 -k --nofile 64000 --core -1 --charset utf-8 --locale en_US.UTF-8 -f $failed
