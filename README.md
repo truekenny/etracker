@@ -2,25 +2,32 @@
 
 **etracker** aims for maximum stability and minimal resource usage.
 
-**etracker** implements 
-[The BitTorrent Protocol Specification](https://www.bittorrent.org/beps/bep_0003.html),
-[UDP Tracker Protocol for BitTorrent](https://www.bittorrent.org/beps/bep_0003.html).
+**etracker** implements: 
+- [The BitTorrent Protocol Specification](https://www.bittorrent.org/beps/bep_0003.html);
+- [UDP Tracker Protocol for BitTorrent](https://www.bittorrent.org/beps/bep_0003.html).
 
 ### Build
 
-    git clone git@github.com:truekenny/etracker.git
+    git clone https://github.com/truekenny/etracker
+    cd etracker
 	make server	
 
 ### Run
 
-    ./etracker [-p port]
+    ./etracker -p 6969
     ./etracker --help
 
-Example: `./etracker -p 6969`<br>
-See the shell script in the [run](https://github.com/truekenny/etracker/blob/master/run) file.
-Example use: `./run 6969`<br>
-Shell with chroot for Debian: [run_chroot](https://github.com/truekenny/etracker/blob/master/run_chroot). <br>
 The port is indicated simultaneously for TCP and UDP.
+
+#### Shell script
+
+File: [run](https://github.com/truekenny/etracker/blob/master/run). <br>
+Example use: `./run 6969`
+
+##### Chroot
+
+Debian 10 example: [run_chroot](https://github.com/truekenny/etracker/blob/master/run_chroot). <br>
+Example use: `./run_chroot 6969`
 
 ### Interfaces
 
@@ -32,7 +39,7 @@ The port is indicated simultaneously for TCP and UDP.
 1. IPv4;
 1. Listen TCP, UDP;
 1. Processing announce, scrape;
-1. Variable interval (4-30 minutes, depending on the load average)
+1. Variable interval (4-30 minutes, depending on the load average).
 
 ### Settings
 
@@ -48,8 +55,8 @@ The port is indicated simultaneously for TCP and UDP.
 
 ### Platforms tested on
 
-- Debian 10.5, gcc version 8.3.0
-- MacOS 10.11.6, Apple LLVM version 8.0.0
+- Debian 10.5, gcc version 8.3.0;
+- MacOS 10.11.6, Apple LLVM version 8.0.0.
 
 ### Efficiency
 
@@ -89,103 +96,115 @@ If this were the result of dos scrape requests, then net-out would be clearly vi
 
 #### Terminal
 
-    Starting configuration: port = 80, interval = 299
-    This system has 1 processors configured and 1 processors available.
-    Garbage data thread NO change priority 0 -> 5
-    Garbage socket pool thread NO change priority 0 -> 5
-    Starting UDP worker 0/0
-    Starting TCP worker 0/0
-    Join TCP Thread
-    Waiting UDP for incoming packets...
-    Waiting TCP for incoming connections...
-    Mon Sep 14 13:02:19 GRBG:       0 TP       0 TT       0 MP       0 MT       0 RP       0 RT    5144 µs  LA: 0.21 0.31 0.29  ML: 0.50  I:  299-> 299 s  RPS: 0.00                                         
-    Mon Sep 14 13:17:19 GRBG:  313789 TP  209763 TT     728 MP      39 MT       0 RP    1380 RT   42281 µs  LA: 0.35 0.36 0.31  ML: 0.50  I:  299-> 299 s  RPS: 934.00                                       
-    Mon Sep 14 13:32:19 GRBG:  432703 TP  301025 TT    1294 MP      83 MT       0 RP    1441 RT   54135 µs  LA: 0.40 0.33 0.29  ML: 0.50  I:  299-> 299 s  RPS: 1028.00                                      
-    Mon Sep 14 13:47:19 GRBG:  518963 TP  346012 TT    1547 MP      83 MT       0 RP    1332 RT   61624 µs  LA: 0.31 0.27 0.27  ML: 0.50  I:  299-> 299 s  RPS: 1176.00                                      
-    Mon Sep 14 14:02:19 GRBG:  606304 TP  390698 TT    1776 MP     113 MT       0 RP    1525 RT   67142 µs  LA: 0.22 0.26 0.25  ML: 0.50  I:  299-> 299 s  RPS: 1139.00                                      
-    Mon Sep 14 14:17:19 GRBG:  628489 TP  411405 TT    1994 MP     113 MT   62860 RP   22438 RT   92262 µs  LA: 0.31 0.27 0.26  ML: 0.50  I:  299-> 299 s  RPS: 1096.00                                      
-    Mon Sep 14 14:32:19 GRBG:  646326 TP  428162 TT    1978 MP     112 MT   67572 RP   26730 RT   94163 µs  LA: 0.11 0.16 0.21  ML: 0.50  I:  299-> 299 s  RPS: 1170.00                                      
-    Mon Sep 14 14:47:19 GRBG:  670317 TP  448315 TT    1980 MP     113 MT   62177 RP   24205 RT  107990 µs  LA: 0.34 0.33 0.28  ML: 0.50  I:  299-> 299 s  RPS: 1255.00                                      
-    Mon Sep 14 15:02:19 GRBG:  691101 TP  465761 TT    2009 MP      89 MT   68942 RP   30134 RT  116955 µs  LA: 0.48 0.36 0.29  ML: 0.50  I:  299-> 299 s  RPS: 1235.00                                      
-    Mon Sep 14 15:17:19 GRBG:  711483 TP  480333 TT    2006 MP      72 MT   68684 RP   30954 RT  116881 µs  LA: 0.43 0.40 0.33  ML: 0.50  I:  299-> 299 s  RPS: 1270.00                                      
-    Mon Sep 14 15:32:19 GRBG:  729638 TP  491629 TT    2020 MP      81 MT   69394 RP   30973 RT  125544 µs  LA: 0.28 0.36 0.36  ML: 0.50  I:  299-> 299 s  RPS: 1305.00                                      
-    Mon Sep 14 15:47:19 GRBG:  742089 TP  501496 TT    2039 MP      84 MT   72357 RP   31561 RT  121588 µs  LA: 0.23 0.27 0.31  ML: 0.50  I:  299-> 299 s  RPS: 1262.00                                      
-    Mon Sep 14 16:02:20 GRBG:  749703 TP  509232 TT    2063 MP      83 MT   75393 RP   32606 RT  123046 µs  LA: 0.29 0.29 0.28  ML: 0.50  I:  299-> 299 s  RPS: 1373.00                                      
-    Mon Sep 14 16:17:20 GRBG:  757180 TP  516118 TT    2090 MP      67 MT   71700 RP   30877 RT  120166 µs  LA: 0.65 0.42 0.36  ML: 0.50  I:  299-> 299 s  RPS: 1285.00                                      
-    Mon Sep 14 16:32:20 GRBG:  763808 TP  519396 TT    2112 MP      77 MT   72696 RP   32996 RT  133611 µs  LA: 0.25 0.28 0.31  ML: 0.50  I:  299-> 299 s  RPS: 1319.00                                      
+    Revision: da52b18                                                                                                                                                                                         
+    Starting configuration:                                                                                                                                                                                   
+      port = 80                                                                                                                                                                                               
+      interval = 239                                                                                                                                                                                          
+      workers = 1                                                                                                                                                                                             
+      maxPeersPerResponse = 300                                                                                                                                                                               
+      socketTimeout = 3                                                                                                                                                                                       
+      keepAlive = 1                                                                                                                                                                                           
+      minInterval = 239                                                                                                                                                                                       
+      maxInterval = 1799                                                                                                                                                                                      
+      noTcp = 0                                                                                                                                                                                               
+      noUdp = 0                                                                                                                                                                                               
+      charset = utf-8                                                                                                                                                                                         
+      locale = en_US.UTF-8                                                                                                                                                                                    
+    This system has 1 processors available.                                                                                                                                                                   
+    Current 7 -> soft=1,024, hard=1,048,576                                                                                                                                                                   
+    New 7 -> soft=64,000, hard=1,048,576                                                                                                                                                                      
+    Current 4 -> soft=0, hard=18,446,744,073,709,551,615                                                                                                                                                      
+    New 4 -> soft=18,446,744,073,709,551,615, hard=18,446,744,073,709,551,615                                                                                                                                 
+    Starting UDP worker 0/0                                                                                                                                                                                   
+    Waiting UDP for incoming packets...                                                                                                                                                                       
+    webRoot: '/web/'                                                                                                                                                                                          
+    Starting TCP worker 0/0                                                                                                                                                                                   
+    Waiting TCP for incoming connections...                                                                                                                                                                   
+    Join TCP Thread                                                                                                                                                                                           
+    Wed Oct  7 14:47:17    1475 TP    1402 TT       0 TL       7 MPT       7 MPL       2 MTL       0 RP       0 RT    2492 µs  LA: 0.44 0.48 0.50  ML: 0.50  I:  239-> 239 s  RPS: 719.00/3.00                                                
+    Wed Oct  7 14:51:16  276808 TP  165813 TT      11 TL     510 MPT     248 MPL      28 MTL       0 RP     710 RT   88001 µs  LA: 0.46 0.47 0.50  ML: 0.50  I:  239-> 239 s  RPS: 1817.00/8.00
+    Wed Oct  7 14:55:15  402633 TP  237029 TT      24 TL     629 MPT     256 MPL      59 MTL       0 RP    1155 RT   98540 µs  LA: 0.34 0.46 0.49  ML: 0.50  I:  239-> 239 s  RPS: 1810.00/9.00
+    Wed Oct  7 14:59:14  465851 TP  284450 TT      34 TL     671 MPT     244 MPL      74 MTL       0 RP    1071 RT  111428 µs  LA: 0.31 0.37 0.44  ML: 0.50  I:  239-> 239 s  RPS: 1631.00/6.00
+    Wed Oct  7 15:03:13  523564 TP  328667 TT      37 TL     701 MPT     257 MPL     101 MTL       0 RP     978 RT  111912 µs  LA: 0.72 0.50 0.48  ML: 0.50  I:  239-> 239 s  RPS: 1831.00/10.00
+    Wed Oct  7 15:07:12  580239 TP  371851 TT      41 TL     735 MPT     255 MPL     136 MTL       0 RP     918 RT  136560 µs  LA: 0.30 0.40 0.44  ML: 0.50  I:  239-> 239 s  RPS: 1778.00/4.00
     
-- `TP` – Total Peers
-- `TT` – Total Torrents
-- `MP` – Max Peers for single torrent
-- `MT` – Max Torrents for single list
-- `RP` – Removed Peers by garbage collector
-- `RT` – Removed Torrents by garbage collector
-- `LA` - Load Average
-- `ML` - Max Allowed Load Average
-- `I` - Interval
-- `RPS` - Requests per second (TCP+UDP)
+- `TP` – Total Peers;
+- `TT` – Total Torrents;
+- `TL` – Torrents with expanded peer's list;
+- `MPT` – Max Peers for single torrent;
+- `MPL` – Max Peers for single list;
+- `MTL` – Max Torrents for single list;
+- `RP` – Removed Peers by garbage collector;
+- `RT` – Removed Torrents by garbage collector;
+- `µs` - Time spent on garbage collect;
+- `LA` - Load Average;
+- `ML` - Max Allowed Load Average;
+- `I` - Interval;
+- `RPS` - Requests per second (TCP/UDP).
 
 #### Stats page
 
-    start_time = Mon Sep 14 13:02:19 2020
+    start_time = Wed Oct  7 14:47:16 2020 (0d) (0f)
     thread_number = 0
     
-    Load Avg = 0.29 0.32 0.31
-    Interval = 299
-    Active sockets: 289 (rlimit 64,000/1,048,576)
+    load_avg = 0.32 0.41 0.42
+    interval = 239
+    active_sockets = 1,055 (rlimit 64,000/1,048,576)
     
-    Request per second ~ 1265.00
+    requests_per_second = tcp: 1373.00, udp: 4.00
     
-    rusage.ru_maxrss =       91,400
-    rusage.ru_ixrss  =            0
-    rusage.ru_idrss  =            0
-    rusage.ru_isrss  =            0
+    rusage.ru_maxrss =      171,312
     
-    Malloc =            3
-    Calloc =  141,206,870
-    *alloc =  141,206,873
-    free   =  139,860,090
-    *alloc - free =    1,346,783
+    malloc        =      59,760,492
+    calloc        =      91,548,937
+    *alloc        =     151,309,429
+    free          =     147,722,712
+    *alloc - free =       3,586,717
     
-    stats.http_200 =   14,674,338
-    stats.http_400 =      186,890
-    stats.http_403 =            5 (Full Scrape)
-    stats.http_404 =          839
-    stats.http_405 =           80 (Not GET)
-    stats.http_408 =      885,892 (Timeout)
-    stats.http_413 =            1 (Oversize)
+    stats.http_200 =   25,410,251
+    stats.http_400 =      271,504
+    stats.http_401 =            0
+    stats.http_403 =            1 (Full Scrape)
+    stats.http_404 =          511
+    stats.http_405 =          162 (Not GET)
+    stats.http_408 =    2,892,382 (Timeout)
+    stats.http_413 =           82 (Oversize)
     
-    stats.close_pass  =   15,748,042
-    stats.send_pass   =   15,719,309
-    stats.recv_pass   =   14,862,153
-    stats.accept_pass =   15,748,334
+    stats.close_pass  =   26,281,984
+    stats.send_pass   =   28,574,705
+    stats.recv_pass   =   25,682,430
+    stats.accept_pass =   26,283,039
     
-    stats.close_failed  =            3
-    stats.send_failed   =       28,736
-    stats.recv_failed   =            1
+    stats.close_failed  =            0
+    stats.send_failed   =          188
+    stats.recv_failed   =       86,090
     stats.accept_failed =            0
     
-    stats.send_pass_udp =       37,727
-    stats.recv_pass_udp =       38,129
+    stats.recv_failed_read_0         =   14,497,481
+    stats.recv_failed_read_sub_0     =       86,008
+    stats.recv_failed_read_not_equal =            0
+    
+    stats.send_pass_udp =      133,397
+    stats.recv_pass_udp =      133,931
     
     stats.send_failed_udp =            0
     stats.recv_failed_udp =            0
     
-    stats.keep_alive    =            0
-    stats.no_keep_alive =   14,862,072
+    stats.keep_alive    =   16,876,398
+    stats.no_keep_alive =    8,805,869
     
-    stats.sent_bytes =   3,517,540,558
-    stats.recv_bytes =   5,285,457,997
+    stats.sent_bytes =   9,444,661,553
+    stats.recv_bytes =   9,049,406,160
     
-    stats.sent_bytes_udp =       1,476,968
-    stats.recv_bytes_udp =       2,081,336
+    stats.sent_bytes_udp =       6,739,906
+    stats.recv_bytes_udp =       7,555,839
     
-    stats.announce =   14,045,611
-    stats.scrape   =      815,558
+    stats.announce =   24,186,205
+    stats.scrape   =    1,495,343
     
-    stats.connect_udp  =       19,050
-    stats.announce_udp =       16,192
-    stats.scrape_udp   =        2,485
+    stats.connect_udp  =       66,372
+    stats.announce_udp =       62,177
+    stats.scrape_udp   =        4,848
 
 ### Author
 
