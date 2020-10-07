@@ -21,6 +21,8 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
     struct rusage rusage;
     getrusage(RUSAGE_SELF, &rusage);
 
+    char *background = stats->failed ? "#fee" : "white";
+
     addFormatStringBlock(block, 4500,
                          "<!DOCTYPE html>\n"
                          "<html lang='en'>"
@@ -28,8 +30,8 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "<title>etracker stats</title>"
                          "<meta name='viewport' content='width=device-width, initial-scale=1'>"
                          "</head>"
-                         "<body>"
-                         "<div style='white-space: pre-wrap; font-family: monospace;'>"
+                         "<body style='background: %s'>"
+                         "<div style='white-space: pre-wrap; font-family: monospace'>"
 
                          "github.com/truekenny/etracker - open-source BitTorrent tracker (%s)\n\n"
                          "start_time = %.24s (%dd) (%df)\n"
@@ -72,7 +74,6 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "stats.recv_failed_read_sub_0     = %'12d\n"
                          "stats.recv_failed_read_not_equal = %'12d\n\n"
 
-
                          "stats.send_pass_udp = %'12d\n"
                          "stats.recv_pass_udp = %'12d\n\n"
 
@@ -98,6 +99,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "</div>"
                          "</body>"
                          "</html>",
+                         background,
                          REVISION,
                          ctime(&stats->time), (time(NULL) - stats->time) / 86400, stats->failed,
                          threadNumber,
