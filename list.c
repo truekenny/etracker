@@ -3,6 +3,7 @@
 #include <memory.h>
 #include "list.h"
 #include "alloc.h"
+#include "exit_code.h"
 
 #define LIMIT_LEVEL 2
 #define DEC_BYTE 256
@@ -40,14 +41,13 @@ struct list *initList(struct list *list, unsigned char level, unsigned char nest
 
     if (level > LIMIT_LEVEL) {
         printf("Level limit = %d, current = %d\n", LIMIT_LEVEL, level);
-
-        exit(55);
+        exitPrint(EXIT_LIST_WRONG_LIMIT, __FILE__, PRINT_ERROR_NO);
     }
 
     if (level > hashLength) {
         printf("level = %d > hashLength = %d – failure\n", LIMIT_LEVEL, hashLength);
 
-        exit(56);
+        exitPrint(EXIT_LIST_WRONG_HASH_LENGTH, __FILE__, PRINT_ERROR_NO);
     }
 
     if (list == NULL)
@@ -82,7 +82,7 @@ void freeList(struct list *list, unsigned char firstRecursion) {
     if (list->firstItem != NULL) {
         printf("List not empty\n");
 
-        exit(77);
+        exitPrint(EXIT_LIST_NOT_EMPTY, __FILE__, PRINT_ERROR_NO);
     }
 
     unsigned char level = list->level;

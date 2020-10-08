@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "sem.h"
+#include "exit_code.h"
 
 /**
  * Инициализация семафора
@@ -15,8 +16,7 @@ int rk_sema_init(struct rk_sema *s, uint32_t value) {
     *sem = dispatch_semaphore_create(value);
 #else
     if (sem_init(&s->semaphoreQueue, 0, value)) {
-        perror("Sem_init failed");
-        exit(10);
+        exitPrint(EXIT_SEMAPHORE_INIT, __FILE__, PRINT_ERROR_YES);
     }
 #endif
     return 0;
@@ -51,8 +51,7 @@ int rk_sema_post(struct rk_sema *s) {
     dispatch_semaphore_signal(s->semaphoreQueue);
 #else
     if (sem_post(&s->semaphoreQueue)) {
-        perror("Sem_post failed");
-        exit(11);
+        exitPrint(EXIT_SEMAPHORE_POST, __FILE__, PRINT_ERROR_YES);
     }
 #endif
     return 0;
@@ -67,8 +66,7 @@ int rk_sema_destroy(struct rk_sema *s) {
     dispatch_release(s->semaphoreQueue);
 #else
     if (sem_destroy(&s->semaphoreQueue)) {
-        perror("Sem_destroy failed");
-        exit(12);
+        exitPrint(EXIT_SEMAPHORE_DESTROY, __FILE__, PRINT_ERROR_YES);
     }
 #endif
     return 0;

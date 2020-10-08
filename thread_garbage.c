@@ -13,6 +13,7 @@
 #include "socket.h"
 #include "block.h"
 #include "thread.h"
+#include "exit_code.h"
 
 #define GARBAGE_SOCKET_POOL_TIME 1
 
@@ -95,9 +96,7 @@ void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stat
 unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item, void *args) {
     // unused
     if (list == NULL) {
-        printf("thread_garbage.c: unused list\n");
-
-        exit(123);
+        exitPrint(EXIT_UNUSED_LIST, __FILE__, PRINT_ERROR_NO);
     }
 
     struct socketData *socketData = item->data;

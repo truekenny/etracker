@@ -6,6 +6,7 @@
 #include "alloc.h"
 #include "math.h"
 #include "string.h"
+#include "exit_code.h"
 
 #define UNKNOWN_NAME                0
 #define PORT_NAME                   1
@@ -278,6 +279,31 @@ void showHelp() {
             "          etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k\n"
             "          etracker --help\n"
             "\n"
+            BOLD "EXIT STATUS\n" RESET
+            "     %3d     chdir\n"
+            "     %3d     getcwd\n"
+            "     %3d     socket tcp create\n"
+            "     %3d     reuseaddr\n"
+            "     %3d     bind tcp\n"
+            "     %3d     tcp client thread\n"
+            "     %3d     socket tcp end\n"
+            "     %3d     size connect request\n"
+            "     %3d     size connect response\n"
+            "     %3d     size announce request\n"
+            "     %3d     size announce head response\n"
+            "     %3d     size announce peer response\n"
+            "     %3d     socket udp create\n"
+            "     %3d     bind udp\n"
+            "     %3d     udp client thread\n"
+            "     %3d     socket udp end\n"
+            "     %3d     unused list\n"
+            "     %3d     list wrong limit\n"
+            "     %3d     list wrong hash length\n"
+            "     %3d     list not empty\n"
+            "     %3d     semaphore init\n"
+            "     %3d     semaphore post\n"
+            "     %3d     semaphore destroy\n"
+            "\n"
             BOLD "AUTHOR\n" RESET
             "     Implemented by Truekenny.\n"
             "     Source code is available at " UNDERLINE "https://github.com/truekenny/etracker" RESET ".\n",
@@ -286,8 +312,32 @@ void showHelp() {
             DEFAULT_MAX_PEER_PER_RESULT,
             DEFAULT_SOCKET_TIMEOUT,
             DEFAULT_MIN_INTERVAL,
-            DEFAULT_MAX_INTERVAL
+            DEFAULT_MAX_INTERVAL,
+
+            EXIT_CHDIR,
+            EXIT_CWD,
+            EXIT_SOCKET_TCP_CREATE,
+            EXIT_REUSEADDR,
+            EXIT_BIND_TCP,
+            EXIT_TCP_CLIENT_THREAD,
+            EXIT_SOCKET_TCP_END,
+            EXIT_SIZE_CONNECT_REQUEST,
+            EXIT_SIZE_CONNECT_RESPONSE,
+            EXIT_SIZE_ANNOUNCE_REQUEST,
+            EXIT_SIZE_ANNOUNCE_HEAD_RESPONSE,
+            EXIT_SIZE_ANNOUNCE_PEER_RESPONSE,
+            EXIT_SOCKET_UDP_CREATE,
+            EXIT_BIND_UDP,
+            EXIT_UDP_CLIENT_THREAD,
+            EXIT_SOCKET_UDP_END,
+            EXIT_UNUSED_LIST,
+            EXIT_LIST_WRONG_LIMIT,
+            EXIT_LIST_WRONG_HASH_LENGTH,
+            EXIT_LIST_NOT_EMPTY,
+            EXIT_SEMAPHORE_INIT,
+            EXIT_SEMAPHORE_POST,
+            EXIT_SEMAPHORE_DESTROY
     );
 
-    exit(223);
+    exit(EXIT_SUCCESS);
 }

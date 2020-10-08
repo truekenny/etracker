@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdatomic.h>
+#include <errno.h>
 #include "socket_udp.h"
 #include "alloc.h"
 #include "thread_client_udp.h"
@@ -13,6 +14,7 @@
 #include "udp_request.h"
 #include "thread.h"
 #include "sem.h"
+#include "exit_code.h"
 
 // Размер заголовка пакета scrape + 74 x info_hash (по протоколу это максимальное кол-во)
 #define RECEIVED_UDP_MESSAGE_LENGTH 1496
@@ -20,28 +22,23 @@
 
 void checkSize() {
     if (sizeof(struct connectRequest) != 16) {
-        printf("Failed packed: sizeof(struct connectRequest) != 16\n");
-        exit(204);
+        exitPrint(EXIT_SIZE_CONNECT_REQUEST, __FILE__, PRINT_ERROR_NO);
     }
 
     if (sizeof(struct connectResponse) != 16) {
-        printf("Failed packed: sizeof(struct connectResponse) != 16\n");
-        exit(205);
+        exitPrint(EXIT_SIZE_CONNECT_RESPONSE, __FILE__, PRINT_ERROR_NO);
     }
 
     if (sizeof(struct announceRequest) != 98) {
-        printf("Failed packed: sizeof(struct announceRequest) != 98\n");
-        exit(206);
+        exitPrint(EXIT_SIZE_ANNOUNCE_REQUEST, __FILE__, PRINT_ERROR_NO);
     }
 
     if (sizeof(struct announceHeadResponse) != 20) {
-        printf("Failed packed: sizeof(struct announceHeadResponse) != 20\n");
-        exit(207);
+        exitPrint(EXIT_SIZE_ANNOUNCE_HEAD_RESPONSE, __FILE__, PRINT_ERROR_NO);
     }
 
     if (sizeof(struct announcePeerResponse) != 6) {
-        printf("Failed packed: sizeof(struct announcePeerResponse) != 6\n");
-        exit(208);
+        exitPrint(EXIT_SIZE_ANNOUNCE_PEER_RESPONSE, __FILE__, PRINT_ERROR_NO);
     }
 }
 
@@ -73,9 +70,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
 
     // Creating socket file descriptor
     if ((serverSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        perror("Socket UDP creation failed");
-
-        exit(201);
+        exitPrint(EXIT_SOCKET_UDP_CREATE, __FILE__, PRINT_ERROR_YES);
     }
 
     memset(&serverAddr, 0, sizeof(serverAddr));
@@ -88,9 +83,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
 
     // Bind the socket with the server address
     if (bind(serverSocket, (const struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-        perror("Bind UDP failed");
-
-        exit(202);
+        exitPrint(EXIT_BIND_UDP, __FILE__, PRINT_ERROR_YES);
     }
 
     // Starting Workers
@@ -116,9 +109,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
         // Поток
         pthread_t udpClientThread;
         if (pthread_create(&udpClientThread, NULL, (void *(*)(void *)) clientUdpHandler, clientUdpArgs) != 0) {
-            perror("Could not create UDP announce thread");
-
-            exit(203);
+            exitPrint(EXIT_UDP_CLIENT_THREAD, __FILE__, PRINT_ERROR_YES);
         }
     }
 
@@ -172,8 +163,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
         if (rand() % 2 == 3) break;
     } // while recv
 
-    puts("UDP server socket finished");
-    exit(6);
+    exitPrint(EXIT_SOCKET_UDP_END, __FILE__, PRINT_ERROR_NO);
 
     return NULL;
 }

@@ -18,6 +18,7 @@
 #include "socket_garbage.h"
 #include "thread.h"
 #include "uri.h"
+#include "exit_code.h"
 
 #define SOCKET_QUEUE_LENGTH 150
 #define EVENTS_EACH_LOOP 32
@@ -40,16 +41,13 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     c_free(args);
 
     if (chdir(WEB_PATH) == -1) {
-        printf("socket_tcp.c: chdir(WEB_PATH) failed: %d: %s\n", errno, strerror(errno));
-
-        exit(67);
+        exitPrint(EXIT_CHDIR, __FILE__, PRINT_ERROR_YES);
     }
 
     char webRoot[MAX_CWD + 1];
 
     if (getcwd(webRoot, MAX_CWD) == NULL) {
-        perror("getcwd failed");
-        exit(66);
+        exitPrint(EXIT_CWD, __FILE__, PRINT_ERROR_YES);
     }
     strcat(webRoot, SEPARATOR_PATH);
     printf("webRoot: '%s'\n", webRoot);
@@ -62,9 +60,7 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     // Create socket
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1) {
-        perror("Socket TCP creation failed");
-
-        exit(2);
+        exitPrint(EXIT_SOCKET_TCP_CREATE, __FILE__, PRINT_ERROR_YES);
     }
 
     //Prepare the sockaddr_in structure
@@ -75,16 +71,12 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     // Reuse
     int option = 1;
     if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) < 0) {
-        perror("SO_REUSEADDR failed");
-
-        exit(3);
+        exitPrint(EXIT_REUSEADDR, __FILE__, PRINT_ERROR_YES);
     }
 
     // Bind
     if (bind(serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-        perror("Bind TCP failed");
-
-        exit(4);
+        exitPrint(EXIT_BIND_TCP, __FILE__, PRINT_ERROR_YES);
     }
 
     int *equeue = c_calloc(workers, sizeof(int));
@@ -114,9 +106,7 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
         clientTcpArgs->webRoot = webRoot;
 
         if (pthread_create(&tcpClientThread, NULL, (void *(*)(void *)) clientTcpHandler, clientTcpArgs) != 0) {
-            perror("Could not create TCP thread");
-
-            exit(5);
+            exitPrint(EXIT_TCP_CLIENT_THREAD, __FILE__, PRINT_ERROR_YES);
         }    // end of workers
     }
 
@@ -168,8 +158,7 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
         if (rand() % 2 == 3) break;
     }
 
-    puts("TCP server socket finished");
-    exit(6);
+    exitPrint(EXIT_SOCKET_TCP_END, __FILE__, PRINT_ERROR_NO);
 
     return NULL;
 }
