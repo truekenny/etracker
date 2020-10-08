@@ -12,6 +12,9 @@ ldd etracker | grep -e "^\s*/" | awk '{print $1}' | xargs -I '{}' cp -v --parent
 cp --parents /lib/x86_64-linux-gnu/libnss_compat.so.2 ./
 cp --parents /etc/passwd ./
 
+# Показывать выбранный на компьютере часовой пояс
+cp --parents /etc/localtime ./
+
 # Для getloadavg
 mkdir proc
 mount -r -t proc proc proc/
@@ -44,4 +47,3 @@ umount proc/
 umount sys/
 mount --make-rslave dev/
 umount -R dev/
-
