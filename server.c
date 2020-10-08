@@ -172,7 +172,8 @@ void setLimit(long long soft, int limitName) {
     struct rlimit rlimit;
 
     if (getrlimit(limitName, &rlimit) == 0) {
-        printf("Current %d -> soft=%'llu, hard=%'llu\n", limitName, rlimit.rlim_cur, rlimit.rlim_max);
+        printf("Current %d -> soft=%llu, hard=%llu\n", limitName,
+               (unsigned long long) rlimit.rlim_cur, (unsigned long long) rlimit.rlim_max);
 
         if (soft == -1)
             rlimit.rlim_cur = rlimit.rlim_max;
@@ -180,7 +181,8 @@ void setLimit(long long soft, int limitName) {
             rlimit.rlim_cur = soft;
 
         if (setrlimit(limitName, &rlimit) != -1)
-            printf("New %d -> soft=%'llu, hard=%'llu\n", limitName, rlimit.rlim_cur, rlimit.rlim_max);
+            printf("New %d -> soft=%'llu, hard=%'llu\n", limitName,
+                   (unsigned long long) rlimit.rlim_cur, (unsigned long long) rlimit.rlim_max);
         else
             printf("setrlimit error: %d: %s (maybe %'llu too large)\n", errno, strerror(errno), soft);
     } else
@@ -190,7 +192,7 @@ void setLimit(long long soft, int limitName) {
 void setLocale(char *locale) {
     char *_locale = "";
 
-    if(locale != NULL)
+    if (locale != NULL)
         _locale = locale;
 
     if (setlocale(LC_NUMERIC, _locale) == NULL)

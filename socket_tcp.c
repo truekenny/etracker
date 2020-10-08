@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdatomic.h>
+#include <errno.h>
 #include "socket_tcp.h"
 #include "thread_client_tcp.h"
 #include "socket.h"
@@ -38,7 +39,12 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
 
     c_free(args);
 
-    chdir(WEB_PATH);
+    if (chdir(WEB_PATH) == -1) {
+        printf("socket_tcp.c: chdir(WEB_PATH) failed: %d: %s\n", errno, strerror(errno));
+
+        exit(67);
+    }
+
     char webRoot[MAX_CWD + 1];
 
     if (getcwd(webRoot, MAX_CWD) == NULL) {
