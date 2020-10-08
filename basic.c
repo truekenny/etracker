@@ -2,20 +2,43 @@
 #include <stdio.h>
 #include <time.h>
 #include <memory.h>
+#include <errno.h>
 #include "basic.h"
 #include "block.h"
 #include "base64.h"
+#include "time.h"
+
+#define PASSWORD_LENGTH 20
 
 _Bool hasBasic(char *buffer, char *search) {
     return strstr(buffer, search) != NULL;
 }
 
+void getRandom(unsigned char *randomBytes, unsigned int size) {
+    FILE *file = fopen("/dev/urandom", "rb");
+
+    if (file != NULL) {
+        size_t readSize = fread(randomBytes, 1, size, file);
+
+        if(readSize != size) {
+            printf("basic.c: fread failed: %d: %s\n", errno, strerror(errno));
+        }
+
+        fclose(file);
+    } else {
+        printf("basic.c: fopen failed: %d: %s\n", errno, strerror(errno));
+    }
+}
+
 struct block *randomString(unsigned char size) {
-    unsigned char symbols[63] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    char *sourceString = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    size_t sourceStringLength = strlen(sourceString);
+    unsigned char randomBytes[size];
+    getRandom(randomBytes, size);
 
     struct block *result = initBlock();
     while (size > 0) {
-        addStringBlock(result, &symbols[rand() % 62], 1);
+        addStringBlock(result, &sourceString[randomBytes[size - 1] % sourceStringLength], 1);
         size--;
     }
 
@@ -23,9 +46,7 @@ struct block *randomString(unsigned char size) {
 }
 
 void getAuthorizationHeader(struct block *authorizationHeader) {
-    srand(time(NULL));
-
-    struct block *password = randomString(10);
+    struct block *password = randomString(PASSWORD_LENGTH);
     printf("Password: %.*s\n", password->size, password->data);
     struct block *base64_input = initBlock();
     addStringBlock(base64_input, "etracker:", 9);

@@ -20,6 +20,14 @@ mount -r -t proc proc proc/
 mkdir sys
 mount -r -t sysfs sys sys/
 
+# Для доступа к /dev/urandom
+if [ -d dev/ ]; then
+    mount --make-rslave dev/
+    umount -R dev/
+fi
+mkdir dev
+mount --rbind /dev dev/
+
 # Для setlocale (локаль может быть отдельной директорией или в архиве)
 cp -L -r --parents /usr/lib/locale/en_US.utf8/ ./
 cp --parents /usr/lib/locale/locale-archive ./
@@ -34,3 +42,6 @@ done
 
 umount proc/
 umount sys/
+mount --make-rslave dev/
+umount -R dev/
+
