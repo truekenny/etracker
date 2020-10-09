@@ -19,6 +19,7 @@
 #include "thread.h"
 #include "uri.h"
 #include "exit_code.h"
+#include "interval.h"
 
 #define SOCKET_QUEUE_LENGTH 150
 #define EVENTS_EACH_LOOP 32
@@ -30,7 +31,7 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     struct list *torrentList = args->torrentList;
     unsigned short port = args->port;
     struct list **socketLists = args->socketLists;
-    _Atomic (unsigned int) *interval = args->interval;
+    struct interval *interval = args->interval;
     struct rps *rps = args->rps;
     long workers = args->workers;
     unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;

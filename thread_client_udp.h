@@ -5,12 +5,13 @@
 #include <arpa/inet.h>
 #include "udp_request.h"
 #include "rps.h"
+#include "interval.h"
 
 struct clientUdpArgs {
     int serverSocket;
     struct list *torrentList;
     struct stats *stats;
-    _Atomic(unsigned int) *interval;
+    struct interval *interval;
 
     unsigned int threadNumber;
 

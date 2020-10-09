@@ -15,6 +15,7 @@
 #include "thread.h"
 #include "sem.h"
 #include "exit_code.h"
+#include "interval.h"
 
 // Размер заголовка пакета scrape + 74 x info_hash (по протоколу это максимальное кол-во)
 #define RECEIVED_UDP_MESSAGE_LENGTH 1496
@@ -58,7 +59,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
     struct stats *stats = args->stats;
     struct list *torrentList = args->torrentList;
     unsigned short serverPort = args->port;
-    _Atomic(unsigned int) *interval = args->interval;
+    struct interval *interval = args->interval;
     struct rps *rps = args->rps;
     long workers = args->workers;
     unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;

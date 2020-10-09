@@ -6,6 +6,7 @@
 #include "socket_garbage.h"
 #include "rps.h"
 #include "list.h"
+#include "interval.h"
 
 /**
  * Аргументы переданные в поток
@@ -19,7 +20,7 @@ struct clientTcpArgs {
 
     struct list *socketList;
 
-    _Atomic (unsigned int) *interval;
+    struct interval *interval;
     struct rps *rps;
     struct block *authorizationHeader;
 

@@ -114,7 +114,7 @@ void renderAnnouncePeersL(struct block *block, struct list *peerList, struct que
  * @param query
  * @param interval
  */
-void renderAnnounceTorrentL(struct block *block, struct block *announceBlock, struct item *torrent, struct query *query, unsigned int interval) {
+void renderAnnounceTorrentL(struct block *block, struct block *announceBlock, struct item *torrent, struct query *query, struct interval *interval) {
     struct torrentDataL torrentDataL = {};
     if (torrent != NULL)
         memcpy(&torrentDataL, torrent->data, sizeof(struct torrentDataL));
@@ -136,7 +136,7 @@ void renderAnnounceTorrentL(struct block *block, struct block *announceBlock, st
                              torrentDataL.complete,
                              torrentDataL.incomplete,
                              torrentDataL.downloaded,
-                             interval,
+                             interval->interval,
                              announceBlock->size
         );
     } else {
@@ -151,7 +151,7 @@ void renderAnnounceTorrentL(struct block *block, struct block *announceBlock, st
                              torrentDataL.complete,
                              torrentDataL.incomplete,
                              torrentDataL.downloaded,
-                             interval
+                             interval->interval
         );
     }
 
@@ -173,7 +173,7 @@ void renderAnnounceTorrentL(struct block *block, struct block *announceBlock, st
  * @param query
  * @param interval
  */
-void renderAnnouncePublic(struct block *block, struct block *announceBlock, struct item *torrent, struct query *query, unsigned int interval) {
+void renderAnnouncePublic(struct block *block, struct block *announceBlock, struct item *torrent, struct query *query, struct interval *interval) {
     struct torrentDataL torrentDataL = {};
     if (torrent != NULL)
         memcpy(&torrentDataL, torrent->data, sizeof(struct torrentDataL));
@@ -182,7 +182,7 @@ void renderAnnouncePublic(struct block *block, struct block *announceBlock, stru
         struct announceHeadResponse announceHeadResponse = {};
         announceHeadResponse.action = ntohl(ACTION_ANNOUNCE);
         announceHeadResponse.transaction_id = query->transaction_id;
-        announceHeadResponse.interval = ntohl(interval);
+        announceHeadResponse.interval = ntohl(interval->interval);
 
         announceHeadResponse.leechers = ntohl(torrentDataL.incomplete);
         announceHeadResponse.seeders = ntohl(torrentDataL.complete);

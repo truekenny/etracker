@@ -58,6 +58,13 @@ int main(int argc, char *argv[]) {
            arguments->socketTimeout, arguments->keepAlive, arguments->minInterval, arguments->maxInterval,
            arguments->noTcp, arguments->noUdp, arguments->charset, arguments->locale);
 
+    struct interval interval;
+    interval.interval = arguments->interval;
+    interval.requireInterval = arguments->interval;
+    interval.previousInterval = arguments->interval;
+    interval.maxInterval = arguments->maxInterval;
+    interval.minInterval = arguments->minInterval;
+
     printf("This system has %ld processors available.\n", sysconf(_SC_NPROCESSORS_ONLN));
 
     c_initSem(); // Семафор для точного подсчёта alloc блоков
@@ -95,7 +102,7 @@ int main(int argc, char *argv[]) {
         serverTcpArgs->stats = stats;
         serverTcpArgs->port = arguments->port;
         serverTcpArgs->socketLists = socketLists;
-        serverTcpArgs->interval = &arguments->interval;
+        serverTcpArgs->interval = &interval;
         serverTcpArgs->rps = &rps;
         serverTcpArgs->workers = arguments->workers;
         serverTcpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
@@ -116,7 +123,7 @@ int main(int argc, char *argv[]) {
         serverUdpArgs->torrentList = torrentList;
         serverUdpArgs->stats = stats;
         serverUdpArgs->port = arguments->port;
-        serverUdpArgs->interval = &arguments->interval;
+        serverUdpArgs->interval = &interval;
         serverUdpArgs->rps = &rps;
         serverUdpArgs->workers = arguments->workers;
         serverUdpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
@@ -132,7 +139,8 @@ int main(int argc, char *argv[]) {
     sleep(1);
     setNobody();
 
-    run15MinutesThread(torrentList, &arguments->interval, &rps, arguments->minInterval, arguments->maxInterval);
+    runGarbageCollectorThread(torrentList, &interval, &rps);
+    runIntervalChangerThread(&interval);
     runGarbageSocketTimeoutThread(socketLists, stats, &arguments->socketTimeout, arguments->workers);
 
     if (!arguments->noTcp) {

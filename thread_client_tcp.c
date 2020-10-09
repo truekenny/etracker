@@ -58,7 +58,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     struct stats *stats = args->stats;
     int equeue = args->equeue;
     struct list *socketList = args->socketList;
-    _Atomic (unsigned int) *interval = args->interval;
+    struct interval *interval = args->interval;
     struct rps *rps = args->rps;
     struct block *authorizationHeader = args->authorizationHeader;
     unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
@@ -191,7 +191,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                     torrent = setPeerPublic(torrentList, &query);
                 }
 
-                renderAnnouncePublic(dataBlock, announceBlock, torrent, &query, *interval);
+                renderAnnouncePublic(dataBlock, announceBlock, torrent, &query, interval);
 
                 postSemaphoreLeaf(leaf);
 
@@ -215,12 +215,12 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                                      "  max_peers_response = %4u"
                                      "  socket_timeout = %2u\n",
                                      *keepAlive,
-                                     *interval,
+                                     interval->interval,
                                      *maxPeersPerResponse,
                                      *socketTimeout);
 
                 if (query.interval)
-                    *interval = query.interval;
+                    forceUpdateInterval(interval, query.interval);
                 if (query.max_peers_per_response)
                     *maxPeersPerResponse = query.max_peers_per_response;
                 if (query.socket_timeout)
@@ -235,7 +235,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                                      "  max_peers_response = %4u"
                                      "  socket_timeout = %2u\n",
                                      *keepAlive,
-                                     *interval,
+                                     interval->interval,
                                      *maxPeersPerResponse,
                                      *socketTimeout);
 
@@ -250,7 +250,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         else if (startsWith("GET /stats", readBuffer)) {
             dataBlock = resetBlock(dataBlock);
 
-            formatStats(threadNumber, dataBlock, stats, *interval, rps);
+            formatStats(threadNumber, dataBlock, stats, interval, rps);
 
             renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
                               *socketTimeout, stats, charset, "text/html");
@@ -358,7 +358,6 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
     struct stats *stats = args->stats;
     int equeue = args->equeue;
     struct list *socketList = args->socketList;
-    // unsigned int *interval = args->interval;
     // struct rps *rps = args->rps;
     // struct block *authorizationHeader = args->authorizationHeader;
     // unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;

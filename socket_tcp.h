@@ -7,6 +7,7 @@
 #include "socket_garbage.h"
 #include "rps.h"
 #include "list.h"
+#include "interval.h"
 
 struct serverTcpArgs {
     unsigned short port;
@@ -15,7 +16,7 @@ struct serverTcpArgs {
 
     struct list **socketLists;
 
-    _Atomic (unsigned int) *interval;
+    struct interval *interval;
     struct rps *rps;
 
     long workers;

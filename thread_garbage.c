@@ -14,15 +14,15 @@
 #include "block.h"
 #include "thread.h"
 #include "exit_code.h"
+#include "math.h"
 
 #define GARBAGE_SOCKET_POOL_TIME 1
+#define LITTLE_SLEEP 10
 
-struct i15MinutesArgs {
+struct garbageCollectorArgs {
     struct list *torrentList;
-    _Atomic(unsigned int) *interval;
+    struct interval *interval;
     struct rps *rps;
-    unsigned int minInterval;
-    unsigned int maxInterval;
 };
 
 struct garbageSocketTimeoutArgs {
@@ -33,47 +33,20 @@ struct garbageSocketTimeoutArgs {
     long maxTimeAllow; // Временная переменная, чтобы не считать это значение для каждого подключения
 };
 
-void *i15MinutesHandler(struct i15MinutesArgs *args);
+void *intervalChangerHandler(struct interval *interval);
+
+void *garbageCollectorArgsHandler(struct garbageCollectorArgs *args);
 
 void *garbageSocketTimeoutHandler(struct garbageSocketTimeoutArgs *_args);
 
-void run15MinutesThread(struct list *torrentList, _Atomic(unsigned int) *interval, struct rps *rps,
-                        unsigned int minInterval, unsigned int maxInterval) {
-    struct i15MinutesArgs *i15MinutesArgs = c_calloc(1, sizeof(struct i15MinutesArgs));
-    i15MinutesArgs->torrentList = torrentList;
-    i15MinutesArgs->interval = interval;
-    i15MinutesArgs->rps = rps;
-    i15MinutesArgs->minInterval = minInterval;
-    i15MinutesArgs->maxInterval = maxInterval;
-
+void runIntervalChangerThread(struct interval *interval) {
     pthread_t tid;
-    pthread_create(&tid, NULL, (void *(*)(void *)) i15MinutesHandler, i15MinutesArgs);
+    pthread_create(&tid, NULL, (void *(*)(void *)) intervalChangerHandler, interval);
 }
 
-void *i15MinutesHandler(struct i15MinutesArgs *args) {
-    pthreadSetName(pthread_self(), "Garbage i15");
-
-    struct list *torrentList = args->torrentList;
-    _Atomic(unsigned int) *interval = args->interval;
-    struct rps *rps = args->rps;
-    unsigned int minInterval = args->minInterval;
-    unsigned int maxInterval = args->maxInterval;
-    c_free(args);
-
+void *intervalChangerHandler(struct interval *interval) {
     while (1) {
-        struct block *block = initBlock();
-
-        runGarbageCollectorL(block, torrentList);
-        addStringBlock(block, "  ", 2);
-        updateInterval(block, interval, minInterval, maxInterval);
-
-        addFormatStringBlock(block, 100, "  RPS: %.2f/%.2f\n\x00",
-                             getRps(rps, RPS_TCP), getRps(rps, RPS_UDP));
-        printf("%s", block->data);
-
-        freeBlock(block);
-
-        sleep(*interval);
+        sleep(stepInterval(interval));
 
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;
@@ -82,7 +55,60 @@ void *i15MinutesHandler(struct i15MinutesArgs *args) {
     return 0;
 }
 
-void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stats, unsigned short *socketTimeout, long workers) {
+void runGarbageCollectorThread(struct list *torrentList, struct interval *interval, struct rps *rps) {
+    struct garbageCollectorArgs *garbageCollectorArgs = c_calloc(1, sizeof(struct garbageCollectorArgs));
+    garbageCollectorArgs->torrentList = torrentList;
+    garbageCollectorArgs->interval = interval;
+    garbageCollectorArgs->rps = rps;
+
+    pthread_t tid;
+    pthread_create(&tid, NULL, (void *(*)(void *)) garbageCollectorArgsHandler, garbageCollectorArgs);
+}
+
+void *garbageCollectorArgsHandler(struct garbageCollectorArgs *args) {
+    pthreadSetName(pthread_self(), "Garbage i15");
+
+    struct list *torrentList = args->torrentList;
+    struct rps *rps = args->rps;
+    struct interval *interval = args->interval;
+    c_free(args);
+
+    while (1) {
+        // Если интервал находится в процессе изменения, то надо дождаться его окончания
+        if (interval->interval != interval->requireInterval) {
+            sleep(LITTLE_SLEEP);
+            continue;
+        }
+
+        struct block *block = initBlock();
+
+        runGarbageCollectorL(block, torrentList);
+        addStringBlock(block, "  ", 2);
+        updateInterval(block, interval);
+
+        addFormatStringBlock(block, 100, "  RPS: %.2f/%.2f\n\x00",
+                             getRps(rps, RPS_TCP), getRps(rps, RPS_UDP));
+        printf("%s", block->data);
+
+        freeBlock(block);
+
+        /*
+         * Если интервал увеличивается, то большее значение – interval->requireInterval,
+         * при этом есть дополнительное время, чтобы дождаться окончания изменения интервала;
+         * если интервал уменьшается, то большее значение – interval->previousInterval,
+         * при этом дополнительного времени не будет, поэтому на всякий случай делаю sleep(LITTLE_SLEEP) выше.
+         */
+        sleep(max(interval->previousInterval, interval->requireInterval));
+
+        // Чтобы нормально работала подсветка кода в IDE
+        if (rand() % 2 == 3) break;
+    }
+
+    return 0;
+}
+
+void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stats, unsigned short *socketTimeout,
+                                   long workers) {
     struct garbageSocketTimeoutArgs *garbageSocketTimeoutArgs = c_calloc(1, sizeof(struct garbageSocketTimeoutArgs));
     garbageSocketTimeoutArgs->socketLists = socketLists;
     garbageSocketTimeoutArgs->stats = stats;

@@ -4,9 +4,11 @@
 #include "socket_garbage.h"
 #include "stats.h"
 #include "list.h"
+#include "interval.h"
 
-void run15MinutesThread(struct list *torrentList, _Atomic(unsigned int) *interval, struct rps *rps,
-        unsigned int minInterval, unsigned int maxInterval);
+void runIntervalChangerThread(struct interval *interval);
+
+void runGarbageCollectorThread(struct list *torrentList, struct interval *interval, struct rps *rps);
 
 void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stats, unsigned short *socketTimeout, long workers);
 

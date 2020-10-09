@@ -6,7 +6,18 @@
 
 #define STEP_INTERVAL 60
 
-void updateInterval(struct block *block, _Atomic(unsigned int) *interval,
-        unsigned int minInterval, unsigned int maxInterval);
+struct interval {
+    _Atomic(unsigned int) interval;
+    _Atomic(unsigned int) requireInterval;
+    _Atomic(unsigned int) previousInterval;
+    unsigned int maxInterval;
+    unsigned int minInterval;
+};
+
+void updateInterval(struct block *block, struct interval*interval);
+
+void forceUpdateInterval(struct interval *interval, unsigned int value);
+
+unsigned int stepInterval(struct interval *interval);
 
 #endif //SC6_INTERVAL_H

@@ -4,12 +4,14 @@
 #include <unistd.h>
 #include "stats.h"
 #include "alloc.h"
+#include "interval.h"
 
 #if !defined(REVISION)
 #define REVISION "UNKNOWN"
 #endif
 
-void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval, struct rps *rps) {
+void
+formatStats(int threadNumber, struct block *block, struct stats *stats, struct interval *interval, struct rps *rps) {
     struct c_countChanges *countChanges = c_result();
 
     double load[3] = {0};
@@ -38,7 +40,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          "thread_number = %d\n\n"
 
                          "load_avg = %.2f %.2f %.2f\n"
-                         "interval = %'d\n"
+                         "interval = %'d (%'d->%'d)\n"
                          "active_sockets = %'d (rlimit %'llu/%'llu)\n\n"
 
                          "requests_per_second = tcp: %.2f, udp: %.2f\n\n"
@@ -105,7 +107,7 @@ void formatStats(int threadNumber, struct block *block, struct stats *stats, uns
                          threadNumber,
 
                          load[0], load[1], load[2],
-                         interval,
+                         interval->interval, interval->previousInterval, interval->requireInterval,
                          stats->accept_pass - stats->close_pass - stats->close_failed,
                          rlimit.rlim_cur, rlimit.rlim_max,
 

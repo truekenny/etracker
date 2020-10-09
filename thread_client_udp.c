@@ -24,7 +24,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
     int serverSocket = args->serverSocket;
     struct list *torrentList = args->torrentList;
     struct stats *stats = args->stats;
-    _Atomic (unsigned int) *interval = args->interval;
+    struct interval *interval = args->interval;
 
     pthread_cond_t *signalRequest = args->signalRequest;
     pthread_mutex_t *mutexSignalRequest = args->mutexSignalRequest;
@@ -117,7 +117,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     } else {
                         torrent = setPeerPublic(torrentList, &query);
                     }
-                    renderAnnouncePublic(sendBlock, announceBlock, torrent, &query, *interval);
+                    renderAnnouncePublic(sendBlock, announceBlock, torrent, &query, interval);
 
                     postSemaphoreLeaf(leaf);
 

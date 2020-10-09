@@ -5,6 +5,7 @@
 #include <stdatomic.h>
 #include "block.h"
 #include "rps.h"
+#include "interval.h"
 
 struct stats {
     time_t time;
@@ -55,6 +56,7 @@ struct stats {
     atomic_uint scrape_udp;
 };
 
-void formatStats(int threadNumber, struct block *block, struct stats *stats, unsigned int interval, struct rps *rps);
+void
+formatStats(int threadNumber, struct block *block, struct stats *stats, struct interval *interval, struct rps *rps);
 
 #endif //SC6_STATS_H

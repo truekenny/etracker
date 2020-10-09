@@ -4,12 +4,13 @@
 #include <stdatomic.h>
 #include "stats.h"
 #include "rps.h"
+#include "interval.h"
 
 struct serverUdpArgs {
     unsigned short port;
     struct stats *stats;
     struct list *torrentList;
-    _Atomic (unsigned int) *interval;
+    struct interval *interval;
 
     struct rps *rps;
     long workers;
