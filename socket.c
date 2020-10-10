@@ -4,6 +4,7 @@
 #include <string.h>
 #include "socket.h"
 #include "block.h"
+#include "string.h"
 
 /**
  * Рендер сообщения по сокету
@@ -12,94 +13,105 @@
  * @param message
  * @param size
  */
-void renderHttpMessage(struct block *block, int code, char *message, size_t size, int canKeepAlive,
-                       unsigned short socketTimeout, struct stats *stats, char *charset, char *contentType) {
+void renderHttpMessage(struct render *render) {
     struct block *body = {0};
 
     // First line headers
-    switch (code) {
+    switch (render->code) {
+        case 101:
+            render->stats->http_101++;
+            addFormatStringBlock(render->block, 1000,
+                                 "HTTP/1.1 101 Switching Protocols\r\n"
+                                 "Upgrade: websocket\r\n"
+                                 "Connection: Upgrade\r\n"
+                                 "Sec-WebSocket-Accept: %s\r\n",
+                                 render->websocketKey);
+            break;
         case 400:
-            stats->http_400++;
-            addStringBlock(block, "HTTP/1.0 400 Invalid Request\r\n", 30);
+            render->stats->http_400++;
+            addStringBlock(render->block, "HTTP/1.0 400 Invalid Request\r\n", 30);
             break;
         case 401:
-            stats->http_401++;
-            addStringBlock(block, "HTTP/1.0 401 Unauthorized\r\n", 27);
-            addStringBlock(block, "WWW-Authenticate: Basic realm=\"etracker\"\r\n", 42);
+            render->stats->http_401++;
+            addStringBlock(render->block, "HTTP/1.0 401 Unauthorized\r\n", 27);
+            addStringBlock(render->block, "WWW-Authenticate: Basic realm=\"etracker\"\r\n", 42);
             break;
         case 403:
-            stats->http_403++;
-            addStringBlock(block, "HTTP/1.0 403 Forbidden\r\n", 24);
+            render->stats->http_403++;
+            addStringBlock(render->block, "HTTP/1.0 403 Forbidden\r\n", 24);
             break;
         case 404:
-            stats->http_404++;
-            addStringBlock(block, "HTTP/1.0 404 Not Found\r\n", 24);
+            render->stats->http_404++;
+            addStringBlock(render->block, "HTTP/1.0 404 Not Found\r\n", 24);
             break;
         case 405:
-            stats->http_405++;
-            addStringBlock(block, "HTTP/1.0 405 Method Not Allowed\r\n", 33);
+            render->stats->http_405++;
+            addStringBlock(render->block, "HTTP/1.0 405 Method Not Allowed\r\n", 33);
             break;
         case 408:
-            stats->http_408++;
-            addStringBlock(block, "HTTP/1.0 408 Request Timeout\r\n", 30);
+            render->stats->http_408++;
+            addStringBlock(render->block, "HTTP/1.0 408 Request Timeout\r\n", 30);
             break;
         case 413:
-            stats->http_413++;
-            addStringBlock(block, "HTTP/1.0 413 Request Entity Too Large\r\n", 39);
+            render->stats->http_413++;
+            addStringBlock(render->block, "HTTP/1.0 413 Request Entity Too Large\r\n", 39);
             break;
         case 507:
-            stats->http_507++;
-            addStringBlock(block, "HTTP/1.0 507 Insufficient Storage\r\n", 35);
+            render->stats->http_507++;
+            addStringBlock(render->block, "HTTP/1.0 507 Insufficient Storage\r\n", 35);
             break;
         case 200:
         default:
-            stats->http_200++;
-            addStringBlock(block, "HTTP/1.1 200 OK\r\n", 17);
+            render->stats->http_200++;
+            addStringBlock(render->block, "HTTP/1.1 200 OK\r\n", 17);
             break;
     }
 
-    if (code != 200) {
+    if (render->code != 200 && render->code != 101) {
         body = initBlock();
-        addFormatStringBlock(body, size + 1000,
+        addFormatStringBlock(body, render->size + 1000,
                              "d"
                              "14:failure reason"
                              "%zu:%s"
                              "e",
-                             size,
-                             message
+                             render->size,
+                             render->message
         );
-        size = body->size;
+        render->size = body->size;
     }
 
     // End of headers
-    if (canKeepAlive) {
-        addStringBlock(block, "Connection: Keep-Alive\r\n", 24);
-        addFormatStringBlock(block, 100, "Keep-Alive: timeout=%u, max=1000\r\n", socketTimeout);
-    } else {
-        addStringBlock(block, "Connection: Close\r\n", 19);
+    if (render->websocketKey == NULL) {
+        if (render->canKeepAlive) {
+            addStringBlock(render->block, "Connection: Keep-Alive\r\n", 24);
+            addFormatStringBlock(render->block, 100, "Keep-Alive: timeout=%u, max=1000\r\n", render->socketTimeout);
+        } else {
+            addStringBlock(render->block, "Connection: Close\r\n", 19);
+        }
     }
 
-    if (charset == NULL && contentType == NULL) {
-        addFormatStringBlock(block, 1000, "Content-Type: text/plain\r\n");
-    } else if (charset == NULL && contentType != NULL) {
-        addFormatStringBlock(block, 1000, "Content-Type: %s\r\n", contentType);
-    } else if (charset != NULL && contentType == NULL) {
-        addFormatStringBlock(block, 1000, "Content-Type: text/plain; charset=%s\r\n", charset);
-    } else if (charset != NULL && contentType != NULL) {
-        addFormatStringBlock(block, 1000, "Content-Type: %s; charset=%s\r\n", contentType, charset);
+    if (render->charset == NULL && render->contentType == NULL) {
+        addFormatStringBlock(render->block, 1000, "Content-Type: text/plain\r\n");
+    } else if (render->charset == NULL && render->contentType != NULL) {
+        addFormatStringBlock(render->block, 1000, "Content-Type: %s\r\n", render->contentType);
+    } else if (render->charset != NULL && render->contentType == NULL) {
+        addFormatStringBlock(render->block, 1000, "Content-Type: text/plain; charset=%s\r\n", render->charset);
+    } else if (render->charset != NULL && render->contentType != NULL) {
+        addFormatStringBlock(render->block, 1000, "Content-Type: %s; charset=%s\r\n", render->contentType,
+                             render->charset);
     }
 
-    addFormatStringBlock(block, 1000, "Content-Length: %zu\r\n"
-                                      "Server: github.com/truekenny/etracker\r\n"
-                                      "\r\n",
-                         size
+    addFormatStringBlock(render->block, 1000, "Content-Length: %zu\r\n"
+                                              "Server: github.com/truekenny/etracker\r\n"
+                                              "\r\n",
+                         render->size
     );
 
     // Body
-    if (code == 200) {
-        addStringBlock(block, message, size);
+    if (render->code == 200 || render->code == 101) {
+        addStringBlock(render->block, render->message, render->size);
     } else {
-        addStringBlock(block, body->data, body->size);
+        addStringBlock(render->block, body->data, body->size);
         freeBlock(body);
     }
 }
@@ -108,6 +120,7 @@ ssize_t send_(int socket, void *message, size_t size, struct stats *stats) {
     stats->sent_bytes += size;
 
     ssize_t result = send(socket, message, size, MSG_DONTWAIT | MSG_NOSIGNAL);
+
     if (result == -1) {
         stats->send_failed++;
     } else

@@ -10,6 +10,7 @@
 struct stats {
     time_t time;
     int failed;
+    atomic_uint http_101;
     atomic_uint http_200;
     atomic_uint http_400;
     atomic_uint http_401;

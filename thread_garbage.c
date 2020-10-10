@@ -15,6 +15,7 @@
 #include "thread.h"
 #include "exit_code.h"
 #include "math.h"
+#include "websocket.h"
 
 #define GARBAGE_SOCKET_POOL_TIME 1
 #define LITTLE_SLEEP 10
@@ -31,6 +32,7 @@ struct garbageSocketTimeoutArgs {
     unsigned short *socketTimeout;
     long workers;
     long maxTimeAllow; // Временная переменная, чтобы не считать это значение для каждого подключения
+    struct list *websockets;
 };
 
 void *intervalChangerHandler(struct interval *interval);
@@ -108,12 +110,13 @@ void *garbageCollectorArgsHandler(struct garbageCollectorArgs *args) {
 }
 
 void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stats, unsigned short *socketTimeout,
-                                   long workers) {
+                                   long workers, struct list *websockets) {
     struct garbageSocketTimeoutArgs *garbageSocketTimeoutArgs = c_calloc(1, sizeof(struct garbageSocketTimeoutArgs));
     garbageSocketTimeoutArgs->socketLists = socketLists;
     garbageSocketTimeoutArgs->stats = stats;
     garbageSocketTimeoutArgs->socketTimeout = socketTimeout;
     garbageSocketTimeoutArgs->workers = workers;
+    garbageSocketTimeoutArgs->websockets = websockets;
 
     pthread_t tid;
     pthread_create(&tid, NULL, (void *(*)(void *)) garbageSocketTimeoutHandler, garbageSocketTimeoutArgs);
@@ -128,12 +131,18 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
     struct socketData *socketData = item->data;
     struct stats *stats = ((struct garbageSocketTimeoutArgs *) args)->stats;
     long maxTimeAllow = ((struct garbageSocketTimeoutArgs *) args)->maxTimeAllow;
+    struct list *websockets = ((struct garbageSocketTimeoutArgs *) args)->websockets;
 
     if (socketData->time < maxTimeAllow) {
         struct block *block = initBlock();
-        renderHttpMessage(block, 408, "Request Timeout", 15, 0, 0, stats, NULL, NULL);
+        struct render render = {block, 408, "Request Timeout", 15, 0, 0, stats};
+        renderHttpMessage(&render);
         send_(socketData->socket, block->data, block->size, stats);
         freeBlock(block);
+
+        // printf("garbage delete socket %d\n", socketData->socket);
+
+        deleteWebsocket(websockets, socketData->socket);
 
         deleteSocketItemL(item, stats);
     }

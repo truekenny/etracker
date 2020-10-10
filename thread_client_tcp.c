@@ -21,6 +21,7 @@
 #include "basic.h"
 #include "thread.h"
 #include "math.h"
+#include "websocket.h"
 
 /*
  * Если включить, это влияет очень сильно на CPU
@@ -33,6 +34,7 @@
 struct deleteSocketListArgs {
     struct list *socketList;
     struct stats *stats;
+    struct list *websockets;
 };
 
 unsigned char deleteSocketListCallback(struct list *list, struct item *item, void *args) {
@@ -42,10 +44,13 @@ unsigned char deleteSocketListCallback(struct list *list, struct item *item, voi
 
     struct list *socketList = ((struct deleteSocketListArgs *) args)->socketList;
     struct stats *stats = ((struct deleteSocketListArgs *) args)->stats;
+    struct list *websockets = ((struct deleteSocketListArgs *) args)->websockets;
     int socket = *(int *) item->hash;
 
     deleteSocketL(socketList, socket, stats);
     deleteItem(item);
+
+    deleteWebsocket(websockets, socket);
 
     return 0;
 }
@@ -66,6 +71,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     unsigned char *keepAlive = args->keepAlive;
     char *charset = args->charset;
     char *webRoot = args->webRoot;
+    struct list *websockets = args->websockets;
+    struct geoip *geoip = args->geoip;
 
     unsigned char *pCurrentSocket = (unsigned char *) &currentSocket;
 
@@ -77,7 +84,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     // Запрос превышает лимит, прерываю такие сокеты
     if (readSize >= RECEIVED_MESSAGE_LENGTH) {
         dataBlock = resetBlock(dataBlock);
-        renderHttpMessage(dataBlock, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats, NULL, NULL);
+        struct render render = {dataBlock, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats};
+        renderHttpMessage(&render);
         send_(currentSocket, dataBlock->data, dataBlock->size, stats);
 
         setHash(deleteSocketList, pCurrentSocket);
@@ -104,7 +112,11 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         return;
     } // read error
 
-    if (strstr(readBuffer, "\r\n\r\n") == NULL) {
+    waitSemaphoreLeaf(websockets);
+    struct item *websocket = getHash(websockets, (unsigned char *) &currentSocket);
+    postSemaphoreLeaf(websockets);
+
+    if (strstr(readBuffer, "\r\n\r\n") == NULL && websocket == NULL) {
 
         return;
     }
@@ -133,8 +145,15 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         return;
     } // read error
 
+    // Не принимаю любые сообщения от websocket, использую их только для поддержания keepAlive
+    if (websocket != NULL) {
+        // printf("websocket ping\n");
+        return;
+    }
+
     _Bool isHttp = 0;
     int canKeepAlive = 0;
+    int isWebsocket = 0;
     sendBlock = resetBlock(sendBlock);
 
     stats->recv_bytes += readSize;
@@ -172,11 +191,13 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 query.numwant = *maxPeersPerResponse;
 
             if (!query.has_info_hash) {
-                renderHttpMessage(sendBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive,
-                                  *socketTimeout, stats, NULL, NULL);
+                struct render render = {sendBlock, 400, "Field 'info_hash' must be filled", 25, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
             } else if (!query.port) {
-                renderHttpMessage(sendBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
-                                  *socketTimeout, stats, NULL, NULL);
+                struct render render = {sendBlock, 400, "Field 'port' must be filled", 25, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
             } else {
                 dataBlock = resetBlock(dataBlock);
 
@@ -195,9 +216,12 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
                 postSemaphoreLeaf(leaf);
 
-                renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
-                                  *socketTimeout, stats, NULL, NULL);
+                struct render render = {sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
             }
+
+            broadcast(websockets, geoip, peer.sin_addr.s_addr, stats, 0);
         } // announce
         else if (startsWith("GET /set", readBuffer)) {
             if (authorizationHeader->size == 0)
@@ -239,26 +263,52 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                                      *maxPeersPerResponse,
                                      *socketTimeout);
 
-                renderHttpMessage(sendBlock, 200,
-                                  dataBlock->data, dataBlock->size,
-                                  canKeepAlive, *socketTimeout, stats, NULL, NULL);
+                struct render render = {sendBlock, 200,
+                                        dataBlock->data, dataBlock->size,
+                                        canKeepAlive, *socketTimeout, stats};
+                renderHttpMessage(&render);
             } else {
-                renderHttpMessage(sendBlock, 401, "Authorization Failure", 21, canKeepAlive,
-                                  *socketTimeout, stats, NULL, NULL);
+                struct render render = {sendBlock, 401, "Authorization Failure", 21, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
             }
         } // set
+        else if (startsWith("GET /websocket", readBuffer)) {
+            struct block *acceptValue = websocketKey2Accept(readBuffer, readSize);
+
+            if (acceptValue == NULL) {
+                struct render render = {sendBlock, 400, "Websocket Failed", 16, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
+            } else {
+                isWebsocket = 1;
+                struct render render = {sendBlock, 101,
+                        //"websocket activate\n", 19,
+                                        "", 0,
+                                        /*canKeepAlive*/1, *socketTimeout, stats, NULL, NULL,
+                                        acceptValue->data};
+                renderHttpMessage(&render);
+                freeBlock(acceptValue);
+
+                waitSemaphoreLeaf(websockets);
+                setHash(websockets, (unsigned char *) &currentSocket);
+                postSemaphoreLeaf(websockets);
+            }
+        } // websocket
         else if (startsWith("GET /stats", readBuffer)) {
             dataBlock = resetBlock(dataBlock);
 
             formatStats(threadNumber, dataBlock, stats, interval, rps);
 
-            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
-                              *socketTimeout, stats, charset, "text/html");
+            struct render render = {sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
+                                    *socketTimeout, stats, charset, "text/html"};
+            renderHttpMessage(&render);
         } // stats
         else if (startsWith("GET / ", readBuffer)) {
-            renderHttpMessage(sendBlock, 200,
-                              "github.com/truekenny/etracker - open-source BitTorrent tracker\n", 63,
-                              canKeepAlive, *socketTimeout, stats, NULL, NULL);
+            struct render render = {sendBlock, 200,
+                                    "github.com/truekenny/etracker - open-source BitTorrent tracker\n", 63,
+                                    canKeepAlive, *socketTimeout, stats};
+            renderHttpMessage(&render);
         } // root
         else if (startsWith("GET /scrape", readBuffer)) {
             stats->scrape++;
@@ -269,12 +319,14 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             parseUri(&query, hashesBlock, readBuffer);
 
             if (!hashesBlock->size && !ENABLE_FULL_SCRAPE) {
-                renderHttpMessage(sendBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
-                                  *socketTimeout, stats, NULL, NULL);
+                struct render render = {sendBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
             } else {
                 renderScrapeTorrentsPublic(dataBlock, scrapeBlock, torrentList, hashesBlock, &query);
-                renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
-                                  *socketTimeout, stats, NULL, NULL);
+                struct render render = {sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
             }
         } // scrape
         else {
@@ -282,6 +334,10 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
             char *typeIco = "image/x-icon";
             char *typePng = "image/png";
+            char *typeHtml = "text/html";
+            char *typeJs = "application/javascript";
+            char *typeCss = "text/css";
+            char *typeJpg = "image/jpeg";
             char *typeDefault = "text/plain";
             char *typeFile = NULL;
 
@@ -303,28 +359,41 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                                 typeFile = typeIco;
                             else if (endsWith(".png", absolute))
                                 typeFile = typePng;
+                            else if (endsWith(".html", absolute))
+                                typeFile = typeHtml;
+                            else if (endsWith(".js", absolute))
+                                typeFile = typeJs;
+                            else if (endsWith(".css", absolute))
+                                typeFile = typeCss;
+                            else if (endsWith(".jpg", absolute))
+                                typeFile = typeJpg;
                             else
                                 typeFile = typeDefault;
 
                             addFileBlock(dataBlock, statFile.st_size, absolute);
-                            renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
-                                              *socketTimeout, stats, NULL, typeFile);
+                            struct render render = {sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
+                                                    *socketTimeout, stats, NULL, typeFile};
+                            renderHttpMessage(&render);
                         } else {
-                            renderHttpMessage(sendBlock, 507, "File size exceeds the allowed limit",
-                                              35, canKeepAlive, *socketTimeout, stats, NULL, NULL);
+                            struct render render = {sendBlock, 507, "File size exceeds the allowed limit",
+                                                    35, canKeepAlive, *socketTimeout, stats};
+                            renderHttpMessage(&render);
                         }
                     } else {
-                        renderHttpMessage(sendBlock, 404, "Page not found: Not a file", 26, canKeepAlive,
-                                          *socketTimeout, stats, NULL, NULL);
+                        struct render render = {sendBlock, 404, "Page not found: Not a file", 26, canKeepAlive,
+                                                *socketTimeout, stats};
+                        renderHttpMessage(&render);
                     }
                 } else {
-                    renderHttpMessage(sendBlock, 404, "Page not found: Secure error", 28, canKeepAlive,
-                                      *socketTimeout, stats, NULL, NULL);
+                    struct render render = {sendBlock, 404, "Page not found: Secure error", 28, canKeepAlive,
+                                            *socketTimeout, stats};
+                    renderHttpMessage(&render);
                 }
             } else {
                 addFormatStringBlock(dataBlock, 1000, "Page not found: %d: %s", errno, strerror(errno));
-                renderHttpMessage(sendBlock, 404, dataBlock->data, dataBlock->size, canKeepAlive,
-                                  *socketTimeout, stats, NULL, NULL);
+                struct render render = {sendBlock, 404, dataBlock->data, dataBlock->size, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
             }
         } // default
 
@@ -335,13 +404,14 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         }
     } // isHttp
     else {
-        renderHttpMessage(sendBlock, 405, readBuffer, readSize, canKeepAlive,
-                          *socketTimeout, stats, NULL, NULL);
+        struct render render = {sendBlock, 405, readBuffer, readSize, canKeepAlive,
+                                *socketTimeout, stats};
+        renderHttpMessage(&render);
     }
 
     send_(currentSocket, sendBlock->data, sendBlock->size, stats);
 
-    if (!canKeepAlive) {
+    if (!canKeepAlive && !isWebsocket) {
         setHash(deleteSocketList, pCurrentSocket);
     }
 }
@@ -364,12 +434,14 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
     // unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
     // unsigned short *socketTimeout = args->socketTimeout;
     // unsigned char *keepAlive = args->keepAlive;
+    struct list *websockets = args->websockets;
 
     struct Eevent eevent;
     struct list *deleteSocketList = initList(NULL, 0, STARTING_NEST, sizeof(int), DISABLE_SEMAPHORE, LITTLE_ENDIAN);
     struct deleteSocketListArgs deleteSocketListArgs;
     deleteSocketListArgs.socketList = socketList;
     deleteSocketListArgs.stats = stats;
+    deleteSocketListArgs.websockets = websockets;
 
     struct block *sendBlock = initBlock();
     struct block *dataBlock = initBlock();

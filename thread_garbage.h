@@ -10,6 +10,7 @@ void runIntervalChangerThread(struct interval *interval);
 
 void runGarbageCollectorThread(struct list *torrentList, struct interval *interval, struct rps *rps);
 
-void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stats, unsigned short *socketTimeout, long workers);
+void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stats, unsigned short *socketTimeout,
+        long workers, struct list *websockets);
 
 #endif //SC6_THREAD_GARBAGE_H

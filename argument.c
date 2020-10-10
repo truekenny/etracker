@@ -303,6 +303,8 @@ void showHelp() {
             "     %3d     semaphore init\n"
             "     %3d     semaphore post\n"
             "     %3d     semaphore destroy\n"
+            "     %3d     geoip memory\n"
+            "     %3d     geoip wrong data\n"
             "\n"
             BOLD "AUTHOR\n" RESET
             "     Implemented by Truekenny.\n"
@@ -336,7 +338,9 @@ void showHelp() {
             EXIT_LIST_NOT_EMPTY,
             EXIT_SEMAPHORE_INIT,
             EXIT_SEMAPHORE_POST,
-            EXIT_SEMAPHORE_DESTROY
+            EXIT_SEMAPHORE_DESTROY,
+            EXIT_GEOIP_MEMORY,
+            EXIT_GEOIP_WRONG_DATA
     );
 
     exit(EXIT_SUCCESS);

@@ -29,6 +29,8 @@
 #define EXIT_SEMAPHORE_INIT                 230
 #define EXIT_SEMAPHORE_POST                 229
 #define EXIT_SEMAPHORE_DESTROY              228
+#define EXIT_GEOIP_MEMORY                   227
+#define EXIT_GEOIP_WRONG_DATA               226
 
 void exitPrint(int exitCode, char *file, char printError);
 

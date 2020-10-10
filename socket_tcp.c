@@ -38,6 +38,8 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     unsigned short *socketTimeout = args->socketTimeout;
     unsigned char *keepAlive = args->keepAlive;
     char *charset = args->charset;
+    struct list *websockets = args->websockets;
+    struct geoip *geoip = args->geoip;
 
     c_free(args);
 
@@ -105,6 +107,8 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
         clientTcpArgs->keepAlive = keepAlive;
         clientTcpArgs->charset = charset;
         clientTcpArgs->webRoot = webRoot;
+        clientTcpArgs->websockets = websockets;
+        clientTcpArgs->geoip = geoip;
 
         if (pthread_create(&tcpClientThread, NULL, (void *(*)(void *)) clientTcpHandler, clientTcpArgs) != 0) {
             exitPrint(EXIT_TCP_CLIENT_THREAD, __FILE__, PRINT_ERROR_YES);

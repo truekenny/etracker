@@ -19,11 +19,13 @@ _Bool startsWith(const char *start, const char *string) {
 _Bool endsWith(const char *end, const char *string) {
     size_t lenEnd = strlen(end),
             lenString = strlen(string);
-    return lenString < lenEnd ? 0 : memcmp(end, &string[lenString-lenEnd], lenEnd) == 0;
+    return lenString < lenEnd ? 0 : memcmp(end, &string[lenString - lenEnd], lenEnd) == 0;
 }
 
 int printHex(char *string, unsigned int len) {
     unsigned int ceilLen = (int) ceil((double) len / 16) * 16;
+
+    printf(BLUE);
 
     printf("%4s | %2d %2d %2d %2d   %2d %2d %2d %2d   %2d %2d %2d %2d   %2d %2d %2d %2d | 0123 4567 8901 2345\n"
            "-----+-------------------------------------------------------+--------------------\n",
@@ -36,7 +38,7 @@ int printHex(char *string, unsigned int len) {
         }
 
         if (index < len)
-            printf("%02x ", string[index] & 0xff);
+            printf("%02x ", (unsigned char) string[index] & 0xffu);
         else
             printf("   ");
 
@@ -54,7 +56,7 @@ int printHex(char *string, unsigned int len) {
                         printf(".");
                     }
 
-                    if (j % 4 == 3)
+                    if (j % 4 == 3 && j % 16 != 15)
                         printf(" ");
                 }
             }
@@ -62,6 +64,8 @@ int printHex(char *string, unsigned int len) {
             printf("\n");
         }
     }
+
+    printf(RESET);
 
     return 0;
 }

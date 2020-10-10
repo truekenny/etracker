@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Map</title>
+</head>
+<body style="margin: 0">
+<canvas id="map" width="360" height="180" style="display: block; width: 100%; height: 100vh"></canvas>
+<script>
+    let canvas = document.getElementById("map");
+    let canvasWidth = canvas.width;
+    let canvasHeight = canvas.height;
+    let ctx = canvas.getContext("2d");
+    let canvasData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+
+    let imageX = 0;
+    let imageY = 1;
+
+    let image = new Image();
+    image.src = "map3.jpg";
+    image.onload = function () {
+        ctx.drawImage(image, imageX, imageY, 360, 180);
+        canvasData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+        console.log('load');
+
+
+        if (0) {
+            let x, y, lat, lon;
+
+            lat = 0;
+            lon = 0;
+            x = Math.round(lon + 180);
+            y = 180 - Math.round(lat + 90);
+            drawPixel(x, y, 255, 0, 0, 255);
+
+            // Камчатка
+            lat = 57;
+            lon = 160;
+            x = Math.round(lon + 180);
+            y = 180 - Math.round(lat + 90);
+            drawPixel(x, y, 255, 0, 0, 255);
+
+            // Сидней
+            lat = -33;
+            lon = 151;
+            x = Math.round(lon + 180);
+            y = 180 - Math.round(lat + 90);
+            drawPixel(x, y, 255, 0, 0, 255);
+
+            // Нью-Йорк
+            lat = 40;
+            lon = -73;
+            x = Math.round(lon + 180);
+            y = 180 - Math.round(lat + 90);
+            drawPixel(x, y, 255, 0, 0, 255);
+        }
+    };
+
+    function drawPixel(x, y, r, g, b, a) {
+        let index = (x + y * canvasWidth) * 4;
+
+        canvasData.data[index + 0] = r;
+        canvasData.data[index + 1] = g;
+        canvasData.data[index + 2] = b;
+        canvasData.data[index + 3] = a;
+    }
+
+    function updateCanvas() {
+        ctx.putImageData(canvasData, 0, 0);
+
+        ctx.globalAlpha = 0.1;
+        ctx.drawImage(image, imageX, imageY, 360, 180);
+        ctx.globalAlpha = 1;
+        canvasData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+
+        setTimeout(function () {
+            updateCanvas();
+        }, 1000);
+    }
+
+    drawPixel(1, 1, 255, 0, 0, 255);
+    drawPixel(2, 2, 0, 255, 0, 255);
+    drawPixel(3, 3, 0, 0, 255, 255);
+
+    function ping(socket) {
+        socket.send('p');
+
+        setTimeout(function () {
+            ping(socket);
+        }, 1000);
+    }
+
+    let link = "ws://" + location.host + "/websocket";
+    let socket = new WebSocket(link, "chat");
+    socket.binaryType = 'arraybuffer';
+
+    // Соединение открыто
+    socket.addEventListener('open', function (event) {
+        console.log('Socket Open');
+        ping(socket);
+        updateCanvas();
+    });
+
+    // Наблюдает за сообщениями
+    socket.addEventListener('message', function (event) {
+        let data = new DataView(event.data);
+        let lat = data.getInt16(0, true);
+        let lon = data.getInt16(2, true);
+        let udp = data.getUint8(4);
+        // console.log('Socket Message', event.data, {lat, lon, udp});
+
+        //             ^ lat 90
+        //        US   |   RU
+        //             |      JP
+        // -180 -------+------> lon 180
+        //             |
+        //        BR   |   AUS
+        //             | -90
+
+        drawPixel(Math.round(lon + 180), 180 - Math.round(lat + 90), udp ? 0 : 255, udp ? 255 : 0, 0, 255);
+    });
+
+    // Наблюдает за сообщениями
+    socket.addEventListener('error', function (event) {
+        console.log('Socket Error ', event);
+    });
+</script>
+</body>
+</html>

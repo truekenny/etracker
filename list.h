@@ -3,6 +3,7 @@
 
 #include <stdatomic.h>
 #include "sem.h"
+#include "block.h"
 
 #define STARTING_NEST 0
 
@@ -54,7 +55,7 @@ void freeList(struct list *list, unsigned char firstRecursion);
 unsigned char mapList(struct list *list, void *args,
                       unsigned char (*callback)(struct list *list, struct item *item, void *args));
 
-void printList(struct list *list, unsigned char nest);
+void printList(struct list *list, unsigned char nest, struct block *block, _Bool print);
 
 void deleteItem(struct item *item);
 

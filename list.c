@@ -145,14 +145,20 @@ unsigned char mapList(struct list *list, void *args,
     return 0;
 }
 
-void printList(struct list *list, unsigned char nest) {
+/**
+ * Только для проверки
+ * @param list
+ * @param nest
+ */
+void printList(struct list *list, unsigned char nest, struct block *block, _Bool print) {
     if (nest == 0) {
-        printf("List:");
+        print && printf("List:");
+        addFormatStringBlock(block, 100, "List:");
     }
 
     if (list->level > 0) {
         for (int index = 0; index < DEC_BYTE; ++index) {
-            printList(&list->list[index], nest + 1);
+            printList(&list->list[index], nest + 1, block, print);
         }
     } else {
         // Печать листа, у которого есть элемент
@@ -162,18 +168,22 @@ void printList(struct list *list, unsigned char nest) {
             struct item *currentItem = list->firstItem;
 
             while (currentItem != NULL) {
-                printf("%*s ", list->hashLength, currentItem->hash);
+                // Здесь не поставил точку и наблюдал в консоле атрефакты
+                print && printf("%.*s ", list->hashLength, currentItem->hash);
+                addFormatStringBlock(block, 100, "%.*s ", list->hashLength, currentItem->hash);
 
                 currentItem = currentItem->nextInLeaf;
             }
 
-            printf(", ");
+            print && printf(", ");
+            addFormatStringBlock(block, 100, ", ");
             postSemaphoreLeaf(list);
         }
     }
 
     if (nest == 0) {
-        printf("\n");
+        print && printf("\n");
+        addFormatStringBlock(block, 100, "\n");
     }
 }
 

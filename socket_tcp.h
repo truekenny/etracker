@@ -8,6 +8,7 @@
 #include "rps.h"
 #include "list.h"
 #include "interval.h"
+#include "geoip.h"
 
 struct serverTcpArgs {
     unsigned short port;
@@ -24,6 +25,9 @@ struct serverTcpArgs {
     unsigned short *socketTimeout;
     unsigned char *keepAlive;
     char *charset;
+
+    struct list *websockets;
+    struct geoip *geoip;
 };
 
 void *serverTcpHandler(struct serverTcpArgs *args);

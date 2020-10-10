@@ -53,6 +53,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "free          = %'15llu\n"
                          "*alloc - free = %'15llu\n\n"
 
+                         "stats.http_101 = %'12d\n"
                          "stats.http_200 = %'12d\n"
                          "stats.http_400 = %'12d\n"
                          "stats.http_401 = %'12d\n"
@@ -122,6 +123,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          countChanges->countFree,
                          countChanges->countMalloc + countChanges->countCalloc - countChanges->countFree,
 
+                         stats->http_101,
                          stats->http_200,
                          stats->http_400,
                          stats->http_401,

@@ -7,6 +7,7 @@
 #include "rps.h"
 #include "list.h"
 #include "interval.h"
+#include "geoip.h"
 
 /**
  * Аргументы переданные в поток
@@ -30,6 +31,9 @@ struct clientTcpArgs {
     char *charset;
 
     char *webRoot;
+
+    struct list *websockets;
+    struct geoip *geoip;
 };
 
 void *clientTcpHandler(struct clientTcpArgs *);

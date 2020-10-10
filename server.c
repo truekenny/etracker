@@ -23,6 +23,7 @@
 #include "list.h"
 #include "data_garbage.h"
 #include "argument.h"
+#include "geoip.h"
 
 #if !defined(REVISION)
 #define REVISION "UNKNOWN"
@@ -73,12 +74,12 @@ int main(int argc, char *argv[]) {
 
     // vars
     struct list **socketLists = c_calloc(arguments->workers, sizeof(void *));
-
     for (int threadNumber = 0; threadNumber < arguments->workers; threadNumber++) {
         socketLists[threadNumber] =
                 initList(NULL, 1, STARTING_NEST, sizeof(int),
                          ENABLE_SEMAPHORE_LEAF | ENABLE_SEMAPHORE_GLOBAL, LITTLE_ENDIAN);
     }
+
     struct list *torrentList = initList(NULL, 2, STARTING_NEST, PARAM_VALUE_LENGTH,
                                         ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
 
@@ -88,6 +89,11 @@ int main(int argc, char *argv[]) {
 
     struct rps rps = {};
 
+    struct list *websockets = initList(NULL, 0, STARTING_NEST, sizeof(int),
+                                       ENABLE_SEMAPHORE_LEAF | ENABLE_SEMAPHORE_GLOBAL, LITTLE_ENDIAN);
+
+    struct geoip *geoip = initGeoip();
+    loadGeoip(geoip);
 
     if (RANDOM_DATA_INFO_HASH)
         printf("- Random data info_hash: %d\n", RANDOM_DATA_INFO_HASH);
@@ -109,6 +115,8 @@ int main(int argc, char *argv[]) {
         serverTcpArgs->socketTimeout = &arguments->socketTimeout;
         serverTcpArgs->keepAlive = &arguments->keepAlive;
         serverTcpArgs->charset = arguments->charset;
+        serverTcpArgs->websockets = websockets;
+        serverTcpArgs->geoip = geoip;
 
         if (pthread_create(&tcpServerThread, NULL, (void *(*)(void *)) serverTcpHandler, serverTcpArgs) != 0) {
             perror("Could not create thread");
@@ -127,6 +135,8 @@ int main(int argc, char *argv[]) {
         serverUdpArgs->rps = &rps;
         serverUdpArgs->workers = arguments->workers;
         serverUdpArgs->maxPeersPerResponse = &arguments->maxPeersPerResponse;
+        serverUdpArgs->websockets = websockets;
+        serverUdpArgs->geoip = geoip;
 
         if (pthread_create(&udpServerThread, NULL, (void *(*)(void *)) serverUdpHandler, serverUdpArgs) != 0) {
             perror("Could not create thread");
@@ -141,7 +151,7 @@ int main(int argc, char *argv[]) {
 
     runGarbageCollectorThread(torrentList, &interval, &rps);
     runIntervalChangerThread(&interval);
-    runGarbageSocketTimeoutThread(socketLists, stats, &arguments->socketTimeout, arguments->workers);
+    runGarbageSocketTimeoutThread(socketLists, stats, &arguments->socketTimeout, arguments->workers, websockets);
 
     if (!arguments->noTcp) {
         printf("Join TCP Thread\n");

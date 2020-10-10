@@ -13,6 +13,7 @@
 #include "data.h"
 #include "thread.h"
 #include "sem.h"
+#include "websocket.h"
 
 #define MSG_CONFIRM_ 0
 
@@ -33,6 +34,8 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
     struct rk_sema *semaphoreRequest = args->semaphoreRequest;
     // unsigned int threadNumber = args->threadNumber;
     unsigned int *maxPeersPerResponse = args->maxPeersPerResponse;
+    struct list *websockets = args->websockets;
+    struct geoip *geoip = args->geoip;
 
     c_free(args);
 
@@ -133,6 +136,8 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     } else {
                         stats->send_pass_udp++;
                     }
+
+                    broadcast(websockets, geoip, clientAddr.sin_addr.s_addr, stats, 1);
                 } // аннонс
 
             } else if (block->size > scrapeRequestSize && htonl(scrapeRequest->action) == ACTION_SCRAPE) {
