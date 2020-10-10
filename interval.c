@@ -52,7 +52,7 @@ void forceUpdateInterval(struct interval *interval, unsigned int value) {
  * Изменяет фактический интервал
  * @param interval
  * @return Кол-во секунд для сна из учёта, что:
- *  за interval->previousInterval секунд интервал измениться на STEP_INTERVAL секунд
+ *  за max(interval->previousInterval, interval->requireInterval) секунд интервал успеет измениться на STEP_INTERVAL с.
  */
 unsigned int stepInterval(struct interval *interval) {
     if (interval->interval < interval->requireInterval)

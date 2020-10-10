@@ -406,6 +406,16 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
         if (nev) {
             // Закрываю сокеты, которые требуют это
             mapList(deleteSocketList, &deleteSocketListArgs, &deleteSocketListCallback);
+        } else {
+#ifdef __APPLE__
+            /*
+             * В потоках (этом и сборщике таймаут подключений) идёт борьба за глобальный семафор socketList,
+             * при этом здесь семафор запирается до ближайшего таймаута, фактически устраивая простой не только себе,
+             * но и потоку-сборщику, чтобы увеличить шансы выполнения потока-сборщика использую yield,
+             * если действительно был достигнут таймаут equeue.
+             */
+            pthread_yield_np();
+#endif
         }
 
         postSemaphoreLeaf(socketList);
