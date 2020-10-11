@@ -26,19 +26,16 @@ struct item {
 };
 
 struct list {
-    unsigned char hashLength;
-    unsigned char level; // 0 - 2
+    struct list *list;                  // Ветки текущего списка веток
+    _Atomic (struct item *) firstItem;  // Листья текущего списка листов
+    struct rk_sema *semaphore;          // Семафор, обычно для списка листов, реже глобальный
 
     // Параметр влияет на то, по каким байтам хэша будет выбираться лист
     // (по первым - LITTLE_ENDIAN или последним - BIG_ENDIAN)
     unsigned short endianness;
-
-    struct list *list;
-
-    unsigned char semaphoreEnabled;
-    struct rk_sema *semaphore;
-
-    _Atomic (struct item *) firstItem;
+    unsigned char hashLength;           // Размер хэша item'ов
+    unsigned char level;                // Размер хэш таблицы, [0-2]
+    unsigned char semaphoreEnabled;     // Использовать семафоры при доступе к списку листов
 };
 
 void waitSemaphoreLeaf(struct list *leaf);

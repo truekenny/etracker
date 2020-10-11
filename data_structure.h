@@ -7,9 +7,9 @@
 #define LIMIT_PEERS_FOR_LEVEL_0 256
 
 struct peerDataL {
-    unsigned short port;
-    unsigned int ip;
     long updateTime;
+    unsigned int ip;
+    unsigned short port;
     unsigned char event;
 };
 
