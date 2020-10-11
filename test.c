@@ -32,6 +32,14 @@ int testBase64() {
     printf("base64_encode(1234567890) > MTIzNDU2Nzg5MA== > %s\n", result->data);
     freeBlock(result);
 
+    // f474dbd06826c93e3732f986e3339e782520b228
+    input = resetBlock(input);
+    addStringBlock(input, "\xf4\x74\xdb\xd0\x68\x26\xc9\x3e\x37\x32\xf9\x86\xe3\x33\x9e\x78\x25\x20\xb2\x28", 20);
+    result = base64_encode(input);
+    // printf("base64_encode(..special..) > 9HTb0GgmyT43MvmG4zOeeCUgsig= > %s\n", result->data);
+    assert(memcmp(result->data, "9HTb0GgmyT43MvmG4zOeeCUgsig=", result->size) == 0);
+    freeBlock(result);
+
     input = resetBlock(input);
     addStringBlock(input, "123456789", 9);
     result = base64_encode(input);
