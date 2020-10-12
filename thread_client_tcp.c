@@ -278,6 +278,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             }
         } // scrape
         else {
+            dataBlock = resetBlock(dataBlock);
+
             char *typeIco = "image/x-icon";
             char *typePng = "image/png";
             char *typeDefault = "text/plain";
@@ -304,7 +306,6 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                             else
                                 typeFile = typeDefault;
 
-                            dataBlock = resetBlock(dataBlock);
                             addFileBlock(dataBlock, statFile.st_size, absolute);
                             renderHttpMessage(sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
                                               *socketTimeout, stats, NULL, typeFile);
