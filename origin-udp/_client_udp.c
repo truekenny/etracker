@@ -9,13 +9,12 @@
 #include <netinet/in.h>
 #include "../string.h"
 
-#define DEBUG 0
 #define PORT        3000
 #define MAXLINE     1024
 #define MSG_CONFIRM 0
 
 // Driver code
-int main() {
+int main(int argc, char *argv[]) {
     int sockfd;
     char buffer[MAXLINE];
     // scrape
@@ -32,7 +31,7 @@ int main() {
             "\x00\x00\x00\x01" // action
             "aaaa" // trans_id
             "11112222333344445555" // info
-            "66667777888899990000" // peer
+            "-UDP-777888899990000" // peer
             "\x00\x00\x00\x00\x00\x00\x00\x00" // down
             "\x00\x00\x00\x00\x00\x00\x00\x00" // left
             "\x00\x00\x00\x00\x00\x00\x00\x00" // up
@@ -70,8 +69,10 @@ int main() {
 
         int n, len;
 
-        DEBUG && printf("Send : index=%d size=%d\n", i, helloSize[i]);
-        DEBUG && printHex(hello[i], helloSize[i]);
+        if (argc > 1) {
+            printf("Send : index=%d size=%d\n", i, helloSize[i]);
+            printHex(hello[i], helloSize[i]);
+        }
 
         sendto(sockfd, (const char *) hello[i], helloSize[i],
                MSG_CONFIRM, (const struct sockaddr *) &servaddr,
@@ -81,9 +82,10 @@ int main() {
                      MSG_WAITALL, (struct sockaddr *) &servaddr,
                      (unsigned int *) &len);
         buffer[n] = '\0';
-        DEBUG && printf("Receive : %d\n", i);
-        DEBUG && printHex(buffer, n);
-
+        if (argc > 1) {
+            printf("Receive : %d\n", i);
+            printHex(buffer, n);
+        }
         close(sockfd);
     }
 

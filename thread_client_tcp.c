@@ -52,7 +52,7 @@ unsigned char deleteSocketListCallback(struct list *list, struct item *item, voi
 
     deleteWebsocket(websockets, socket);
 
-    return 0;
+    return RETURN_CONTINUE;
 }
 
 void processRead(struct clientTcpArgs *args, int currentSocket, struct list *deleteSocketList,
@@ -209,7 +209,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 if (query.event == EVENT_ID_STOPPED) {
                     torrent = deletePeerPublic(torrentList, &query);
                 } else {
-                    torrent = setPeerPublic(torrentList, &query);
+                    torrent = setPeerPublic(torrentList, &query, PEER_PROTOCOL_TCP);
                 }
 
                 renderAnnouncePublic(dataBlock, announceBlock, torrent, &query, interval);
@@ -221,7 +221,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 renderHttpMessage(&render);
             }
 
-            broadcast(websockets, geoip, peer.sin_addr.s_addr, stats, 0);
+            broadcast(websockets, geoip, peer.sin_addr.s_addr, stats, WEBSOCKET_PROTOCOL_TCP);
         } // announce
         else if (startsWith("GET /set", readBuffer)) {
             if (authorizationHeader->size == 0)

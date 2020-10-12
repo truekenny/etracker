@@ -28,6 +28,9 @@
 #define WEB_PATH "web"
 #define SEPARATOR_PATH "/"
 
+#define QUERY_PROTOCOL_TCP 0
+#define QUERY_PROTOCOL_UDP 1
+
 struct query {
     char path[PATH_LENGTH + 1];
     unsigned char has_info_hash;
@@ -36,7 +39,7 @@ struct query {
     unsigned short port;
     unsigned int ip;
     unsigned char peer_id[PARAM_VALUE_LENGTH];
-    _Bool udp;
+    unsigned char protocol;
     _Bool compact;
     _Bool no_peer_id;
     unsigned int numwant;

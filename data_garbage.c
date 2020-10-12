@@ -71,7 +71,7 @@ unsigned char runGarbageCollectorCallbackCallback(struct list *list, struct item
         garbageStats->currentPeersInTorrent++;
     }
 
-    return 0;
+    return RETURN_CONTINUE;
 }
 
 /**
@@ -118,7 +118,7 @@ unsigned char runGarbageCollectorCallback(struct list *list, struct item *torren
         }
     }
 
-    return 0;
+    return RETURN_CONTINUE;
 }
 
 /**

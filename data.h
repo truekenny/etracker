@@ -13,6 +13,6 @@ void renderScrapeTorrentsPublic(struct block *block, struct block *scrapeBlock, 
 
 struct item *deletePeerPublic(struct list *torrentList, struct query *query);
 
-struct item *setPeerPublic(struct list *torrentList, struct query *query);
+struct item *setPeerPublic(struct list *torrentList, struct query *query, unsigned char protocol);
 
 #endif //SC6_DATA_H

@@ -23,7 +23,7 @@ unsigned char reInitListCallback(struct list *list, struct item *item, void *arg
     item->data = NULL;
     deleteItem(item);
 
-    return 0;
+    return RETURN_CONTINUE;
 }
 
 struct list *reInitList(struct list *list, unsigned char level) {
@@ -116,8 +116,8 @@ unsigned char mapList(struct list *list, void *args,
         for (int index = 0; index < DEC_BYTE; ++index) {
             unsigned char test = mapList(&list->list[index], args, callback);
 
-            if (test)
-                return 1;
+            if (test == RETURN_BREAK)
+                return RETURN_BREAK;
         }
     } else {
         if (list->firstItem) {
@@ -129,10 +129,10 @@ unsigned char mapList(struct list *list, void *args,
                 struct item *nextItem = currentItem->nextInLeaf;
                 unsigned char test = (*callback)(list, currentItem, args);
 
-                if (test) {
+                if (test == RETURN_BREAK) {
                     postSemaphoreLeaf(list);
 
-                    return 1;
+                    return RETURN_BREAK;
                 }
 
                 currentItem = nextItem;

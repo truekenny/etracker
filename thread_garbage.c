@@ -147,7 +147,7 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
         deleteSocketItemL(item, stats);
     }
 
-    return 0;
+    return RETURN_CONTINUE;
 }
 
 void *garbageSocketTimeoutHandler(struct garbageSocketTimeoutArgs *_args) {

@@ -216,13 +216,13 @@ int testSem() {
 unsigned char listCallback(struct list *list, struct item *item, void *args) {
     deleteHash(list, item->hash);
 
-    return 1;
+    return RETURN_BREAK;
 }
 
 unsigned char listPrintCallback(struct list *list, struct item *item, void *args) {
     printf("f");
 
-    return 0;
+    return RETURN_CONTINUE;
 }
 
 int testList() {

@@ -70,10 +70,10 @@ unsigned char broadcastCallback(struct list *list, struct item *item, void *args
     int socket = *(int *) item->hash;
     send_(socket, broadcastArgs->data, SIZE_FRAME, broadcastArgs->stats);
 
-    return 0;
+    return RETURN_CONTINUE;
 }
 
-void broadcast(struct list *websockets, struct geoip *geoip, in_addr_t ip, struct stats *stats, unsigned char udp) {
+void broadcast(struct list *websockets, struct geoip *geoip, in_addr_t ip, struct stats *stats, unsigned char protocol) {
     if (ip == 0) {
         // unused
     }
@@ -85,7 +85,7 @@ void broadcast(struct list *websockets, struct geoip *geoip, in_addr_t ip, struc
     char data[SIZE_FRAME] = "\x82\x05" "\x00\x00\x00\x00\x00";
     memcpy(data + 2, &geoipSingle->lat, 2);
     memcpy(data + 4, &geoipSingle->lon, 2);
-    memcpy(data + 6, &udp, 1);
+    memcpy(data + 6, &protocol, 1);
 
     struct broadcastArgs broadcastArgs;
     broadcastArgs.stats = stats;

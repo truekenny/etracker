@@ -96,7 +96,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
 
                 // Аргументы потока
                 struct query query = {};
-                query.udp = 1;
+                query.protocol = QUERY_PROTOCOL_UDP;
                 query.port = announceRequest->port;
                 query.event = htonl(announceRequest->event);
                 memcpy(query.info_hash, announceRequest->info_hash, PARAM_VALUE_LENGTH);
@@ -118,7 +118,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     if (query.event == EVENT_ID_STOPPED) {
                         torrent = deletePeerPublic(torrentList, &query);
                     } else {
-                        torrent = setPeerPublic(torrentList, &query);
+                        torrent = setPeerPublic(torrentList, &query, PEER_PROTOCOL_UDP);
                     }
                     renderAnnouncePublic(sendBlock, announceBlock, torrent, &query, interval);
 
@@ -137,7 +137,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                         stats->send_pass_udp++;
                     }
 
-                    broadcast(websockets, geoip, clientAddr.sin_addr.s_addr, stats, 1);
+                    broadcast(websockets, geoip, clientAddr.sin_addr.s_addr, stats, WEBSOCKET_PROTOCOL_UDP);
                 } // аннонс
 
             } else if (block->size > scrapeRequestSize && htonl(scrapeRequest->action) == ACTION_SCRAPE) {
@@ -153,7 +153,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                 {  // scrape
                     sendBlock = resetBlock(sendBlock);
                     struct query query = {};
-                    query.udp = 1;
+                    query.protocol = QUERY_PROTOCOL_UDP;
                     query.transaction_id = scrapeRequest->transaction_id;
                     renderScrapeTorrentsPublic(sendBlock, scrapeBlock, torrentList, hashesBlock, &query);
 
