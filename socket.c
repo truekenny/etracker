@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <errno.h>
 #include "socket.h"
 #include "block.h"
 #include "string.h"
@@ -117,14 +118,31 @@ void renderHttpMessage(struct render *render) {
 }
 
 ssize_t send_(int socket, void *message, size_t size, struct stats *stats) {
-    stats->sent_bytes += size;
+    // send может принять не всё сразу и за раз доставить только часть данных
+    ssize_t result;
 
-    ssize_t result = send(socket, message, size, MSG_DONTWAIT | MSG_NOSIGNAL);
+    do {
+        result = send(socket, message, size, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-    if (result == -1) {
-        stats->send_failed++;
-    } else
-        stats->send_pass++;
+        if (result == -1) {
+            stats->send_failed++;
+            // printf("send errno:%d message:%s\n", errno, strerror(errno));
+
+            // Если ошибка не errno:35 message:Resource temporarily unavailable
+            // то повторять не стоит
+            if (errno != EAGAIN) break;
+        } else
+            stats->send_pass++;
+
+        if (result >= 0) {
+            stats->sent_bytes += result;
+
+            // Отправить надо меньше на result байт
+            size -= result;
+            // Указатель надо сместить на result байт
+            message += result;
+        }
+    } while (size != 0);
 
     return result;
 }

@@ -25,7 +25,7 @@
 
 #define THREAD_CLIENT_TCP_RECEIVED_MESSAGE_LENGTH 4000
 
-#define THREAD_CLIENT_TCP_MAX_FILE_SIZE 1000000
+#define THREAD_CLIENT_TCP_MAX_FILE_SIZE 2000000
 
 struct deleteSocketListArgs {
     struct list *socketList;
