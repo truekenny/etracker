@@ -5,6 +5,10 @@
     <title>Map</title>
 
     <style>
+        body {
+            margin: 0;
+        }
+
         .holder {
             width: 100%;
             padding-bottom: 50%;
@@ -19,7 +23,7 @@
         }
     </style>
 </head>
-<body style="margin: 0">
+<body>
 <div class="holder">
     <canvas id="map" width="360" height="180"></canvas>
 </div>
@@ -61,6 +65,10 @@
         });
     };
 
+
+    /**
+     * Занести точку во временный массив данных (картунка)
+     */
     function drawPixel(x, y, r, g, b, a) {
         let index = (x + y * canvasWidth) * 4;
 
@@ -70,6 +78,9 @@
         canvasData.data[index + 3] = a;
     }
 
+    /**
+     * Отобразить накопленные данные
+     */
     function updateCanvas() {
         ctx.putImageData(canvasData, 0, 0);
 
@@ -83,6 +94,10 @@
         }, 100);
     }
 
+    /**
+     * Поддержка постоянного подключения
+     * @param socket
+     */
     function ping(socket) {
         socket.send('p');
 
@@ -125,6 +140,15 @@
         console.log('Websocket Error ', event);
         alert('Websocket Error')
     });
+
+    // Прокрутка на 25%
+    let visibleHeight = window.innerHeight;
+    let fullHeight = document.body.clientHeight;
+    console.log({visibleHeight, fullHeight});
+    if (fullHeight > visibleHeight) {
+        console.log('scroll');
+        window.scroll(0, Math.round((fullHeight - visibleHeight) / 4));
+    }
 </script>
 </body>
 </html>
