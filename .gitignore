@@ -4,7 +4,6 @@ cmake-build-debug
 client.o.dSYM
 server.o.dSYM
 etracker.dSYM
-etracker
-web/js
-IP2LOCATION-LITE-DB5.CSV
 test.o.dSYM
+etracker
+IP2LOCATION-LITE-DB5.CSV
