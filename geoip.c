@@ -66,9 +66,9 @@ void loadGeoip(struct geoip *geoip) {
             } else if (position == GEOIP_POSITION_END_IP_GEOIP) {
                 geoip[lineNumber].endIp = atoi(cell);
             } else if (position == GEOIP_POSITION_LAT_GEOIP) {
-                geoip[lineNumber].lat = atoi(cell);
+                geoip[lineNumber].lat = atof(cell);
             } else if (position == GEOIP_POSITION_LON_GEOIP) {
-                geoip[lineNumber].lon = atoi(cell);
+                geoip[lineNumber].lon = atof(cell);
             }
 
             cell = strtok(NULL, ",\"");

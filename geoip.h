@@ -4,8 +4,8 @@
 struct geoip {
     unsigned int startIp;
     unsigned int endIp;
-    short lat;
-    short lon;
+    float lat;
+    float lon;
 };
 
 struct geoip *initGeoip();

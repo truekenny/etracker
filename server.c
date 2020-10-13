@@ -40,8 +40,6 @@ int main(int argc, char *argv[]) {
 
     struct arguments *arguments = parseArguments(argc, argv);
 
-    setLocale(arguments->locale);
-
     printf("Starting configuration:\n"
            "  port = %d\n"
            "  interval = %d\n"
@@ -94,6 +92,10 @@ int main(int argc, char *argv[]) {
 
     struct geoip *geoip = initGeoip();
     loadGeoip(geoip);
+
+    // Влияет на вывод: printf("%'s", 12.12);
+    // Влияет на atof
+    setLocale(arguments->locale);
 
     if (URI_RANDOM_DATA_INFO_HASH)
         printf("- Random data info_hash: %d\n", URI_RANDOM_DATA_INFO_HASH);

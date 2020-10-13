@@ -12,7 +12,7 @@
 #define WEBSOCKET_RETURN_CODE 13
 #define WEBSOCKET_SPACE_CODE  32
 
-#define WEBSOCKET_SIZE_FRAME 7
+#define WEBSOCKET_SIZE_FRAME 11
 
 struct broadcastArgs {
     char *data;
@@ -75,7 +75,8 @@ unsigned char broadcastCallback(struct list *list, struct item *item, void *args
     return LIST_CONTINUE_RETURN;
 }
 
-void broadcast(struct list *websockets, struct geoip *geoip, in_addr_t ip, struct stats *stats, unsigned char protocol) {
+void
+broadcast(struct list *websockets, struct geoip *geoip, in_addr_t ip, struct stats *stats, unsigned char protocol) {
     if (ip == 0) {
         // unused
     }
@@ -84,10 +85,10 @@ void broadcast(struct list *websockets, struct geoip *geoip, in_addr_t ip, struc
 
     // 0x80 - FIN
     // 0x02 - BIN
-    char data[WEBSOCKET_SIZE_FRAME] = "\x82\x05" "\x00\x00\x00\x00\x00";
-    memcpy(data + 2, &geoipSingle->lat, 2);
-    memcpy(data + 4, &geoipSingle->lon, 2);
-    memcpy(data + 6, &protocol, 1);
+    char data[WEBSOCKET_SIZE_FRAME] = "\x82" /*SIZE=*/ "\x09" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00";
+    memcpy(data + 2, &geoipSingle->lat, 4);
+    memcpy(data + 6, &geoipSingle->lon, 4);
+    memcpy(data + 10, &protocol, 1);
 
     struct broadcastArgs broadcastArgs;
     broadcastArgs.stats = stats;
