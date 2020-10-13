@@ -43,7 +43,7 @@ Example use: `./run_chroot 6969`
 
 ### Settings
 
-1. Optional *full scrape* (`data.h` `ENABLE_FULL_SCRAPE: 0 -> 1`).
+1. Optional *full scrape* (`data.h` `DATA_FULL_SCRAPE_ENABLE: 0 -> 1`).
 
 ### Statictics
 

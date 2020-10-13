@@ -5,7 +5,7 @@
 #include "block.h"
 #include "list.h"
 
-#define MAX_ALIVE_TIME 1800
+#define DATA_GARBAGE_MAX_ALIVE_TIME 1800
 
 void runGarbageCollectorL(struct block *block, struct list *torrentList);
 

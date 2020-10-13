@@ -216,13 +216,13 @@ int testSem() {
 unsigned char listCallback(struct list *list, struct item *item, void *args) {
     deleteHash(list, item->hash);
 
-    return RETURN_BREAK;
+    return LIST_BREAK_RETURN;
 }
 
 unsigned char listPrintCallback(struct list *list, struct item *item, void *args) {
     printf("f");
 
-    return RETURN_CONTINUE;
+    return LIST_CONTINUE_RETURN;
 }
 
 int testList() {
@@ -235,7 +235,7 @@ int testList() {
 */
 
     struct list *list = NULL;
-    list = initList(NULL, 2, STARTING_NEST, 2, ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
+    list = initList(NULL, 2, LIST_STARTING_NEST, 2, LIST_SEMAPHORE_ENABLE_LEAF, LITTLE_ENDIAN);
 
     // Обхожу пустой список
     mapList(list, NULL, &listPrintCallback);

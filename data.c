@@ -30,7 +30,7 @@ struct item *setTorrentL(struct list *torrentList, unsigned char *hash) {
     if (torrent->data == NULL) {
         torrent->data = c_calloc(1, sizeof(struct torrentDataL));
         ((struct torrentDataL *) torrent->data)->peerList =
-                initList(NULL, 0, STARTING_NEST, PARAM_VALUE_LENGTH, DISABLE_SEMAPHORE, BIG_ENDIAN);
+                initList(NULL, 0, LIST_STARTING_NEST, URI_PARAM_VALUE_LENGTH, LIST_SEMAPHORE_DISABLE, BIG_ENDIAN);
     }
 
     return torrent;
@@ -54,19 +54,19 @@ unsigned char renderAnnouncePeersCallback(struct list *list, struct item *peer, 
     struct peerDataL *peerDataL = peer->data;
 
     // Ищу TCP, но пир не TCP
-    if (query->protocol == QUERY_PROTOCOL_TCP && (peerDataL->protocol & PEER_PROTOCOL_TCP) == 0) {
+    if (query->protocol == URI_QUERY_PROTOCOL_TCP && (peerDataL->protocol & DATA_STRUCTURE_PEER_PROTOCOL_TCP_BIT) == 0) {
 
-        return RETURN_CONTINUE;
+        return LIST_CONTINUE_RETURN;
     }
     // Ищу UDP, но пир не UDP
-    if (query->protocol == QUERY_PROTOCOL_UDP && (peerDataL->protocol & PEER_PROTOCOL_UDP) == 0) {
+    if (query->protocol == URI_QUERY_PROTOCOL_UDP && (peerDataL->protocol & DATA_STRUCTURE_PEER_PROTOCOL_UDP_BIT) == 0) {
 
-        return RETURN_CONTINUE;
+        return LIST_CONTINUE_RETURN;
     }
 
     char ip[16] = {0};
 
-    if (query->compact || query->protocol == QUERY_PROTOCOL_UDP) {
+    if (query->compact || query->protocol == URI_QUERY_PROTOCOL_UDP) {
         addStringBlock(peerBlock, &peerDataL->ip, sizeof(int));
         addStringBlock(peerBlock, &peerDataL->port, sizeof(short));
     } else if (query->no_peer_id) {
@@ -86,10 +86,10 @@ unsigned char renderAnnouncePeersCallback(struct list *list, struct item *peer, 
                              "4:port" "i%de"
                              "7:peer id" "%d:",
                              htons(peerDataL->port),
-                             PARAM_VALUE_LENGTH
+                             URI_PARAM_VALUE_LENGTH
         );
 
-        addStringBlock(peerBlock, peer->hash, PARAM_VALUE_LENGTH);
+        addStringBlock(peerBlock, peer->hash, URI_PARAM_VALUE_LENGTH);
 
         int2ip(ip, peerDataL->ip);
         addFormatStringBlock(peerBlock, 500,
@@ -135,7 +135,7 @@ void renderAnnounceTorrentL(struct block *block, struct block *announceBlock, st
     announceBlock = resetBlock(announceBlock);
     renderAnnouncePeersL(announceBlock, peerList, query);
 
-    if (query->protocol == QUERY_PROTOCOL_UDP) {}
+    if (query->protocol == URI_QUERY_PROTOCOL_UDP) {}
     else if (query->compact) {
         addFormatStringBlock(block, 500,
                              "d"
@@ -169,7 +169,7 @@ void renderAnnounceTorrentL(struct block *block, struct block *announceBlock, st
 
     addStringBlock(block, announceBlock->data, announceBlock->size);
 
-    if (query->protocol == QUERY_PROTOCOL_TCP) {
+    if (query->protocol == URI_QUERY_PROTOCOL_TCP) {
         if (!query->compact) {
             addStringBlock(block, "e", sizeof(char));
         }
@@ -191,9 +191,9 @@ void renderAnnouncePublic(struct block *block, struct block *announceBlock, stru
     if (torrent != NULL)
         memcpy(&torrentDataL, torrent->data, sizeof(struct torrentDataL));
 
-    if (query->protocol == QUERY_PROTOCOL_UDP) {
+    if (query->protocol == URI_QUERY_PROTOCOL_UDP) {
         struct announceHeadResponse announceHeadResponse = {};
-        announceHeadResponse.action = ntohl(ACTION_ANNOUNCE);
+        announceHeadResponse.action = ntohl(SOCKET_UDP_STRUCTURE_ACTION_ANNOUNCE);
         announceHeadResponse.transaction_id = query->transaction_id;
         announceHeadResponse.interval = ntohl(interval->interval);
 
@@ -219,7 +219,7 @@ void renderScrapeTorrentL(struct block *block, struct item *torrent, unsigned ch
     if (torrent != NULL)
         memcpy(&torrentDataL, torrent->data, sizeof(struct torrentDataL));
 
-    if (protocol == QUERY_PROTOCOL_UDP) {
+    if (protocol == URI_QUERY_PROTOCOL_UDP) {
         struct scrapeTorrentResponse scrapeTorrentResponse = {};
 
         scrapeTorrentResponse.seeders = htonl(torrentDataL.complete);
@@ -230,7 +230,7 @@ void renderScrapeTorrentL(struct block *block, struct item *torrent, unsigned ch
     } else {
         addStringBlock(block, "20:", 3);
 
-        addStringBlock(block, hash, PARAM_VALUE_LENGTH);
+        addStringBlock(block, hash, URI_PARAM_VALUE_LENGTH);
 
         addFormatStringBlock(block, 1000, "d"
                                           "8:completei%de"
@@ -260,7 +260,7 @@ unsigned char renderScrapeTorrentsCallback(struct list *list, struct item *torre
     renderScrapeTorrentL(renderScrapeTorrentsCallbackL->block, torrent, torrent->hash,
                          renderScrapeTorrentsCallbackL->query->protocol);
 
-    return RETURN_CONTINUE;
+    return LIST_CONTINUE_RETURN;
 }
 
 /**
@@ -277,9 +277,9 @@ renderScrapeTorrentsPublic(struct block *block, struct block *scrapeBlock, struc
 
     _Bool protocol = query->protocol;
 
-    if (protocol == QUERY_PROTOCOL_UDP) {
+    if (protocol == URI_QUERY_PROTOCOL_UDP) {
         struct scrapeHeadResponse scrapeHeadResponse = {};
-        scrapeHeadResponse.action = htonl(ACTION_SCRAPE);
+        scrapeHeadResponse.action = htonl(SOCKET_UDP_STRUCTURE_ACTION_SCRAPE);
         scrapeHeadResponse.transaction_id = query->transaction_id;
         addStringBlock(block, &scrapeHeadResponse, sizeof(struct scrapeHeadResponse));
 
@@ -289,17 +289,17 @@ renderScrapeTorrentsPublic(struct block *block, struct block *scrapeBlock, struc
                               "d", 9);
     }
 
-    if (hashes->size == 0 && ENABLE_FULL_SCRAPE) {
+    if (hashes->size == 0 && DATA_FULL_SCRAPE_ENABLE) {
         struct renderScrapeTorrentsCallbackL renderScrapeTorrentsCallbackL = {};
         renderScrapeTorrentsCallbackL.query = query;
         renderScrapeTorrentsCallbackL.block = scrapeBlock;
         mapList(torrentList, &renderScrapeTorrentsCallbackL, &renderScrapeTorrentsCallback);
 
     } else {
-        unsigned char hash[PARAM_VALUE_LENGTH];
+        unsigned char hash[URI_PARAM_VALUE_LENGTH];
 
-        for (unsigned int index = 0; index < hashes->size / PARAM_VALUE_LENGTH; ++index) {
-            memcpy(&hash, &hashes->data[index * PARAM_VALUE_LENGTH], PARAM_VALUE_LENGTH);
+        for (unsigned int index = 0; index < hashes->size / URI_PARAM_VALUE_LENGTH; ++index) {
+            memcpy(&hash, &hashes->data[index * URI_PARAM_VALUE_LENGTH], URI_PARAM_VALUE_LENGTH);
 
             struct list *leaf = getLeaf(torrentList, hash);
             waitSemaphoreLeaf(leaf);
@@ -313,7 +313,7 @@ renderScrapeTorrentsPublic(struct block *block, struct block *scrapeBlock, struc
 
     addStringBlock(block, scrapeBlock->data, scrapeBlock->size);
 
-    if (protocol == QUERY_PROTOCOL_TCP) {
+    if (protocol == URI_QUERY_PROTOCOL_TCP) {
         addStringBlock(block, "e"
                               "e", 2);
     }
@@ -337,7 +337,7 @@ struct item *deletePeerPublic(struct list *torrentList, struct query *query) {
             struct peerDataL *peerDataL = peer->data;
 
             // Удаление из статистики
-            changeTorrentStatsL(torrent, peerDataL->event, EVENT_ID_NONE);
+            changeTorrentStatsL(torrent, peerDataL->event, URI_EVENT_ID_NONE);
 
             deleteItem(peer);
         }
@@ -358,7 +358,7 @@ struct item *setPeerPublic(struct list *torrentList, struct query *query, unsign
 
     struct list *peerList = torrentDataL->peerList;
 
-    if (torrentDataL->complete + torrentDataL->incomplete > LIMIT_PEERS_FOR_LEVEL_0
+    if (torrentDataL->complete + torrentDataL->incomplete > DATA_STRUCTURE_PEERS_FOR_LEVEL_0_LIMIT
         && peerList->level == 0) {
         peerList = reInitList(peerList, 1);
         torrentDataL->peerList = peerList;
@@ -370,7 +370,7 @@ struct item *setPeerPublic(struct list *torrentList, struct query *query, unsign
         peer->data = c_calloc(1, sizeof(struct peerDataL));
 
         // Новый пир
-        changeTorrentStatsL(torrent, EVENT_ID_NONE, query->event);
+        changeTorrentStatsL(torrent, URI_EVENT_ID_NONE, query->event);
     } else {
 
         // Уже имеющийся пир
@@ -397,27 +397,27 @@ struct item *setPeerPublic(struct list *torrentList, struct query *query, unsign
 void changeTorrentStatsL(struct item *torrent, unsigned char oldEvent, unsigned char newEvent) {
     struct torrentDataL *torrentDataL = torrent->data;
 
-    if (oldEvent == EVENT_ID_NONE) {
+    if (oldEvent == URI_EVENT_ID_NONE) {
         // Новый пир
-        if (newEvent == EVENT_ID_COMPLETED) {
+        if (newEvent == URI_EVENT_ID_COMPLETED) {
             torrentDataL->downloaded++;
             torrentDataL->complete++;
         } else {
             torrentDataL->incomplete++;
         }
-    } else if (newEvent == EVENT_ID_NONE) {
+    } else if (newEvent == URI_EVENT_ID_NONE) {
         // Удаляем пир (пир есть в базе, он был добавлен, он действительно удаляется)
-        if (oldEvent == EVENT_ID_COMPLETED) {
+        if (oldEvent == URI_EVENT_ID_COMPLETED) {
             torrentDataL->complete--;
         } else {
             torrentDataL->incomplete--;
         }
-    } else if (oldEvent != newEvent && newEvent != EVENT_ID_CONTINUE) {
+    } else if (oldEvent != newEvent && newEvent != URI_EVENT_ID_CONTINUE) {
         // Пир меняет статус
-        if (oldEvent == EVENT_ID_COMPLETED) {
+        if (oldEvent == URI_EVENT_ID_COMPLETED) {
             torrentDataL->complete--;
             torrentDataL->incomplete++;
-        } else if (newEvent == EVENT_ID_COMPLETED) {
+        } else if (newEvent == URI_EVENT_ID_COMPLETED) {
             torrentDataL->downloaded++;
             torrentDataL->complete++;
             torrentDataL->incomplete--;

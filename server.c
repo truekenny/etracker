@@ -76,12 +76,12 @@ int main(int argc, char *argv[]) {
     struct list **socketLists = c_calloc(arguments->workers, sizeof(void *));
     for (int threadNumber = 0; threadNumber < arguments->workers; threadNumber++) {
         socketLists[threadNumber] =
-                initList(NULL, 1, STARTING_NEST, sizeof(int),
-                         ENABLE_SEMAPHORE_LEAF | ENABLE_SEMAPHORE_GLOBAL, LITTLE_ENDIAN);
+                initList(NULL, 1, LIST_STARTING_NEST, sizeof(int),
+                         LIST_SEMAPHORE_ENABLE_LEAF | LIST_SEMAPHORE_ENABLE_GLOBAL, LITTLE_ENDIAN);
     }
 
-    struct list *torrentList = initList(NULL, 2, STARTING_NEST, PARAM_VALUE_LENGTH,
-                                        ENABLE_SEMAPHORE_LEAF, LITTLE_ENDIAN);
+    struct list *torrentList = initList(NULL, 2, LIST_STARTING_NEST, URI_PARAM_VALUE_LENGTH,
+                                        LIST_SEMAPHORE_ENABLE_LEAF, LITTLE_ENDIAN);
 
     struct stats *stats = c_calloc(1, sizeof(struct stats));
     stats->time = time(NULL);
@@ -89,16 +89,16 @@ int main(int argc, char *argv[]) {
 
     struct rps rps = {};
 
-    struct list *websockets = initList(NULL, 0, STARTING_NEST, sizeof(int),
-                                       ENABLE_SEMAPHORE_LEAF | ENABLE_SEMAPHORE_GLOBAL, LITTLE_ENDIAN);
+    struct list *websockets = initList(NULL, 0, LIST_STARTING_NEST, sizeof(int),
+                                       LIST_SEMAPHORE_ENABLE_LEAF | LIST_SEMAPHORE_ENABLE_GLOBAL, LITTLE_ENDIAN);
 
     struct geoip *geoip = initGeoip();
     loadGeoip(geoip);
 
-    if (RANDOM_DATA_INFO_HASH)
-        printf("- Random data info_hash: %d\n", RANDOM_DATA_INFO_HASH);
-    if (RANDOM_DATA_PEER_ID)
-        printf("- Random data peer_id: %d\n", RANDOM_DATA_PEER_ID);
+    if (URI_RANDOM_DATA_INFO_HASH)
+        printf("- Random data info_hash: %d\n", URI_RANDOM_DATA_INFO_HASH);
+    if (URI_RANDOM_DATA_PEER_ID)
+        printf("- Random data peer_id: %d\n", URI_RANDOM_DATA_PEER_ID);
 
     // Start TCP
     pthread_t tcpServerThread;

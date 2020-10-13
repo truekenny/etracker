@@ -3,11 +3,8 @@
 
 #include <stdatomic.h>
 
-#define RPS_TCP 0
-#define RPS_UDP 1
-
-#define TIME_EVEN 0
-#define TIME_ODD 1
+#define RPS_PROTOCOL_TCP 0
+#define RPS_PROTOCOL_UDP 1
 
 struct rps {
     atomic_uint even[2]; // Четный

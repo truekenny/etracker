@@ -3,42 +3,38 @@
 
 #include "block.h"
 
-#define RANDOM_DATA_INFO_HASH 0
-#define RANDOM_DATA_PEER_ID 0
+#define URI_RANDOM_DATA_INFO_HASH 0
+#define URI_RANDOM_DATA_PEER_ID   0
 
 // При добавлении или удалении
-#define EVENT_ID_NONE      0
-#define EVENT_ID_COMPLETED 1
-#define EVENT_ID_STARTED   2
-#define EVENT_ID_STOPPED   3
-#define EVENT_ID_PAUSED    4
+#define URI_EVENT_ID_NONE      0
+#define URI_EVENT_ID_COMPLETED 1
+#define URI_EVENT_ID_STARTED   2
+#define URI_EVENT_ID_STOPPED   3
+#define URI_EVENT_ID_PAUSED    4
 // Event не указан
-#define EVENT_ID_CONTINUE  5
-#define EVENT_STRING_COMPLETED "completed"
-#define EVENT_STRING_STARTED   "started"
-#define EVENT_STRING_STOPPED   "stopped"
-#define EVENT_STRING_PAUSED    "paused"
+#define URI_EVENT_ID_CONTINUE  5
+#define URI_EVENT_STRING_COMPLETED "completed"
+#define URI_EVENT_STRING_STARTED   "started"
+#define URI_EVENT_STRING_STOPPED   "stopped"
+#define URI_EVENT_STRING_PAUSED    "paused"
 // Обязательно 20, очень большая связанность
-#define PARAM_VALUE_LENGTH 20
-#define DEFAULT_NUM_WANT 50
+#define URI_PARAM_VALUE_LENGTH 20
+#define URI_DEFAULT_NUM_WANT 50
 
-#define PATH_LENGTH 200
+#define URI_PATH_LENGTH 200
 
-#define MAX_CWD 500
-#define WEB_PATH "web"
-#define SEPARATOR_PATH "/"
-
-#define QUERY_PROTOCOL_TCP 0
-#define QUERY_PROTOCOL_UDP 1
+#define URI_QUERY_PROTOCOL_TCP 0
+#define URI_QUERY_PROTOCOL_UDP 1
 
 struct query {
-    char path[PATH_LENGTH + 1];
+    char path[URI_PATH_LENGTH + 1];
     unsigned char has_info_hash;
-    unsigned char info_hash[PARAM_VALUE_LENGTH];
+    unsigned char info_hash[URI_PARAM_VALUE_LENGTH];
     unsigned char event;
     unsigned short port;
     unsigned int ip;
-    unsigned char peer_id[PARAM_VALUE_LENGTH];
+    unsigned char peer_id[URI_PARAM_VALUE_LENGTH];
     unsigned char protocol;
     _Bool compact;
     _Bool no_peer_id;

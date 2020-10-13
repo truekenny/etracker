@@ -5,7 +5,7 @@
 #include "uri.h"
 #include "interval.h"
 
-#define ENABLE_FULL_SCRAPE 0
+#define DATA_FULL_SCRAPE_ENABLE 0
 
 void renderAnnouncePublic(struct block *block, struct block *announceBlock, struct item *torrent, struct query *query, struct interval *interval);
 

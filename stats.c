@@ -112,8 +112,8 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          stats->accept_pass - stats->close_pass - stats->close_failed,
                          rlimit.rlim_cur, rlimit.rlim_max,
 
-                         getRps(rps, RPS_TCP),
-                         getRps(rps, RPS_UDP),
+                         getRps(rps, RPS_PROTOCOL_TCP),
+                         getRps(rps, RPS_PROTOCOL_UDP),
 
                          rusage.ru_maxrss,
 

@@ -17,8 +17,8 @@
 #include "math.h"
 #include "websocket.h"
 
-#define GARBAGE_SOCKET_POOL_TIME 1
-#define LITTLE_SLEEP 10
+#define THREAD_GARBAGE_GARBAGE_SOCKET_LOOP_SLEEP 1
+#define THREAD_GARBAGE_LITTLE_SLEEP 10
 
 struct garbageCollectorArgs {
     struct list *torrentList;
@@ -78,7 +78,7 @@ void *garbageCollectorArgsHandler(struct garbageCollectorArgs *args) {
     while (1) {
         // Если интервал находится в процессе изменения, то надо дождаться его окончания
         if (interval->interval != interval->requireInterval) {
-            sleep(LITTLE_SLEEP);
+            sleep(THREAD_GARBAGE_LITTLE_SLEEP);
             continue;
         }
 
@@ -89,7 +89,7 @@ void *garbageCollectorArgsHandler(struct garbageCollectorArgs *args) {
         updateInterval(block, interval);
 
         addFormatStringBlock(block, 100, "  RPS: %.2f/%.2f\n\x00",
-                             getRps(rps, RPS_TCP), getRps(rps, RPS_UDP));
+                             getRps(rps, RPS_PROTOCOL_TCP), getRps(rps, RPS_PROTOCOL_UDP));
         printf("%s", block->data);
 
         freeBlock(block);
@@ -125,7 +125,7 @@ void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stat
 unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item, void *args) {
     // unused
     if (list == NULL) {
-        exitPrint(EXIT_UNUSED_LIST, __FILE__, PRINT_ERROR_NO);
+        exitPrint(EXIT_CODE_UNUSED_LIST, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
     }
 
     struct socketData *socketData = item->data;
@@ -147,7 +147,7 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
         deleteSocketItemL(item, stats);
     }
 
-    return RETURN_CONTINUE;
+    return LIST_CONTINUE_RETURN;
 }
 
 void *garbageSocketTimeoutHandler(struct garbageSocketTimeoutArgs *_args) {
@@ -173,7 +173,7 @@ void *garbageSocketTimeoutHandler(struct garbageSocketTimeoutArgs *_args) {
             postSemaphoreLeaf(socketList);
         }
 
-        sleep(GARBAGE_SOCKET_POOL_TIME);
+        sleep(THREAD_GARBAGE_GARBAGE_SOCKET_LOOP_SLEEP);
 
         // Чтобы нормально работала подсветка кода в IDE
         if (rand() % 2 == 3) break;

@@ -3,20 +3,20 @@
 #include "alloc.h"
 #include "sem.h"
 
-#define STRICT_MEMORY 0
+#define ALLOC_STRICT_MEMORY_ENABLE 0
 
 struct rk_sema semAlloc = {0};
 
 struct c_countChanges countChanges;
 
 void c_initSem() {
-    STRICT_MEMORY && rk_sema_init(&semAlloc, 1);
+    ALLOC_STRICT_MEMORY_ENABLE && rk_sema_init(&semAlloc, 1);
 }
 
 void *c_malloc(int size) {
-    STRICT_MEMORY && rk_sema_wait(&semAlloc);
+    ALLOC_STRICT_MEMORY_ENABLE && rk_sema_wait(&semAlloc);
     countChanges.countMalloc++;
-    STRICT_MEMORY && rk_sema_post(&semAlloc);
+    ALLOC_STRICT_MEMORY_ENABLE && rk_sema_post(&semAlloc);
 
     void *result = malloc(size);
     if (result == NULL) {
@@ -27,9 +27,9 @@ void *c_malloc(int size) {
 }
 
 void *c_calloc(int count, int size) {
-    STRICT_MEMORY && rk_sema_wait(&semAlloc);
+    ALLOC_STRICT_MEMORY_ENABLE && rk_sema_wait(&semAlloc);
     countChanges.countCalloc++;
-    STRICT_MEMORY && rk_sema_post(&semAlloc);
+    ALLOC_STRICT_MEMORY_ENABLE && rk_sema_post(&semAlloc);
 
     void *result = calloc(count, size);
     if (result == NULL) {
@@ -40,9 +40,9 @@ void *c_calloc(int count, int size) {
 }
 
 void c_free(void *pointer) {
-    STRICT_MEMORY && rk_sema_wait(&semAlloc);
+    ALLOC_STRICT_MEMORY_ENABLE && rk_sema_wait(&semAlloc);
     countChanges.countFree++;
-    STRICT_MEMORY && rk_sema_post(&semAlloc);
+    ALLOC_STRICT_MEMORY_ENABLE && rk_sema_post(&semAlloc);
 
     free(pointer);
 }

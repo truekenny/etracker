@@ -5,14 +5,14 @@
 #include "sem.h"
 #include "block.h"
 
-#define STARTING_NEST 0
+#define LIST_STARTING_NEST 0
 
-#define DISABLE_SEMAPHORE 0u
-#define ENABLE_SEMAPHORE_LEAF    0b1u
-#define ENABLE_SEMAPHORE_GLOBAL 0b10u
+#define LIST_SEMAPHORE_DISABLE 0u
+#define LIST_SEMAPHORE_ENABLE_LEAF    0b1u
+#define LIST_SEMAPHORE_ENABLE_GLOBAL 0b10u
 
-#define RETURN_CONTINUE 0
-#define RETURN_BREAK    1
+#define LIST_CONTINUE_RETURN 0
+#define LIST_BREAK_RETURN    1
 
 // По первым байтам
 // #define LITTLE_ENDIAN 0

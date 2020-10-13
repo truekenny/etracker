@@ -5,19 +5,19 @@
 #include "exit_code.h"
 #include "alloc.h"
 
-#define GEOIP_LINES 2912124
-#define POSITION_START_IP_GEOIP 1
-#define POSITION_END_IP_GEOIP 2
-#define POSITION_LAT_GEOIP 7
-#define POSITION_LON_GEOIP 8
+#define GEOIP_FILE_LINES 2912124
+#define GEOIP_POSITION_START_IP_GEOIP 1
+#define GEOIP_POSITION_END_IP_GEOIP   2
+#define GEOIP_POSITION_LAT_GEOIP      7
+#define GEOIP_POSITION_LON_GEOIP      8
 
 #define GEOIP_FILE "IP2LOCATION-LITE-DB5.CSV"
 
 struct geoip *initGeoip() {
-    struct geoip *geoip = c_calloc(GEOIP_LINES, sizeof(struct geoip));
+    struct geoip *geoip = c_calloc(GEOIP_FILE_LINES, sizeof(struct geoip));
 
     if (geoip == NULL)
-        exitPrint(EXIT_GEOIP_MEMORY, __FILE__, PRINT_ERROR_YES);
+        exitPrint(EXIT_CODE_GEOIP_MEMORY, __FILE__, EXIT_CODE_PRINT_ERROR_YES);
 
     return geoip;
 }
@@ -43,7 +43,7 @@ void loadGeoip(struct geoip *geoip) {
         }
     }
 
-    printf("Loading locations\n");
+    printf("Loading locations…\n");
 
     unsigned int startIp = 0;
 
@@ -56,18 +56,18 @@ void loadGeoip(struct geoip *geoip) {
         while (cell != NULL) {
             position++;
             // printf("+%s\n", cell);
-            if (position == POSITION_START_IP_GEOIP) {
+            if (position == GEOIP_POSITION_START_IP_GEOIP) {
                 geoip[lineNumber].startIp = atoi(cell);
 
                 if (startIp > geoip[lineNumber].startIp)
-                    exitPrint(EXIT_GEOIP_WRONG_DATA, __FILE__, PRINT_ERROR_NO);
+                    exitPrint(EXIT_CODE_GEOIP_WRONG_DATA, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
 
                 startIp = geoip[lineNumber].startIp;
-            } else if (position == POSITION_END_IP_GEOIP) {
+            } else if (position == GEOIP_POSITION_END_IP_GEOIP) {
                 geoip[lineNumber].endIp = atoi(cell);
-            } else if (position == POSITION_LAT_GEOIP) {
+            } else if (position == GEOIP_POSITION_LAT_GEOIP) {
                 geoip[lineNumber].lat = atoi(cell);
-            } else if (position == POSITION_LON_GEOIP) {
+            } else if (position == GEOIP_POSITION_LON_GEOIP) {
                 geoip[lineNumber].lon = atoi(cell);
             }
 
@@ -80,7 +80,7 @@ void loadGeoip(struct geoip *geoip) {
     fclose(file);
     if (line)
         free(line);
-    printf("Loading complete\n");
+    printf("Loading locations finished.\n");
 }
 
 struct geoip *findGeoip(struct geoip *geoip, unsigned int ip) {
@@ -88,7 +88,7 @@ struct geoip *findGeoip(struct geoip *geoip, unsigned int ip) {
         return geoip;
 
     unsigned long long delimiter = 2;
-    unsigned int index = GEOIP_LINES / delimiter;
+    unsigned int index = GEOIP_FILE_LINES / delimiter;
     unsigned int newIndex;
 
     struct geoip *middle = &geoip[index];
@@ -98,7 +98,7 @@ struct geoip *findGeoip(struct geoip *geoip, unsigned int ip) {
         newIndex = index;
 
         if (middle->startIp > ip) {
-            newIndex -= GEOIP_LINES / delimiter;
+            newIndex -= GEOIP_FILE_LINES / delimiter;
             if (index != newIndex)
                 index = newIndex;
             else {
@@ -106,7 +106,7 @@ struct geoip *findGeoip(struct geoip *geoip, unsigned int ip) {
                 // printf("-\n");
             }
         } else {
-            newIndex += GEOIP_LINES / delimiter;
+            newIndex += GEOIP_FILE_LINES / delimiter;
             if (index != newIndex)
                 index = newIndex;
             else {

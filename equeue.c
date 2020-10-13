@@ -4,7 +4,7 @@
 #include <sys/time.h>
 
 // 0.05 секунды (здесь не может быть >= 1 секунда)
-#define WAIT_TIMEOUT 50
+#define EQUEUE_WAIT_TIMEOUT_MS 50
 
 int initEqueue() {
 #ifdef __APPLE__
@@ -53,11 +53,11 @@ int checkEqueue(int equeue, struct Eevent *eevent) {
 #ifdef __APPLE__
     struct timespec timespec;
     timespec.tv_sec = 0;
-    timespec.tv_nsec = WAIT_TIMEOUT * 1000000;
+    timespec.tv_nsec = EQUEUE_WAIT_TIMEOUT_MS * 1000000;
 
-    return kevent(equeue, NULL, 0, eevent->evList, EVENTS_EACH_LOOP, &timespec);
+    return kevent(equeue, NULL, 0, eevent->evList, EQUEUE_EVENTS_EACH_LOOP, &timespec);
 #else
-    return epoll_wait(equeue, eevent->evList, EVENTS_EACH_LOOP, WAIT_TIMEOUT);
+    return epoll_wait(equeue, eevent->evList, EQUEUE_EVENTS_EACH_LOOP, EQUEUE_WAIT_TIMEOUT_MS);
 #endif
 }
 

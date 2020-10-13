@@ -24,9 +24,9 @@ void updateInterval(struct block *block, struct interval *interval) {
     unsigned int localInterval = interval->requireInterval;
 
     if (load[0] < maxAllowLoadAverage && load[1] < maxAllowLoadAverage && load[2] < maxAllowLoadAverage)
-        localInterval -= STEP_INTERVAL;
+        localInterval -= INTERVAL_STEP_S;
     else if (load[0] > maxAllowLoadAverage && load[1] > maxAllowLoadAverage && load[2] > maxAllowLoadAverage)
-        localInterval += STEP_INTERVAL;
+        localInterval += INTERVAL_STEP_S;
 
     localInterval = niceInterval(interval, localInterval);
 
@@ -60,7 +60,7 @@ unsigned int stepInterval(struct interval *interval) {
     else if (interval->interval > interval->requireInterval)
         interval->interval--;
 
-    return max(round((double) interval->previousInterval / STEP_INTERVAL), 1u);
+    return max(round((double) interval->previousInterval / INTERVAL_STEP_S), 1u);
 }
 
 /**

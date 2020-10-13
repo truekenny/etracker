@@ -5,8 +5,8 @@
 #include "alloc.h"
 #include "exit_code.h"
 
-#define LIMIT_LEVEL 2
-#define DEC_BYTE 256
+#define LIST_LIMIT_LEVEL 2
+#define LIST_BYTE_SIZE 256
 
 unsigned char reInitListCallback(struct list *list, struct item *item, void *args) {
     if (list == NULL) {
@@ -23,12 +23,12 @@ unsigned char reInitListCallback(struct list *list, struct item *item, void *arg
     item->data = NULL;
     deleteItem(item);
 
-    return RETURN_CONTINUE;
+    return LIST_CONTINUE_RETURN;
 }
 
 struct list *reInitList(struct list *list, unsigned char level) {
     struct list *resultList =
-            initList(NULL, level, STARTING_NEST, list->hashLength, list->semaphoreEnabled, list->endianness);
+            initList(NULL, level, LIST_STARTING_NEST, list->hashLength, list->semaphoreEnabled, list->endianness);
 
     mapList(list, resultList, &reInitListCallback);
     freeList(list, 1);
@@ -39,15 +39,15 @@ struct list *reInitList(struct list *list, unsigned char level) {
 struct list *initList(struct list *list, unsigned char level, unsigned char nest, unsigned char hashLength,
                       unsigned char semaphoreEnabled, unsigned short endianness) {
 
-    if (level > LIMIT_LEVEL) {
-        printf("Level limit = %d, current = %d\n", LIMIT_LEVEL, level);
-        exitPrint(EXIT_LIST_WRONG_LIMIT, __FILE__, PRINT_ERROR_NO);
+    if (level > LIST_LIMIT_LEVEL) {
+        printf("Level limit = %d, current = %d\n", LIST_LIMIT_LEVEL, level);
+        exitPrint(EXIT_CODE_LIST_WRONG_LIMIT, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
     }
 
     if (level > hashLength) {
-        printf("level = %d > hashLength = %d – failure\n", LIMIT_LEVEL, hashLength);
+        printf("level = %d > hashLength = %d – failure\n", LIST_LIMIT_LEVEL, hashLength);
 
-        exitPrint(EXIT_LIST_WRONG_HASH_LENGTH, __FILE__, PRINT_ERROR_NO);
+        exitPrint(EXIT_CODE_LIST_WRONG_HASH_LENGTH, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
     }
 
     if (list == NULL)
@@ -59,17 +59,17 @@ struct list *initList(struct list *list, unsigned char level, unsigned char nest
     list->endianness = endianness;
 
     if (level > 0) {
-        list->list = c_calloc(DEC_BYTE, sizeof(struct list));
+        list->list = c_calloc(LIST_BYTE_SIZE, sizeof(struct list));
 
-        for (int index = 0; index < DEC_BYTE; ++index) {
+        for (int index = 0; index < LIST_BYTE_SIZE; ++index) {
             initList(&list->list[index], level - 1, nest + 1, hashLength,
                      semaphoreEnabled, endianness);
         }
     }
 
     if (
-            (level == 0 && list->semaphoreEnabled & ENABLE_SEMAPHORE_LEAF)
-            || (nest == STARTING_NEST && list->semaphoreEnabled & ENABLE_SEMAPHORE_GLOBAL)
+            (level == 0 && list->semaphoreEnabled & LIST_SEMAPHORE_ENABLE_LEAF)
+            || (nest == LIST_STARTING_NEST && list->semaphoreEnabled & LIST_SEMAPHORE_ENABLE_GLOBAL)
             ) {
         list->semaphore = c_calloc(1, sizeof(struct rk_sema));
         rk_sema_init(list->semaphore, 1);
@@ -82,13 +82,13 @@ void freeList(struct list *list, unsigned char firstRecursion) {
     if (list->firstItem != NULL) {
         printf("List not empty\n");
 
-        exitPrint(EXIT_LIST_NOT_EMPTY, __FILE__, PRINT_ERROR_NO);
+        exitPrint(EXIT_CODE_LIST_NOT_EMPTY, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
     }
 
     unsigned char level = list->level;
 
     if (level > 0) {
-        for (int index = 0; index < DEC_BYTE; ++index) {
+        for (int index = 0; index < LIST_BYTE_SIZE; ++index) {
             freeList(&list->list[index], 0);
         }
 
@@ -96,8 +96,8 @@ void freeList(struct list *list, unsigned char firstRecursion) {
     }
 
     if (
-            (level == 0 && list->semaphoreEnabled & ENABLE_SEMAPHORE_LEAF)
-            || (firstRecursion && list->semaphoreEnabled & ENABLE_SEMAPHORE_GLOBAL)
+            (level == 0 && list->semaphoreEnabled & LIST_SEMAPHORE_ENABLE_LEAF)
+            || (firstRecursion && list->semaphoreEnabled & LIST_SEMAPHORE_ENABLE_GLOBAL)
             ) {
         rk_sema_destroy(list->semaphore);
         c_free(list->semaphore);
@@ -113,11 +113,11 @@ unsigned char mapList(struct list *list, void *args,
         return 0;
 
     if (list->level > 0) {
-        for (int index = 0; index < DEC_BYTE; ++index) {
+        for (int index = 0; index < LIST_BYTE_SIZE; ++index) {
             unsigned char test = mapList(&list->list[index], args, callback);
 
-            if (test == RETURN_BREAK)
-                return RETURN_BREAK;
+            if (test == LIST_BREAK_RETURN)
+                return LIST_BREAK_RETURN;
         }
     } else {
         if (list->firstItem) {
@@ -129,10 +129,10 @@ unsigned char mapList(struct list *list, void *args,
                 struct item *nextItem = currentItem->nextInLeaf;
                 unsigned char test = (*callback)(list, currentItem, args);
 
-                if (test == RETURN_BREAK) {
+                if (test == LIST_BREAK_RETURN) {
                     postSemaphoreLeaf(list);
 
-                    return RETURN_BREAK;
+                    return LIST_BREAK_RETURN;
                 }
 
                 currentItem = nextItem;
@@ -157,7 +157,7 @@ void printList(struct list *list, unsigned char nest, struct block *block, _Bool
     }
 
     if (list->level > 0) {
-        for (int index = 0; index < DEC_BYTE; ++index) {
+        for (int index = 0; index < LIST_BYTE_SIZE; ++index) {
             printList(&list->list[index], nest + 1, block, print);
         }
     } else {

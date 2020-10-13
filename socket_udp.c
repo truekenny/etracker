@@ -19,28 +19,27 @@
 #include "geoip.h"
 
 // Размер заголовка пакета scrape + 74 x info_hash (по протоколу это максимальное кол-во)
-#define RECEIVED_UDP_MESSAGE_LENGTH 1496
-#define MSG_CONFIRM_ 0
+#define SOCKET_UDP_RECEIVED_UDP_MESSAGE_LENGTH 1496
 
 void checkSize() {
     if (sizeof(struct connectRequest) != 16) {
-        exitPrint(EXIT_SIZE_CONNECT_REQUEST, __FILE__, PRINT_ERROR_NO);
+        exitPrint(EXIT_CODE_SIZE_CONNECT_REQUEST, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
     }
 
     if (sizeof(struct connectResponse) != 16) {
-        exitPrint(EXIT_SIZE_CONNECT_RESPONSE, __FILE__, PRINT_ERROR_NO);
+        exitPrint(EXIT_CODE_SIZE_CONNECT_RESPONSE, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
     }
 
     if (sizeof(struct announceRequest) != 98) {
-        exitPrint(EXIT_SIZE_ANNOUNCE_REQUEST, __FILE__, PRINT_ERROR_NO);
+        exitPrint(EXIT_CODE_SIZE_ANNOUNCE_REQUEST, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
     }
 
     if (sizeof(struct announceHeadResponse) != 20) {
-        exitPrint(EXIT_SIZE_ANNOUNCE_HEAD_RESPONSE, __FILE__, PRINT_ERROR_NO);
+        exitPrint(EXIT_CODE_SIZE_ANNOUNCE_HEAD_RESPONSE, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
     }
 
     if (sizeof(struct announcePeerResponse) != 6) {
-        exitPrint(EXIT_SIZE_ANNOUNCE_PEER_RESPONSE, __FILE__, PRINT_ERROR_NO);
+        exitPrint(EXIT_CODE_SIZE_ANNOUNCE_PEER_RESPONSE, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
     }
 }
 
@@ -70,12 +69,12 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
     c_free(args);
 
     int serverSocket;
-    char receivedMessage[RECEIVED_UDP_MESSAGE_LENGTH + 1];
+    char receivedMessage[SOCKET_UDP_RECEIVED_UDP_MESSAGE_LENGTH + 1];
     struct sockaddr_in serverAddr, clientAddr;
 
     // Creating socket file descriptor
     if ((serverSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        exitPrint(EXIT_SOCKET_UDP_CREATE, __FILE__, PRINT_ERROR_YES);
+        exitPrint(EXIT_CODE_SOCKET_UDP_CREATE, __FILE__, EXIT_CODE_PRINT_ERROR_YES);
     }
 
     memset(&serverAddr, 0, sizeof(serverAddr));
@@ -88,7 +87,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
 
     // Bind the socket with the server address
     if (bind(serverSocket, (const struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
-        exitPrint(EXIT_BIND_UDP, __FILE__, PRINT_ERROR_YES);
+        exitPrint(EXIT_CODE_BIND_UDP, __FILE__, EXIT_CODE_PRINT_ERROR_YES);
     }
 
     // Starting Workers
@@ -117,7 +116,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
         // Поток
         pthread_t udpClientThread;
         if (pthread_create(&udpClientThread, NULL, (void *(*)(void *)) clientUdpHandler, clientUdpArgs) != 0) {
-            exitPrint(EXIT_UDP_CLIENT_THREAD, __FILE__, PRINT_ERROR_YES);
+            exitPrint(EXIT_CODE_UDP_CLIENT_THREAD, __FILE__, EXIT_CODE_PRINT_ERROR_YES);
         }
     }
 
@@ -129,7 +128,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
     unsigned long receiveCount = 0;
 
     while (1) {
-        receivedSize = recvfrom(serverSocket, (char *) receivedMessage, RECEIVED_UDP_MESSAGE_LENGTH,
+        receivedSize = recvfrom(serverSocket, (char *) receivedMessage, SOCKET_UDP_RECEIVED_UDP_MESSAGE_LENGTH,
                                 MSG_WAITALL, (struct sockaddr *) &clientAddr,
                                 (socklen_t *) &sockAddrSize);
 
@@ -147,7 +146,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
             continue;
         }
 
-        updateRps(rps, RPS_UDP);
+        updateRps(rps, RPS_PROTOCOL_UDP);
         stats->recv_pass_udp++;
         stats->recv_bytes_udp += receivedSize;
 
@@ -171,7 +170,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
         if (rand() % 2 == 3) break;
     } // while recv
 
-    exitPrint(EXIT_SOCKET_UDP_END, __FILE__, PRINT_ERROR_NO);
+    exitPrint(EXIT_CODE_SOCKET_UDP_END, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
 
     return NULL;
 }

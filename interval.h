@@ -4,7 +4,7 @@
 #include <stdatomic.h>
 #include "block.h"
 
-#define STEP_INTERVAL 60
+#define INTERVAL_STEP_S 60
 
 struct interval {
     _Atomic(unsigned int) interval;

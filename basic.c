@@ -8,7 +8,7 @@
 #include "base64.h"
 #include "time.h"
 
-#define PASSWORD_LENGTH 20
+#define BASIC_PASSWORD_LENGTH 20
 
 _Bool hasBasic(char *buffer, char *search) {
     return strstr(buffer, search) != NULL;
@@ -46,7 +46,7 @@ struct block *randomString(unsigned char size) {
 }
 
 void getAuthorizationHeader(struct block *authorizationHeader) {
-    struct block *password = randomString(PASSWORD_LENGTH);
+    struct block *password = randomString(BASIC_PASSWORD_LENGTH);
     printf("Password: %.*s\n", password->size, password->data);
     struct block *base64_input = initBlock();
     addStringBlock(base64_input, "etracker:", 9);

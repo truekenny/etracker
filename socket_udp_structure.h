@@ -3,12 +3,12 @@
 
 #include "uri.h"
 
-#define ACTION_CONNECT  0
-#define ACTION_ANNOUNCE 1
-#define ACTION_SCRAPE   2
-#define ACTION_ERROR    3
+#define SOCKET_UDP_STRUCTURE_ACTION_CONNECT  0
+#define SOCKET_UDP_STRUCTURE_ACTION_ANNOUNCE 1
+#define SOCKET_UDP_STRUCTURE_ACTION_SCRAPE   2
+#define SOCKET_UDP_STRUCTURE_ACTION_ERROR    3
 
-#define PROTOCOL_ID 0x8019102717040000
+#define SOCKET_UDP_STRUCTURE_PROTOCOL_ID 0x8019102717040000
 
 /*
 0       64-bit integer  protocol_id     0x41727101980 // magic constant
@@ -57,8 +57,8 @@ struct announceRequest {
     unsigned long connection_id;
     unsigned int action;
     unsigned int transaction_id;
-    unsigned char info_hash[PARAM_VALUE_LENGTH];
-    unsigned char peer_id[PARAM_VALUE_LENGTH];
+    unsigned char info_hash[URI_PARAM_VALUE_LENGTH];
+    unsigned char peer_id[URI_PARAM_VALUE_LENGTH];
     unsigned long downloaded;
     unsigned long left;
     unsigned long uploaded;

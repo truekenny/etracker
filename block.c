@@ -8,11 +8,11 @@
 #include "math.h"
 
 // Начальный размер памяти
-#define START_ALLOCATE_SIZE 2000
+#define BLOCK_START_ALLOCATE_SIZE 2000
 // Минимальный размер оставшейся свободной памяти (если выделяеься точный предел)
-#define MIN_FREE_ALLOCATE_SIZE 2000
+#define BLOCK_MIN_FREE_ALLOCATE_SIZE 2000
 // Каждый раз расширяю память минимум в два раза
-#define MIN_RE_ALLOC_MULTIPLY 2
+#define BLOCK_MIN_RE_ALLOC_MULTIPLY 2
 
 void reAllocBlock(struct block *block, unsigned int requiredSpace);
 
@@ -20,8 +20,8 @@ void checkSizeBlock(struct block *block);
 
 struct block *initBlock() {
     struct block *block = c_calloc(1, sizeof(struct block));
-    block->data = c_malloc(START_ALLOCATE_SIZE * sizeof(char));
-    block->allocated = START_ALLOCATE_SIZE;
+    block->data = c_malloc(BLOCK_START_ALLOCATE_SIZE * sizeof(char));
+    block->allocated = BLOCK_START_ALLOCATE_SIZE;
     block->data[0] = 0;
 
     return block;
@@ -111,8 +111,8 @@ void reAllocBlock(struct block *block, unsigned int requiredSpace) {
 
     // Новый размер выделенной памяти
     unsigned int newAlloc = max(
-            block->allocated + requiredSpace + MIN_FREE_ALLOCATE_SIZE,
-            block->allocated * MIN_RE_ALLOC_MULTIPLY);
+            block->allocated + requiredSpace + BLOCK_MIN_FREE_ALLOCATE_SIZE,
+            block->allocated * BLOCK_MIN_RE_ALLOC_MULTIPLY);
 
     if (newAlloc) {
         block->data = c_realloc(block->data, newAlloc);

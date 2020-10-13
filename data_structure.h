@@ -4,10 +4,10 @@
 #include "sem.h"
 
 // Максимальное кол-во пиров, на структуру peerList с level=0
-#define LIMIT_PEERS_FOR_LEVEL_0 256
+#define DATA_STRUCTURE_PEERS_FOR_LEVEL_0_LIMIT 256
 
-#define PEER_PROTOCOL_TCP 0b1u
-#define PEER_PROTOCOL_UDP 0b10u
+#define DATA_STRUCTURE_PEER_PROTOCOL_TCP_BIT 0b1u
+#define DATA_STRUCTURE_PEER_PROTOCOL_UDP_BIT 0b10u
 
 struct peerDataL {
     long updateTime;

@@ -23,13 +23,9 @@
 #include "math.h"
 #include "websocket.h"
 
-/*
- * Если включить, это влияет очень сильно на CPU
- * Возможно из-за роста sockPool
- */
-#define RECEIVED_MESSAGE_LENGTH 4000
+#define THREAD_CLIENT_TCP_RECEIVED_MESSAGE_LENGTH 4000
 
-#define MAX_FILE_SIZE 1000000
+#define THREAD_CLIENT_TCP_MAX_FILE_SIZE 1000000
 
 struct deleteSocketListArgs {
     struct list *socketList;
@@ -52,7 +48,7 @@ unsigned char deleteSocketListCallback(struct list *list, struct item *item, voi
 
     deleteWebsocket(websockets, socket);
 
-    return RETURN_CONTINUE;
+    return LIST_CONTINUE_RETURN;
 }
 
 void processRead(struct clientTcpArgs *args, int currentSocket, struct list *deleteSocketList,
@@ -77,12 +73,12 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     unsigned char *pCurrentSocket = (unsigned char *) &currentSocket;
 
     // Read from socket.
-    char readBuffer[RECEIVED_MESSAGE_LENGTH + 1];
+    char readBuffer[THREAD_CLIENT_TCP_RECEIVED_MESSAGE_LENGTH + 1];
     memset(readBuffer, 0, sizeof(readBuffer));
-    ssize_t readSize = recv(currentSocket, readBuffer, RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL | MSG_PEEK);
+    ssize_t readSize = recv(currentSocket, readBuffer, THREAD_CLIENT_TCP_RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL | MSG_PEEK);
 
     // Запрос превышает лимит, прерываю такие сокеты
-    if (readSize >= RECEIVED_MESSAGE_LENGTH) {
+    if (readSize >= THREAD_CLIENT_TCP_RECEIVED_MESSAGE_LENGTH) {
         dataBlock = resetBlock(dataBlock);
         struct render render = {dataBlock, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats};
         renderHttpMessage(&render);
@@ -121,7 +117,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         return;
     }
 
-    updateRps(rps, RPS_TCP);
+    updateRps(rps, RPS_PROTOCOL_TCP);
 
     updateSocketL(socketList, currentSocket, equeue, 0);
 
@@ -181,8 +177,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             socklen_t socklen = sizeof(peer);
             getpeername(currentSocket, (struct sockaddr *) &peer, &socklen); // client
             query.ip = peer.sin_addr.s_addr;
-            query.numwant = DEFAULT_NUM_WANT;
-            query.event = EVENT_ID_STARTED;
+            query.numwant = URI_DEFAULT_NUM_WANT;
+            query.event = URI_EVENT_ID_STARTED;
             query.threadNumber = threadNumber;
 
             parseUri(&query, NULL, readBuffer);
@@ -206,10 +202,10 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
 
 
                 struct item *torrent;
-                if (query.event == EVENT_ID_STOPPED) {
+                if (query.event == URI_EVENT_ID_STOPPED) {
                     torrent = deletePeerPublic(torrentList, &query);
                 } else {
-                    torrent = setPeerPublic(torrentList, &query, PEER_PROTOCOL_TCP);
+                    torrent = setPeerPublic(torrentList, &query, DATA_STRUCTURE_PEER_PROTOCOL_TCP_BIT);
                 }
 
                 renderAnnouncePublic(dataBlock, announceBlock, torrent, &query, interval);
@@ -318,7 +314,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             dataBlock = resetBlock(dataBlock);
             parseUri(&query, hashesBlock, readBuffer);
 
-            if (!hashesBlock->size && !ENABLE_FULL_SCRAPE) {
+            if (!hashesBlock->size && !DATA_FULL_SCRAPE_ENABLE) {
                 struct render render = {sendBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
                                         *socketTimeout, stats};
                 renderHttpMessage(&render);
@@ -354,7 +350,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                     // Это обычный файл
                     if (S_ISREG(statFile.st_mode)) {
                         // Размер не больше предельного значения
-                        if (statFile.st_size < MAX_FILE_SIZE) {
+                        if (statFile.st_size < THREAD_CLIENT_TCP_MAX_FILE_SIZE) {
                             if (endsWith(".ico", absolute))
                                 typeFile = typeIco;
                             else if (endsWith(".png", absolute))
@@ -437,7 +433,7 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
     struct list *websockets = args->websockets;
 
     struct Eevent eevent;
-    struct list *deleteSocketList = initList(NULL, 0, STARTING_NEST, sizeof(int), DISABLE_SEMAPHORE, LITTLE_ENDIAN);
+    struct list *deleteSocketList = initList(NULL, 0, LIST_STARTING_NEST, sizeof(int), LIST_SEMAPHORE_DISABLE, LITTLE_ENDIAN);
     struct deleteSocketListArgs deleteSocketListArgs;
     deleteSocketListArgs.socketList = socketList;
     deleteSocketListArgs.stats = stats;

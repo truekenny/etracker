@@ -4,9 +4,9 @@
 #include <arpa/inet.h>
 #include "uri.h"
 
-#define URI_PATH 0
-#define QUERY_PARAM 1
-#define QUERY_VALUE 2
+#define URI_STATUS_PATH  0
+#define URI_STATUS_PARAM 1
+#define URI_STATUS_VALUE 2
 
 void getParam(struct query *query, struct block *block, char *param, char *value);
 
@@ -15,9 +15,9 @@ void getParam(struct query *query, struct block *block, char *param, char *value
  * @param message
  */
 void parseUri(struct query *query, struct block *block, char *message) {
-    char param[PARAM_VALUE_LENGTH + 1] = {0};
-    char value[PARAM_VALUE_LENGTH + 1] = {0};
-    int status = URI_PATH;
+    char param[URI_PARAM_VALUE_LENGTH + 1] = {0};
+    char value[URI_PARAM_VALUE_LENGTH + 1] = {0};
+    int status = URI_STATUS_PATH;
     size_t len;
     short percent = 0;
     char percentChars[3] = {0};
@@ -29,36 +29,36 @@ void parseUri(struct query *query, struct block *block, char *message) {
             break;
         }
 
-        if (status == URI_PATH) {
+        if (status == URI_STATUS_PATH) {
             if (current == '?') {
-                status = QUERY_PARAM;
+                status = URI_STATUS_PARAM;
 
                 continue;
             }
-            if ((len = strlen(query->path)) < PATH_LENGTH) {
+            if ((len = strlen(query->path)) < URI_PATH_LENGTH) {
                 if(len != 0 || current != '/')
                     query->path[len] = current;
             }
             continue;
         }
         if (current == '=') {
-            memset(&value, 0, PARAM_VALUE_LENGTH);
-            status = QUERY_VALUE;
+            memset(&value, 0, URI_PARAM_VALUE_LENGTH);
+            status = URI_STATUS_VALUE;
             len = 0;
             continue;
         }
         if (current == '&') {
             getParam(query, block, &param[0], &value[0]);
 
-            memset(&param, 0, PARAM_VALUE_LENGTH);
-            status = QUERY_PARAM;
+            memset(&param, 0, URI_PARAM_VALUE_LENGTH);
+            status = URI_STATUS_PARAM;
 
             continue;
         }
-        if (status == QUERY_PARAM && (len = strlen(param)) < PARAM_VALUE_LENGTH) {
+        if (status == URI_STATUS_PARAM && (len = strlen(param)) < URI_PARAM_VALUE_LENGTH) {
             param[len] = current;
         }
-        if (status == QUERY_VALUE && len < PARAM_VALUE_LENGTH) {
+        if (status == URI_STATUS_VALUE && len < URI_PARAM_VALUE_LENGTH) {
             if (current == '%') {
                 percent = 1;
                 continue;
@@ -90,11 +90,11 @@ void parseUri(struct query *query, struct block *block, char *message) {
  */
 void getParam(struct query *query, struct block *block, char *param, char *value) {
     if (!strcmp(param, "info_hash")) {
-        memcpy(query->info_hash, value, PARAM_VALUE_LENGTH);
+        memcpy(query->info_hash, value, URI_PARAM_VALUE_LENGTH);
         query->has_info_hash = 1;
 
         // Random peers
-        if (RANDOM_DATA_INFO_HASH) {
+        if (URI_RANDOM_DATA_INFO_HASH) {
             query->info_hash[0] = (rand() % 256);
             query->info_hash[1] = (rand() % 256);
             query->info_hash[2] = (rand() % 256);
@@ -102,32 +102,32 @@ void getParam(struct query *query, struct block *block, char *param, char *value
         }
 
         if (block != NULL) {
-            addStringBlock(block, query->info_hash, PARAM_VALUE_LENGTH);
+            addStringBlock(block, query->info_hash, URI_PARAM_VALUE_LENGTH);
         }
 
     } else if (!strcmp(param, "event")) {
-        if (!strcmp(value, EVENT_STRING_COMPLETED)) {
-            query->event = EVENT_ID_COMPLETED;
-        } else if (!strcmp(value, EVENT_STRING_STARTED)) {
-            query->event = EVENT_ID_STARTED;
-        } else if (!strcmp(value, EVENT_STRING_STOPPED)) {
-            query->event = EVENT_ID_STOPPED;
-        } else if (!strcmp(value, EVENT_STRING_PAUSED)) {
-            query->event = EVENT_ID_PAUSED;
+        if (!strcmp(value, URI_EVENT_STRING_COMPLETED)) {
+            query->event = URI_EVENT_ID_COMPLETED;
+        } else if (!strcmp(value, URI_EVENT_STRING_STARTED)) {
+            query->event = URI_EVENT_ID_STARTED;
+        } else if (!strcmp(value, URI_EVENT_STRING_STOPPED)) {
+            query->event = URI_EVENT_ID_STOPPED;
+        } else if (!strcmp(value, URI_EVENT_STRING_PAUSED)) {
+            query->event = URI_EVENT_ID_PAUSED;
         } else {
-            query->event = EVENT_ID_CONTINUE;
+            query->event = URI_EVENT_ID_CONTINUE;
         }
     } else if (!strcmp(param, "port")) {
         query->port = htons(atoi(value));
     } else if (!strcmp(param, "peer_id")) {
-        memcpy(query->peer_id, value, PARAM_VALUE_LENGTH);
+        memcpy(query->peer_id, value, URI_PARAM_VALUE_LENGTH);
 
         // Random peers
-        if (RANDOM_DATA_PEER_ID) {
-            query->peer_id[PARAM_VALUE_LENGTH - 1] = (rand() % 256);
-            query->peer_id[PARAM_VALUE_LENGTH - 2] = (rand() % 256);
-            query->peer_id[PARAM_VALUE_LENGTH - 3] = (rand() % 256);
-            query->peer_id[PARAM_VALUE_LENGTH - 4] = (rand() % 256);
+        if (URI_RANDOM_DATA_PEER_ID) {
+            query->peer_id[URI_PARAM_VALUE_LENGTH - 1] = (rand() % 256);
+            query->peer_id[URI_PARAM_VALUE_LENGTH - 2] = (rand() % 256);
+            query->peer_id[URI_PARAM_VALUE_LENGTH - 3] = (rand() % 256);
+            query->peer_id[URI_PARAM_VALUE_LENGTH - 4] = (rand() % 256);
         }
 
     } else if (!strcmp(param, "compact")) {

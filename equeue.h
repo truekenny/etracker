@@ -1,7 +1,7 @@
 #ifndef SC6_EQUEUE_H
 #define SC6_EQUEUE_H
 
-#define EVENTS_EACH_LOOP 32
+#define EQUEUE_EVENTS_EACH_LOOP 32
 
 #ifdef __APPLE__
 
@@ -13,9 +13,9 @@
 
 struct Eevent {
 #ifdef __APPLE__
-    struct kevent evList[EVENTS_EACH_LOOP];
+    struct kevent evList[EQUEUE_EVENTS_EACH_LOOP];
 #else
-    struct epoll_event evList[EVENTS_EACH_LOOP];
+    struct epoll_event evList[EQUEUE_EVENTS_EACH_LOOP];
 #endif
 };
 

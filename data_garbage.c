@@ -58,7 +58,7 @@ unsigned char runGarbageCollectorCallbackCallback(struct list *list, struct item
 
         // Правлю статистику
         struct torrentDataL *torrentDataL = garbageStats->currentTorrent->data;
-        if (peerDataL->event == EVENT_ID_COMPLETED) {
+        if (peerDataL->event == URI_EVENT_ID_COMPLETED) {
             torrentDataL->complete--;
         } else {
             torrentDataL->incomplete--;
@@ -71,7 +71,7 @@ unsigned char runGarbageCollectorCallbackCallback(struct list *list, struct item
         garbageStats->currentPeersInTorrent++;
     }
 
-    return RETURN_CONTINUE;
+    return LIST_CONTINUE_RETURN;
 }
 
 /**
@@ -113,12 +113,12 @@ unsigned char runGarbageCollectorCallback(struct list *list, struct item *torren
             garbageStats->maxPeersInOneTorrent = garbageStats->currentPeersInTorrent;
         }
 
-        if (garbageStats->currentPeersInTorrent > LIMIT_PEERS_FOR_LEVEL_0) {
+        if (garbageStats->currentPeersInTorrent > DATA_STRUCTURE_PEERS_FOR_LEVEL_0_LIMIT) {
             garbageStats->totalTorrentsWithChangeLimit++;
         }
     }
 
-    return RETURN_CONTINUE;
+    return LIST_CONTINUE_RETURN;
 }
 
 /**
@@ -129,7 +129,7 @@ unsigned char runGarbageCollectorCallback(struct list *list, struct item *torren
 void runGarbageCollectorL(struct block *block, struct list *torrentList) {
     struct garbageStats garbageStats = {};
     long now = time(NULL);
-    garbageStats.limitTime = now - MAX_ALIVE_TIME - STEP_INTERVAL;
+    garbageStats.limitTime = now - DATA_GARBAGE_MAX_ALIVE_TIME - INTERVAL_STEP_S;
 
     unsigned long startTime = getStartTime();
 
