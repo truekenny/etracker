@@ -140,6 +140,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
         }
 
         if (receivedSize < 0) {
+            incErrno(stats->recv_errno_udp);
             printf("Recvfrom return < 0\n");
             stats->recv_failed_udp++;
 

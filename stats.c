@@ -2,6 +2,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include "stats.h"
 #include "alloc.h"
 #include "interval.h"
@@ -9,6 +11,8 @@
 #if !defined(REVISION)
 #define REVISION "UNKNOWN"
 #endif
+
+void printArray(struct block *block, atomic_uint *statErrno, char *name);
 
 void
 formatStats(int threadNumber, struct block *block, struct stats *stats, struct interval *interval, struct rps *rps) {
@@ -97,11 +101,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
 
                          "stats.connect_udp  = %'12d\n"
                          "stats.announce_udp = %'12d\n"
-                         "stats.scrape_udp   = %'12d\n\n"
-
-                         "</div>"
-                         "</body>"
-                         "</html>",
+                         "stats.scrape_udp   = %'12d\n\n",
                          background,
                          REVISION,
                          ctime(&stats->time), (time(NULL) - stats->time) / 86400, stats->failed,
@@ -161,4 +161,34 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
 
                          stats->connect_udp, stats->announce_udp, stats->scrape_udp
     );
+
+    printArray(block, stats->close_errno, "close_errno");
+    printArray(block, stats->send_errno, "send_errno");
+    printArray(block, stats->recv_errno, "recv_errno");
+    printArray(block, stats->accept_errno, "accept_errno");
+
+    printArray(block, stats->send_errno_udp, "send_errno_udp");
+    printArray(block, stats->recv_errno_udp, "recv_errno_udp");
+
+    addFormatStringBlock(block, 1000, "</div>" "</body>" "</html>");
+}
+
+void incErrno(atomic_uint *statErrno) {
+    int err_no = errno;
+
+    if (err_no > STATS_ERRNO_MAX_INDEX)
+        err_no = STATS_ERRNO_MAX_INDEX;
+
+    statErrno[err_no]++;
+}
+
+void printArray(struct block *block, atomic_uint *statErrno, char *name) {
+    addFormatStringBlock(block, 1000, "%s:\n", name);
+
+    for (int err_no = 0; err_no <= STATS_ERRNO_MAX_INDEX; ++err_no) {
+        if (statErrno[err_no] != 0) {
+            addFormatStringBlock(block, 1000, "  errno = %'3d count = %'9u name = '%s'\n",
+                                 err_no, statErrno[err_no], strerror(err_no));
+        }
+    }
 }

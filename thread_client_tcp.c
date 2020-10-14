@@ -75,7 +75,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     // Read from socket.
     char readBuffer[THREAD_CLIENT_TCP_RECEIVED_MESSAGE_LENGTH + 1];
     memset(readBuffer, 0, sizeof(readBuffer));
-    ssize_t readSize = recv(currentSocket, readBuffer, THREAD_CLIENT_TCP_RECEIVED_MESSAGE_LENGTH, MSG_NOSIGNAL | MSG_PEEK);
+    ssize_t readSize = recv(currentSocket, readBuffer, THREAD_CLIENT_TCP_RECEIVED_MESSAGE_LENGTH,
+                            MSG_NOSIGNAL | MSG_PEEK);
 
     // Запрос превышает лимит, прерываю такие сокеты
     if (readSize >= THREAD_CLIENT_TCP_RECEIVED_MESSAGE_LENGTH) {
@@ -99,6 +100,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     } // close connection
 
     if (readSize < 0) {
+        incErrno(stats->recv_errno);
+
         // Обычно Connection reset by peer, реже Bad File Descriptor, возможно еще что-нибудь
         stats->recv_failed++;
         stats->recv_failed_read_sub_0++;
@@ -127,6 +130,9 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     readSize = recv(currentSocket, readBuffer, readSize, MSG_NOSIGNAL);
 
     if (beforeReadSize != readSize) {
+        if (readSize < 0)
+            incErrno(stats->recv_errno);
+
         long now = time(NULL);
 
         stats->recv_failed++;
@@ -281,7 +287,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 struct render render = {sendBlock, 101,
                         //"websocket activate\n", 19,
                                         "", 0,
-                                        /*canKeepAlive*/1, *socketTimeout, stats, NULL, NULL,
+                        /*canKeepAlive*/1, *socketTimeout, stats, NULL, NULL,
                                         acceptValue->data};
                 renderHttpMessage(&render);
                 freeBlock(acceptValue);
@@ -433,7 +439,8 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
     struct list *websockets = args->websockets;
 
     struct Eevent eevent;
-    struct list *deleteSocketList = initList(NULL, 0, LIST_STARTING_NEST, sizeof(int), LIST_SEMAPHORE_DISABLE, LITTLE_ENDIAN);
+    struct list *deleteSocketList = initList(NULL, 0, LIST_STARTING_NEST, sizeof(int), LIST_SEMAPHORE_DISABLE,
+                                             LITTLE_ENDIAN);
     struct deleteSocketListArgs deleteSocketListArgs;
     deleteSocketListArgs.socketList = socketList;
     deleteSocketListArgs.stats = stats;

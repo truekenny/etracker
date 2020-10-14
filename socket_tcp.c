@@ -142,6 +142,8 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
         }
 
         if (clientSocket < 0) {
+            incErrno(stats->accept_errno);
+
             stats->accept_failed++;
 
             continue;

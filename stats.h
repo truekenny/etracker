@@ -7,6 +7,8 @@
 #include "rps.h"
 #include "interval.h"
 
+#define STATS_ERRNO_MAX_INDEX 256
+
 struct stats {
     time_t time;
     int failed;
@@ -55,9 +57,19 @@ struct stats {
     atomic_uint connect_udp;
     atomic_uint announce_udp;
     atomic_uint scrape_udp;
+
+    atomic_uint close_errno[257];
+    atomic_uint send_errno[257];
+    atomic_uint recv_errno[257];
+    atomic_uint accept_errno[257];
+
+    atomic_uint send_errno_udp[257];
+    atomic_uint recv_errno_udp[257];
 };
 
 void
 formatStats(int threadNumber, struct block *block, struct stats *stats, struct interval *interval, struct rps *rps);
+
+void incErrno(atomic_uint *statErrno);
 
 #endif //SC6_STATS_H

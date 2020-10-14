@@ -43,6 +43,7 @@ void deleteSocketItemL(struct item *item, struct stats *stats) {
         deleteClientEqueue(socketData->equeue, socket);
         int status = close(socket);
         if (status) {
+            incErrno(stats->close_errno);
             stats->close_failed++;
         } else {
             stats->close_pass++;

@@ -125,6 +125,8 @@ ssize_t send_(int socket, void *message, size_t size, struct stats *stats) {
         result = send(socket, message, size, MSG_DONTWAIT | MSG_NOSIGNAL);
 
         if (result == -1) {
+            incErrno(stats->send_errno);
+
             stats->send_failed++;
             // printf("send errno:%d message:%s\n", errno, strerror(errno));
 

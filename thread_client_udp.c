@@ -86,6 +86,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     if (sendto(serverSocket, (const char *) &connectResponse, connectResponseSize,
                                THREAD_CLIENT_UDP__MSG_CONFIRM, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
+                        incErrno(stats->send_errno_udp);
                         stats->send_failed_udp++;
                     } else {
                         stats->send_pass_udp++;
