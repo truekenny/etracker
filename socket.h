@@ -1,6 +1,7 @@
 #ifndef SC6_SOCKET_H
 #define SC6_SOCKET_H
 
+#include <arpa/inet.h>
 #include "stats.h"
 
 #ifdef __APPLE__
@@ -17,6 +18,9 @@
 #endif
 #endif
 
+#define SOCKET_VERSION_IPV4_BIT  0b1u
+#define SOCKET_VERSION_IPV6_BIT 0b10u
+
 struct render {
     struct block *block;
     int code;
@@ -29,6 +33,8 @@ struct render {
     char *contentType;
     char *websocketKey;
 };
+
+unsigned char getIpVersion(struct in6_addr *in6Addr);
 
 void setTimeout(int socket);
 

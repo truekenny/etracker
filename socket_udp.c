@@ -70,10 +70,10 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
 
     int serverSocket;
     char receivedMessage[SOCKET_UDP_RECEIVED_UDP_MESSAGE_LENGTH + 1];
-    struct sockaddr_in serverAddr, clientAddr;
+    struct sockaddr_in6 serverAddr, clientAddr;
 
     // Creating socket file descriptor
-    if ((serverSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ((serverSocket = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
         exitPrint(EXIT_CODE_SOCKET_UDP_CREATE, __FILE__, EXIT_CODE_PRINT_ERROR_YES);
     }
 
@@ -81,9 +81,8 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
     memset(&clientAddr, 0, sizeof(clientAddr));
 
     // Filling server information
-    serverAddr.sin_family = AF_INET; // IPv4
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(serverPort);
+    serverAddr.sin6_family = AF_INET6;
+    serverAddr.sin6_port = htons(serverPort);
 
     // Bind the socket with the server address
     if (bind(serverSocket, (const struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
@@ -123,7 +122,7 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
     int sockAddrSize, receivedSize;
 
     puts("Waiting UDP for incoming packets...");
-    sockAddrSize = sizeof(struct sockaddr_in);
+    sockAddrSize = sizeof(struct sockaddr_in6);
 
     unsigned long receiveCount = 0;
 

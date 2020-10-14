@@ -179,10 +179,11 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             stats->announce++;
 
             struct query query = {};
-            struct sockaddr_in peer = {};
+            struct sockaddr_in6 peer = {};
             socklen_t socklen = sizeof(peer);
             getpeername(currentSocket, (struct sockaddr *) &peer, &socklen); // client
-            query.ip = peer.sin_addr.s_addr;
+            query.ip = peer.sin6_addr;
+            query.ipVersion = getIpVersion(&query.ip);
             query.numwant = URI_DEFAULT_NUM_WANT;
             query.event = URI_EVENT_ID_STARTED;
             query.threadNumber = threadNumber;
@@ -223,7 +224,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 renderHttpMessage(&render);
             }
 
-            broadcast(websockets, geoip, peer.sin_addr.s_addr, stats, WEBSOCKET_PROTOCOL_TCP);
+            if (query.ipVersion & SOCKET_VERSION_IPV4_BIT)
+                broadcast(websockets, geoip, peer.sin6_addr, stats, WEBSOCKET_PROTOCOL_TCP);
         } // announce
         else if (startsWith("GET /set", readBuffer)) {
             if (authorizationHeader->size == 0)

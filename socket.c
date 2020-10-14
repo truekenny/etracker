@@ -1,11 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <arpa/inet.h>
 #include <string.h>
 #include <errno.h>
 #include "socket.h"
 #include "block.h"
 #include "string.h"
+
+/**
+ * В адресе маскируется ipv4
+ * @param in6Addr
+ * @return
+ */
+unsigned char getIpVersion(struct in6_addr *in6Addr) {
+    return IN6_IS_ADDR_V4MAPPED(in6Addr) ? SOCKET_VERSION_IPV4_BIT : SOCKET_VERSION_IPV6_BIT;
+}
 
 /**
  * Рендер сообщения по сокету

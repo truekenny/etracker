@@ -19,7 +19,7 @@ struct broadcastArgs {
     struct stats *stats;
     struct geoip *geoip;
     unsigned char protocol;
-    in_addr_t ip;
+    struct in6_addr ip;
 };
 
 struct block *websocketKey2Accept(char *data, int size) {
@@ -73,7 +73,12 @@ unsigned char broadcastCallback(struct list *list, struct item *item, void *args
     struct broadcastArgs *broadcastArgs = args;
 
     if (broadcastArgs->data[0] == 0) {
-        struct geoip *geoipSingle = findGeoip(broadcastArgs->geoip, htonl(broadcastArgs->ip));
+        // todo сделать правильный разбор ip4/6
+        unsigned char *ip6 = (unsigned char *) &broadcastArgs->ip;
+        unsigned char *ip4 = ip6 + 12;
+
+        struct geoip *geoipSingle = findGeoip(broadcastArgs->geoip,
+                                              htonl(*(uint32_t *) ip4));
 
         // 0x80 - FIN
         // 0x02 - BIN
@@ -90,12 +95,8 @@ unsigned char broadcastCallback(struct list *list, struct item *item, void *args
 }
 
 void
-broadcast(struct list *websockets, struct geoip *geoip, in_addr_t ip, struct stats *stats, unsigned char protocol) {
-    if (ip == 0) {
-        // unused
-    }
-
-
+broadcast(struct list *websockets, struct geoip *geoip, struct in6_addr ip, struct stats *stats,
+          unsigned char protocol) {
     char data[WEBSOCKET_SIZE_FRAME] = "\x00";
 
     struct broadcastArgs broadcastArgs;

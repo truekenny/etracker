@@ -62,18 +62,17 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     struct block *authorizationHeader = initBlock();
 
     int serverSocket;
-    struct sockaddr_in serverAddr;
+    struct sockaddr_in6 serverAddr = {};
 
     // Create socket
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    serverSocket = socket(AF_INET6, SOCK_STREAM, 0);
     if (serverSocket == -1) {
         exitPrint(EXIT_CODE_SOCKET_TCP_CREATE, __FILE__, EXIT_CODE_PRINT_ERROR_YES);
     }
 
-    //Prepare the sockaddr_in structure
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(port);
+    //Prepare the sockaddr_in6 structure
+    serverAddr.sin6_family = AF_INET6;
+    serverAddr.sin6_port = htons(port);
 
     // Reuse
     int option = 1;
@@ -127,8 +126,8 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
 
     int clientSocket;
 
-    struct sockaddr_in clientAddr;
-    socklen_t sockAddrSize = sizeof(struct sockaddr_in);
+    struct sockaddr_in6 clientAddr;
+    socklen_t sockAddrSize = sizeof(struct sockaddr_in6);
     long currentThread = 0;
 
     while (1) {

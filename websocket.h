@@ -14,6 +14,6 @@ struct block *websocketKey2Accept(char *data, int size);
 
 void deleteWebsocket(struct list *websockets, int socket);
 
-void broadcast(struct list *websockets, struct geoip *geoip, in_addr_t ip, struct stats *stats, unsigned char protocol);
+void broadcast(struct list *websockets, struct geoip *geoip, struct in6_addr ip, struct stats *stats, unsigned char protocol);
 
 #endif //SC6_WEBSOCKET_H

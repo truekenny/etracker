@@ -1,9 +1,14 @@
+# IDE
+/.idea
+
+# make/debug results
+/cmake-build-debug
+/client.o.dSYM
+/server.o.dSYM
+/etracker.dSYM
+/test.o.dSYM
+/etracker
 *.o
-.idea
-cmake-build-debug
-client.o.dSYM
-server.o.dSYM
-etracker.dSYM
-test.o.dSYM
-etracker
-IP2LOCATION-LITE-DB5.CSV
+
+# geoip file
+/IP2LOCATION-LITE-DB5.CSV*

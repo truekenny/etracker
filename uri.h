@@ -1,6 +1,7 @@
 #ifndef SC6_URI_H
 #define SC6_URI_H
 
+#include <arpa/inet.h>
 #include "block.h"
 
 #define URI_RANDOM_DATA_INFO_HASH 0
@@ -33,7 +34,7 @@ struct query {
     unsigned char info_hash[URI_PARAM_VALUE_LENGTH];
     unsigned char event;
     unsigned short port;
-    unsigned int ip;
+    struct in6_addr ip;
     unsigned char peer_id[URI_PARAM_VALUE_LENGTH];
     unsigned char protocol;
     _Bool compact;
@@ -48,6 +49,8 @@ struct query {
     unsigned int max_peers_per_response;
     unsigned short socket_timeout;
     unsigned char keep_alive;
+
+    unsigned char ipVersion;
 };
 
 void parseUri(struct query *query, struct block *block, char *message);

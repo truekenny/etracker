@@ -36,10 +36,13 @@ Example use: `./run_chroot 6969`
 
 ### Features
 
-1. IPv4;
-1. Listen TCP, UDP;
-1. Processing announce, scrape;
-1. Variable interval (4-30 minutes, depending on the load average).
+&nbsp; | IPv4 | IPv6
+--- | --- | ---
+**TCP** | **✓** | **✓**
+**UDP** | **✓** | **✓**
+
+- Announce, Scrape;
+- Variable interval (4-30 minutes, depending on the load average).
 
 ### Settings
 

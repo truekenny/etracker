@@ -3,7 +3,7 @@
 #include "udp_request.h"
 #include "alloc.h"
 
-void addUdpRequest(struct udpRequest **firstRequest, struct udpRequest **lastRequest, struct sockaddr_in clientAddr,
+void addUdpRequest(struct udpRequest **firstRequest, struct udpRequest **lastRequest, struct sockaddr_in6 clientAddr,
                    struct block *block, unsigned int receiveCount) {
     struct udpRequest *newLastRequest = c_calloc(1, sizeof(struct udpRequest));
     newLastRequest->block = block;

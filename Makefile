@@ -41,6 +41,8 @@ test:
 	$(CC) -Werror \
 		test.c alloc.c block.c list.c sem.c base64.c sha1.c string.c exit_code.c geoip.c \
 		-o test.o $(FSANITIZE_ADDRESS) -lm
+ipv6:
+	$(CC) origin-ipv6/_ipv6.c -o ipv6.o
 clear:
 	$(RM_SERVER)
 	$(RM_CLIENT)

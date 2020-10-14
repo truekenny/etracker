@@ -1,6 +1,7 @@
 #ifndef SC6_DATA_STRUCTURE_H
 #define SC6_DATA_STRUCTURE_H
 
+#include <netinet/in.h>
 #include "sem.h"
 
 // Максимальное кол-во пиров, на структуру peerList с level=0
@@ -11,10 +12,11 @@
 
 struct peerDataL {
     long updateTime;
-    unsigned int ip;
+    struct in6_addr ip;
     unsigned short port;
     unsigned char event;
     unsigned char protocol;
+    unsigned char ipVersion;
 };
 
 struct torrentDataL {

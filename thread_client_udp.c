@@ -14,13 +14,14 @@
 #include "thread.h"
 #include "sem.h"
 #include "websocket.h"
+#include "socket.h"
 
 #define THREAD_CLIENT_UDP__MSG_CONFIRM 0
 
 void *clientUdpHandler(struct clientUdpArgs *args) {
     pthreadSetName(pthread_self(), "UDP worker");
 
-    int sockAddrSize = sizeof(struct sockaddr_in);
+    int sockAddrSize = sizeof(struct sockaddr_in6);
 
     int serverSocket = args->serverSocket;
     struct list *torrentList = args->torrentList;
@@ -58,7 +59,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
         }
 
         struct block *block = udpRequest->block;
-        struct sockaddr_in clientAddr = udpRequest->clientAddr;
+        struct sockaddr_in6 clientAddr = udpRequest->clientAddr;
         unsigned int receiveCount = udpRequest->receiveCount;
 
         { // Проверка формата
@@ -75,7 +76,8 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                 stats->connect_udp++;
 
                 struct connectRequest *connectRequest = (struct connectRequest *) block->data;
-                if (connectRequest->protocol_id == SOCKET_UDP_STRUCTURE_PROTOCOL_ID && connectRequest->action == SOCKET_UDP_STRUCTURE_ACTION_CONNECT) {
+                if (connectRequest->protocol_id == SOCKET_UDP_STRUCTURE_PROTOCOL_ID &&
+                    connectRequest->action == SOCKET_UDP_STRUCTURE_ACTION_CONNECT) {
                     connectResponse.transaction_id = connectRequest->transaction_id;
                     connectResponse.connection_id = receiveCount;
 
@@ -92,7 +94,8 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                         stats->send_pass_udp++;
                     }
                 }
-            } else if (block->size >= announceRequestSize && htonl(announceRequest->action) == SOCKET_UDP_STRUCTURE_ACTION_ANNOUNCE) {
+            } else if (block->size >= announceRequestSize &&
+                       htonl(announceRequest->action) == SOCKET_UDP_STRUCTURE_ACTION_ANNOUNCE) {
                 stats->announce_udp++;
 
                 // Аргументы потока
@@ -103,7 +106,8 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                 memcpy(query.info_hash, announceRequest->info_hash, URI_PARAM_VALUE_LENGTH);
                 memcpy(query.peer_id, announceRequest->peer_id, URI_PARAM_VALUE_LENGTH);
                 query.numwant = htonl(announceRequest->num_want);
-                query.ip = clientAddr.sin_addr.s_addr;
+                query.ip = clientAddr.sin6_addr;
+                query.ipVersion = getIpVersion(&query.ip);
                 query.transaction_id = announceRequest->transaction_id;
 
                 if (query.numwant > *maxPeersPerResponse)
@@ -138,10 +142,12 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                         stats->send_pass_udp++;
                     }
 
-                    broadcast(websockets, geoip, clientAddr.sin_addr.s_addr, stats, WEBSOCKET_PROTOCOL_UDP);
+                    if (query.ipVersion & SOCKET_VERSION_IPV4_BIT)
+                        broadcast(websockets, geoip, clientAddr.sin6_addr, stats, WEBSOCKET_PROTOCOL_UDP);
                 } // аннонс
 
-            } else if (block->size > scrapeRequestSize && htonl(scrapeRequest->action) == SOCKET_UDP_STRUCTURE_ACTION_SCRAPE) {
+            } else if (block->size > scrapeRequestSize &&
+                       htonl(scrapeRequest->action) == SOCKET_UDP_STRUCTURE_ACTION_SCRAPE) {
                 stats->scrape_udp++;
 
                 unsigned int hashCount = (block->size - sizeof(struct scrapeRequest)) / URI_PARAM_VALUE_LENGTH;
