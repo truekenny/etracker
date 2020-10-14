@@ -5,20 +5,16 @@ let ctx = canvas.getContext("2d");
 let canvasData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 
 let imageWidth = 1440;
-let imageHeight = 695;
-
-let canvasOffsetX = 0;
-let canvasOffsetY = 14; // Math.round((imageWidth / 2 - imageHeight) * canvasWidth / imageWidth);
-
-let latK = 1.035;
+let imageHeight = 720;
+let imageSrc = "images/world.png";
 
 let image = new Image();
-image.src = "images/world.png";
+image.src = imageSrc;
 
 function drawImage() {
     ctx.drawImage(image,
         0, 0, imageWidth, imageHeight,
-        canvasOffsetX, canvasOffsetY, canvasWidth, canvasHeight);
+        0, 0, canvasWidth, canvasHeight);
 }
 
 image.onload = function () {
@@ -27,11 +23,12 @@ image.onload = function () {
 
     // Три тестовые точки
     [
-        {x: 1, y: 56, r: 255, g: 0, b: 0, a: 255},
-        {x: 2, y: 57, r: 0, g: 255, b: 0, a: 255},
-        {x: 3, y: 58, r: 0, g: 0, b: 255, a: 255}
+        {x: 0, y: 0, r: 255, g: 0, b: 0, a: 255},
+        {x: 1, y: 1, r: 255, g: 0, b: 0, a: 255},
+        {x: 2, y: 2, r: 0, g: 255, b: 0, a: 255},
+        {x: 3, y: 3, r: 0, g: 0, b: 255, a: 255}
     ].forEach(function ({x, y, r, g, b, a}) {
-        drawPixel(x, y, r, g, b, a);
+        drawPixelXY(x, y, r, g, b, a);
     });
 
     // Тестовые точки по краям мира
@@ -43,9 +40,7 @@ image.onload = function () {
         {lat: -54.73, lon: -63.81}, // Южная Америка -54.7267363,-63.8125051
         {lat: 66.54, lon: -16.20} // Исландия 66.5370265,-16.1965755
     ].forEach(function ({lat, lon}) {
-        let x = (lon + 180) * 4;
-        let y = (90 - lat * latK) * 4;
-        drawPixel(x, y, 255, 0, 255, 255);
+        drawPixelLatLon(lat, lon, 255, 0, 255, 255);
     });
 };
 
@@ -53,13 +48,21 @@ image.onload = function () {
 /**
  * Занести точку во временный массив данных (картунка)
  */
-function drawPixel(x, y, r, g, b, a) {
-    let index = (Math.round(x) + Math.round(y) * canvasWidth) * Math.round(canvasWidth / 360); // 360 - кол-во градусов в полном угле
+function drawPixelXY(x, y, r, g, b, a) {
+    let index = (Math.round(x) + Math.round(y) * canvasWidth) * 4;
 
     canvasData.data[index] = r;
     canvasData.data[index + 1] = g;
     canvasData.data[index + 2] = b;
     canvasData.data[index + 3] = a;
+}
+
+function drawPixelLatLon(lat, lon, r, g, b, a) {
+    let pixelPerDeg = canvasWidth / 360;
+
+    let x = (lon + 180) * pixelPerDeg;
+    let y = (90 - lat) * pixelPerDeg;
+    drawPixelXY(x, y, r, g, b, a);
 }
 
 /**
@@ -115,7 +118,7 @@ socket.addEventListener('message', function (event) {
     //        BR   |   AUS
     //             | -90
 
-    drawPixel((lon + 180) * 4, 4 * (90 - lat * latK), udp ? 0 : 255, udp ? 255 : 0, 0, 255);
+    drawPixelLatLon(lat, lon, udp ? 0 : 255, udp ? 255 : 0, 0, 255);
 });
 
 // Наблюдает за ошибками
