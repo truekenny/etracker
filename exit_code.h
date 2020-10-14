@@ -31,6 +31,7 @@
 #define EXIT_CODE_SEMAPHORE_DESTROY              228
 #define EXIT_CODE_GEOIP_MEMORY                   227
 #define EXIT_CODE_GEOIP_WRONG_DATA               226
+#define EXIT_CODE_GEOIP_TEST_FAILED              225
 
 void exitPrint(int exitCode, char *file, char printError);
 

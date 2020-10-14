@@ -13,6 +13,8 @@
 
 #define GEOIP_FILE "IP2LOCATION-LITE-DB5.CSV"
 
+#define GEOIP_MAX_ITERATION 50
+
 struct geoip *initGeoip() {
     struct geoip *geoip = c_calloc(GEOIP_FILE_LINES, sizeof(struct geoip));
 
@@ -90,6 +92,8 @@ struct geoip *findGeoip(struct geoip *geoip, unsigned int ip) {
     unsigned long long delimiter = 2;
     unsigned int index = GEOIP_FILE_LINES / delimiter;
     unsigned int newIndex;
+    static atomic_int max_iterations = 0;
+    int current_iterations = 0;
 
     struct geoip *middle = &geoip[index];
 
@@ -116,6 +120,18 @@ struct geoip *findGeoip(struct geoip *geoip, unsigned int ip) {
         }
 
         middle = &geoip[index];
+        current_iterations++;
+
+        if (current_iterations > GEOIP_MAX_ITERATION) {
+            printf("Too many iteration %d for ip: %u\n", current_iterations, ip);
+
+            break;
+        }
+    }
+
+    if (current_iterations > max_iterations) {
+        max_iterations = current_iterations;
+        printf("ip: %u, iterations: %d\n", ip, current_iterations);
     }
 
     return middle;

@@ -305,6 +305,7 @@ void showHelp() {
             "     %3d     semaphore destroy\n"
             "     %3d     geoip memory\n"
             "     %3d     geoip wrong data\n"
+            "     %3d     geoip test failed\n"
             "\n"
             STRING_BOLD "AUTHOR\n" STRING_RESET
             "     Implemented by Truekenny.\n"
@@ -340,7 +341,8 @@ void showHelp() {
             EXIT_CODE_SEMAPHORE_POST,
             EXIT_CODE_SEMAPHORE_DESTROY,
             EXIT_CODE_GEOIP_MEMORY,
-            EXIT_CODE_GEOIP_WRONG_DATA
+            EXIT_CODE_GEOIP_WRONG_DATA,
+            EXIT_CODE_GEOIP_TEST_FAILED
     );
 
     exit(EXIT_SUCCESS);

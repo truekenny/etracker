@@ -57,16 +57,28 @@ int testGeoip() {
     unsigned int ip = 1570630176;
     printf("ip:%u\n", ip);
     struct geoip *middle = findGeoip(geoip, ip);
-    printf(" s:%u e:%u %d %d\n", middle->startIp, middle->endIp, middle->lat, middle->lon);
+    printf(" s:%u e:%u %f %f\n", middle->startIp, middle->endIp, middle->lat, middle->lon);
+    assert(middle->startIp <= ip);
+    assert(ip <= middle->endIp);
+
+    ip = 4294967295;
+    printf("ip:%u\n", ip);
+    middle = findGeoip(geoip, ip);
+    printf(" s:%u e:%u %f %f\n", middle->startIp, middle->endIp, middle->lat, middle->lon);
+    assert(middle->startIp <= ip);
+    assert(ip <= middle->endIp);
+
+    ip = 0;
+    printf("ip:%u\n", ip);
+    middle = findGeoip(geoip, ip);
+    printf(" s:%u e:%u %f %f\n", middle->startIp, middle->endIp, middle->lat, middle->lon);
     assert(middle->startIp <= ip);
     assert(ip <= middle->endIp);
 
     printf("start loop\n");
     for (int i = 0; i < 256000; ++i) {
         ip = (unsigned int) rand();
-        // printf("ip:%u\n", ip);
         middle = findGeoip(geoip, ip);
-        // printf(" s:%u e:%u %d %d\n", middle->startIp, middle->endIp, middle->lat, middle->lon);
         assert(middle->startIp <= ip);
         assert(ip <= middle->endIp);
     }
@@ -82,33 +94,25 @@ int testSha1() {
 
     block = resetBlock(block);
     addStringBlock(block, "1", 1);
-    // printf("in=%s => sha1=%s\n", block->data, "356a192b7913b04c54574d18c28d46e6395428ab");
     sha1(block);
-    // printHex(block->data, block->size);
     assert(memcmp(block->data, "\x35\x6a\x19\x2b\x79\x13\xb0\x4c\x54\x57\x4d\x18\xc2\x8d\x46\xe6\x39\x54\x28\xab",
                   block->size) == 0);
 
     block = resetBlock(block);
     addStringBlock(block, "abc", 3);
-    // printf("in=%s => sha1=%s\n", block->data, "a9993e364706816aba3e25717850c26c9cd0d89d");
     sha1(block);
-    // printHex(block->data, block->size);
     assert(memcmp(block->data, "\xa9\x99\x3e\x36\x47\x06\x81\x6a\xba\x3e\x25\x71\x78\x50\xc2\x6c\x9c\xd0\xd8\x9d",
                   block->size) == 0);
 
     block = resetBlock(block);
     addStringBlock(block, "123456789012345678901234567890123456789012345678901234567890", 60);
-    // printf("in=%s => sha1=%s\n", block->data, "245be30091fd392fe191f4bfcec22dcb30a03ae6");
     sha1(block);
-    // printHex(block->data, block->size);
     assert(memcmp(block->data, "\x24\x5b\xe3\x00\x91\xfd\x39\x2f\xe1\x91\xf4\xbf\xce\xc2\x2d\xcb\x30\xa0\x3a\xe6",
                   block->size) == 0);
 
     block = resetBlock(block);
     addStringBlock(block, "1234567890123456789012345678901234567890123456789012345678901234567890", 70);
-    // printf("in=%s => sha1=%s\n", block->data, "610e973d05145fd4c3e6c97ff349907fdc8ec4b7");
     sha1(block);
-    // printHex(block->data, block->size);
     assert(memcmp(block->data, "\x61\x0e\x97\x3d\x05\x14\x5f\xd4\xc3\xe6\xc9\x7f\xf3\x49\x90\x7f\xdc\x8e\xc4\xb7",
                   block->size) == 0);
 
@@ -116,17 +120,39 @@ int testSha1() {
     addStringBlock(block,
                    "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
                    140);
-    // printf("in=%s => sha1=%s\n", block->data, "f0026e50bea5e90dd113d933312a8a6c7fb06f7b");
     sha1(block);
-    // printHex(block->data, block->size);
     assert(memcmp(block->data, "\xf0\x02\x6e\x50\xbe\xa5\xe9\x0d\xd1\x13\xd9\x33\x31\x2a\x8a\x6c\x7f\xb0\x6f\x7b",
                   block->size) == 0);
 
     block = resetBlock(block);
-    // printf("in=%s => sha1=%s\n", block->data, "da39a3ee5e6b4b0d3255bfef95601890afd80709");
+    // ZERO BYTES TEST
     sha1(block);
-    // printHex(block->data, block->size);
     assert(memcmp(block->data, "\xda\x39\xa3\xee\x5e\x6b\x4b\x0d\x32\x55\xbf\xef\x95\x60\x18\x90\xaf\xd8\x07\x09",
+                  block->size) == 0);
+
+    // 256 bytes 0…\xFF
+    block = resetBlock(block);
+    unsigned char buff[256];
+    for (int i = 0; i < 256; ++i) {
+        buff[i] = i;
+    }
+    addStringBlock(block,
+                   buff,
+                   256);
+    sha1(block);
+    assert(memcmp(block->data, "\x49\x16\xd6\xbd\xb7\xf7\x8e\x68\x03\x69\x8c\xab\x32\xd1\x58\x6e\xa4\x57\xdf\xc8",
+                  block->size) == 0);
+
+    // 256 bytes 0…0
+    block = resetBlock(block);
+    for (int i = 0; i < 256; ++i) {
+        buff[i] = 0;
+    }
+    addStringBlock(block,
+                   buff,
+                   256);
+    sha1(block);
+    assert(memcmp(block->data, "\xb3\x76\x88\x5a\xc8\x45\x2b\x6c\xbf\x9c\xed\x81\xb1\x08\x0b\xfd\x57\x0d\x9b\x91",
                   block->size) == 0);
 
     freeBlock(block);
@@ -141,51 +167,73 @@ int testBase64() {
     input = resetBlock(input);
     addStringBlock(input, "1234567890", 10);
     result = base64_encode(input);
-    // printf("base64_encode(1234567890) > MTIzNDU2Nzg5MA== > %s\n", result->data);
     assert(memcmp(result->data, "MTIzNDU2Nzg5MA==", result->size) == 0);
     freeBlock(result);
 
-    // f474dbd06826c93e3732f986e3339e782520b228
     input = resetBlock(input);
     addStringBlock(input, "\xf4\x74\xdb\xd0\x68\x26\xc9\x3e\x37\x32\xf9\x86\xe3\x33\x9e\x78\x25\x20\xb2\x28", 20);
     result = base64_encode(input);
-    // printf("base64_encode(..special..) > 9HTb0GgmyT43MvmG4zOeeCUgsig= > %s\n", result->data);
     assert(memcmp(result->data, "9HTb0GgmyT43MvmG4zOeeCUgsig=", result->size) == 0);
     freeBlock(result);
 
     input = resetBlock(input);
     addStringBlock(input, "123456789", 9);
     result = base64_encode(input);
-    // printf("base64_encode(123456789) > MTIzNDU2Nzg5 > %s\n", result->data);
     assert(memcmp(result->data, "MTIzNDU2Nzg5", result->size) == 0);
     freeBlock(result);
 
     input = resetBlock(input);
     addStringBlock(input, "12345678", 8);
     result = base64_encode(input);
-    // printf("base64_encode(12345678) > MTIzNDU2Nzg= > %s\n", result->data);
     assert(memcmp(result->data, "MTIzNDU2Nzg=", result->size) == 0);
     freeBlock(result);
 
     input = resetBlock(input);
     addStringBlock(input, "1", 1);
     result = base64_encode(input);
-    // printf("base64_encode(1) > MQ== > %s\n", result->data);
     assert(memcmp(result->data, "MQ==", result->size) == 0);
     freeBlock(result);
 
     input = resetBlock(input);
     addStringBlock(input, "12", 2);
     result = base64_encode(input);
-    // printf("base64_encode(12) > MTI= > %s\n", result->data);
     assert(memcmp(result->data, "MTI=", result->size) == 0);
     freeBlock(result);
 
     input = resetBlock(input);
     addStringBlock(input, "123", 3);
     result = base64_encode(input);
-    // printf("base64_encode(123) > MTIz > %s\n", result->data);
     assert(memcmp(result->data, "MTIz", result->size) == 0);
+    freeBlock(result);
+
+
+    unsigned char buff[256];
+    for (int i = 0; i < 256; ++i) {
+        buff[i] = i;
+    }
+    input = resetBlock(input);
+    addStringBlock(input, buff, 256);
+    result = base64_encode(input);
+    assert(memcmp(result->data,
+                  "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZH"
+                  "SElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P"
+                  "kJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX"
+                  "2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==",
+                  result->size) == 0);
+    freeBlock(result);
+
+    for (int i = 0; i < 256; ++i) {
+        buff[i] = 0;
+    }
+    input = resetBlock(input);
+    addStringBlock(input, buff, 256);
+    result = base64_encode(input);
+    assert(memcmp(result->data,
+                  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+                  result->size) == 0);
     freeBlock(result);
 
     freeBlock(input);
