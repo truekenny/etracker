@@ -17,6 +17,9 @@
 struct broadcastArgs {
     char *data;
     struct stats *stats;
+    struct geoip *geoip;
+    unsigned char protocol;
+    in_addr_t ip;
 };
 
 struct block *websocketKey2Accept(char *data, int size) {
@@ -69,6 +72,17 @@ unsigned char broadcastCallback(struct list *list, struct item *item, void *args
     }
     struct broadcastArgs *broadcastArgs = args;
 
+    if (broadcastArgs->data[0] == 0) {
+        struct geoip *geoipSingle = findGeoip(broadcastArgs->geoip, htonl(broadcastArgs->ip));
+
+        // 0x80 - FIN
+        // 0x02 - BIN
+        memcpy(broadcastArgs->data, "\x82" /*SIZE=*/ "\x09", 2);
+        memcpy(broadcastArgs->data + 2, &geoipSingle->lat, 4);
+        memcpy(broadcastArgs->data + 6, &geoipSingle->lon, 4);
+        memcpy(broadcastArgs->data + 10, &broadcastArgs->protocol, 1);
+    }
+
     int socket = *(int *) item->hash;
     send_(socket, broadcastArgs->data, WEBSOCKET_SIZE_FRAME, broadcastArgs->stats);
 
@@ -81,18 +95,15 @@ broadcast(struct list *websockets, struct geoip *geoip, in_addr_t ip, struct sta
         // unused
     }
 
-    struct geoip *geoipSingle = findGeoip(geoip, htonl(ip));
 
-    // 0x80 - FIN
-    // 0x02 - BIN
-    char data[WEBSOCKET_SIZE_FRAME] = "\x82" /*SIZE=*/ "\x09" "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00";
-    memcpy(data + 2, &geoipSingle->lat, 4);
-    memcpy(data + 6, &geoipSingle->lon, 4);
-    memcpy(data + 10, &protocol, 1);
+    char data[WEBSOCKET_SIZE_FRAME] = "\x00";
 
     struct broadcastArgs broadcastArgs;
     broadcastArgs.stats = stats;
     broadcastArgs.data = data;
+    broadcastArgs.geoip = geoip;
+    broadcastArgs.protocol = protocol;
+    broadcastArgs.ip = ip;
 
     mapList(websockets, &broadcastArgs, &broadcastCallback);
 }
