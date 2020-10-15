@@ -25,7 +25,7 @@ _Bool endsWith(const char *end, const char *string) {
 int printHex(char *string, unsigned int len) {
     unsigned int ceilLen = (int) ceil((double) len / 16) * 16;
 
-    printf(STRING_BLUE);
+    // printf(STRING_BLUE);
 
     printf("%4s | %2d %2d %2d %2d   %2d %2d %2d %2d   %2d %2d %2d %2d   %2d %2d %2d %2d | 0123 4567 8901 2345\n"
            "-----+-------------------------------------------------------+--------------------\n",
@@ -65,7 +65,7 @@ int printHex(char *string, unsigned int len) {
         }
     }
 
-    printf(STRING_RESET);
+    // printf(STRING_RESET);
 
     return 0;
 }

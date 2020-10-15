@@ -4,7 +4,7 @@
 
 **etracker** implements: 
 - [The BitTorrent Protocol Specification](https://www.bittorrent.org/beps/bep_0003.html);
-- [UDP Tracker Protocol for BitTorrent](https://www.bittorrent.org/beps/bep_0003.html).
+- [UDP Tracker Protocol for BitTorrent](https://www.bittorrent.org/beps/bep_0015.html).
 
 ### Build
 
