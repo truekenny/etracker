@@ -189,6 +189,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             query.numwant = URI_DEFAULT_NUM_WANT;
             query.event = URI_EVENT_ID_STARTED;
             query.threadNumber = threadNumber;
+            query.compact = URI_DEFAULT_COMPACT;
 
             parseUri(&query, NULL, readBuffer);
 

@@ -22,6 +22,7 @@
 // Обязательно 20, очень большая связанность
 #define URI_PARAM_VALUE_LENGTH 20
 #define URI_DEFAULT_NUM_WANT 50
+#define URI_DEFAULT_COMPACT 1u
 
 #define URI_PATH_LENGTH 200
 

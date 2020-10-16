@@ -14,45 +14,45 @@ gcc origin-udp/_client_udp.c string.c -o client-udp.o -lm || exit
 echo Base Tests
 
 echo ADD tcp peer 11111111111111111111 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/01.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/01.txt -
 
 echo ADD tcp peer 11111111111111111111 hash 11112222333344445555
 curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started&compact=1" | hexdump -C | diff functional_tests/02.txt -
 
 echo ADD tcp peer 22222222222222222222 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/03.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/03.txt -
 
 echo ADD tcp peer 22222222222222222222 hash 11112222333344445555
 curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=started&compact=1" | hexdump -C | diff functional_tests/04.txt -
 
 echo ADD tcp peer 33333333333333333333 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/05.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/05.txt -
 
 echo ADD tcp peer 33333333333333333333 hash 11112222333344445555
 curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&compact=1" | hexdump -C | diff functional_tests/06.txt -
 
 
 echo ADD tcp peer 11111111111111111111 hash 22223333444455551111
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=22223333444455551111&event=started" | hexdump -C | diff functional_tests/01.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=22223333444455551111&event=started&compact=0" | hexdump -C | diff functional_tests/01.txt -
 
 echo ADD tcp peer 11111111111111111111 hash 22223333444455551111
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=22223333444455551111&event=started&no_peer_id=1" | hexdump -C | diff functional_tests/11.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=22223333444455551111&event=started&no_peer_id=1&compact=0" | hexdump -C | diff functional_tests/11.txt -
 
 echo ADD tcp peer 11111111111111111111 hash 22223333444455551111
 curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=22223333444455551111&event=started&compact=1" | hexdump -C | diff functional_tests/02.txt -
 
 
 echo STOP tcp peer 22222222222222222222 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=stopped" | hexdump -C | diff functional_tests/07.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=stopped&compact=0" | hexdump -C | diff functional_tests/07.txt -
 
 echo STOP tcp peer 22222222222222222222 hash 11112222333344445555
 curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=stopped&compact=1" | hexdump -C | diff functional_tests/08.txt -
 
 echo STOP tcp peer 33333333333333333333 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=stopped" | hexdump -C | diff functional_tests/09.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=stopped&compact=0" | hexdump -C | diff functional_tests/09.txt -
 
 echo STOP tcp peer 11111111111111111111 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=stopped" | hexdump -C | diff functional_tests/10.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=stopped&compact=0" | hexdump -C | diff functional_tests/10.txt -
 
 
 echo STOP tcp peer 11111111111111111111 hash 22223333444455551111
@@ -67,10 +67,10 @@ echo ADD udp peer 22222222222222222222 hash 22222222222222222222 scrape 11111111
 echo Ipv4 Tests
 
 echo ADD tcp peer 11111111111111111111 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/15.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/15.txt -
 
 echo ADD tcp peer 22222222222222222222 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/16.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/16.txt -
 
 echo ADD udp peer 22222222222222222222 hash 11112222333344445555 scrape 11111111111111111111 11112222333344445555
 ./client-udp.o 2 22222222222222222222 11112222333344445555 11111111111111111111 11112222333344445555  | diff functional_tests/17.txt -
@@ -79,42 +79,42 @@ echo ADD udp peer 33333333333333333333 hash 11112222333344445555 scrape 11111111
 ./client-udp.o 2 33333333333333333333 11112222333344445555 11111111111111111111 11112222333344445555  | diff functional_tests/18.txt -
 
 echo ADD tcp peer 33333333333333333333 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/19.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/19.txt -
 
 echo STOP udp peer 33333333333333333333 hash 11112222333344445555 scrape 11111111111111111111 11112222333344445555
 ./client-udp.o 3 33333333333333333333 11112222333344445555 11111111111111111111 11112222333344445555  | diff functional_tests/20.txt -
 
 echo ADD tcp peer 44444444444444444444 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=44444444444444444444&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/21.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=44444444444444444444&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/21.txt -
 
 echo STOP udp peer 44444444444444444444 hash 11112222333344445555 scrape 11111111111111111111 11112222333344445555
 ./client-udp.o 3 44444444444444444444 11112222333344445555 11111111111111111111 11112222333344445555  | diff functional_tests/22.txt -
 
 echo STOP tcp peer 11111111111111111111 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=stopped" | hexdump -C | diff functional_tests/23.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=stopped&compact=0" | hexdump -C | diff functional_tests/23.txt -
 
 echo STOP tcp peer 22222222222222222222 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=stopped" | hexdump -C | diff functional_tests/24.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=stopped&compact=0" | hexdump -C | diff functional_tests/24.txt -
 
 echo Ipv6 tcp Tests
 
 echo ADD tcp peer 11111111111111111111 hash 11112222333344445555
-curl -s "http://[::1]:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/25.txt -
+curl -s "http://[::1]:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/25.txt -
 
 echo ADD tcp peer 22222222222222222222 hash 11112222333344445555
 curl -s "http://[::1]:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=started&compact=1" | hexdump -C | diff functional_tests/26.txt -
 
 echo ADD tcp peer 33333333333333333333 hash 11112222333344445555
-curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&no_peer_id=1" | hexdump -C | diff functional_tests/27.txt -
+curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&no_peer_id=1&compact=0" | hexdump -C | diff functional_tests/27.txt -
 
 echo STOP tcp peer 22222222222222222222 hash 11112222333344445555
 curl -s "http://[::1]:3000/announce?port=12345&peer_id=22222222222222222222&info_hash=11112222333344445555&event=stopped&compact=1" | hexdump -C | diff functional_tests/28.txt -
 
 echo STOP tcp peer 11111111111111111111 hash 11112222333344445555
-curl -s "http://[::1]:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=stopped&no_peer_id=1" | hexdump -C | diff functional_tests/29.txt -
+curl -s "http://[::1]:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=stopped&no_peer_id=1&compact=0" | hexdump -C | diff functional_tests/29.txt -
 
 echo STOP tcp peer 33333333333333333333 hash 11112222333344445555
-curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=stopped" | hexdump -C | diff functional_tests/30.txt -
+curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=stopped&compact=0" | hexdump -C | diff functional_tests/30.txt -
 
 echo Ipv6 udp Tests
 
@@ -139,37 +139,45 @@ echo STOP udp peer 11111111111111111111 hash 11112222333344445555 scrape 1111111
 echo Mix tests
 
 echo ADD tcp peer 11111111111111111111 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/37.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/37.txt -
 
 echo ADD udp peer 22222222222222222222 hash 11112222333344445555 scrape 11111111111111111111 11112222333344445555
 ./client-udp.o 2 22222222222222222222 11112222333344445555 11111111111111111111 11112222333344445555 | diff functional_tests/38.txt -
 
 echo ADD tcp peer 33333333333333333333 hash 11112222333344445555
-curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&no_peer_id=1" | hexdump -C | diff functional_tests/39.txt -
+curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&no_peer_id=1&compact=0" | hexdump -C | diff functional_tests/39.txt -
 
 echo ADD udp peer 44444444444444444444 hash 11112222333344445555 scrape 11111111111111111111 11112222333344445555
 ./client-udp.o 2 44444444444444444444 11112222333344445555 11111111111111111111 11112222333344445555 6 | diff functional_tests/40.txt -
 
 echo ADD tcp peer 11111111111111111111 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/41.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=started&compact=0" | hexdump -C | diff functional_tests/41.txt -
 
 echo ADD udp peer 22222222222222222222 hash 11112222333344445555 scrape 11111111111111111111 11112222333344445555
 ./client-udp.o 2 22222222222222222222 11112222333344445555 11111111111111111111 11112222333344445555 | diff functional_tests/42.txt -
 
 echo ADD tcp peer 33333333333333333333 hash 11112222333344445555
-curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&no_peer_id=1" | hexdump -C | diff functional_tests/43.txt -
+curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&no_peer_id=1&compact=0" | hexdump -C | diff functional_tests/43.txt -
 
 echo ADD udp peer 44444444444444444444 hash 11112222333344445555 scrape 11111111111111111111 11112222333344445555
 ./client-udp.o 2 44444444444444444444 11112222333344445555 11111111111111111111 11112222333344445555 6 | diff functional_tests/44.txt -
 
 echo STOP tcp peer 11111111111111111111 hash 11112222333344445555
-curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=stopped" | hexdump -C | diff functional_tests/45.txt -
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=11111111111111111111&info_hash=11112222333344445555&event=stopped&compact=0" | hexdump -C | diff functional_tests/45.txt -
 
 echo STOP udp peer 22222222222222222222 hash 11112222333344445555 scrape 11111111111111111111 11112222333344445555
 ./client-udp.o 3 22222222222222222222 11112222333344445555 11111111111111111111 11112222333344445555 | diff functional_tests/46.txt -
 
 echo STOP tcp peer 33333333333333333333 hash 11112222333344445555
-curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=stopped&no_peer_id=1" | hexdump -C | diff functional_tests/47.txt -
+curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=stopped&no_peer_id=1&compact=0" | hexdump -C | diff functional_tests/47.txt -
 
 echo STOP udp peer 44444444444444444444 hash 11112222333344445555 scrape 11111111111111111111 11112222333344445555
 ./client-udp.o 3 44444444444444444444 11112222333344445555 11111111111111111111 11112222333344445555 6 | diff functional_tests/48.txt -
+
+echo Compact defailt tests
+
+echo ADD tcp peer 33333333333333333333 hash 11112222333344445555
+curl -s "http://[::1]:3000/announce?port=12345&peer_id=33333333333333333333&info_hash=11112222333344445555&event=started&no_peer_id=1" | hexdump -C | diff functional_tests/49.txt -
+
+echo ADD tcp peer 44444444444444444444 hash 11112222333344445555
+curl -s "http://127.0.0.1:3000/announce?port=12345&peer_id=44444444444444444444&info_hash=11112222333344445555&event=started" | hexdump -C | diff functional_tests/50.txt -

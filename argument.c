@@ -264,7 +264,7 @@ void showHelp() {
             "\n"
             "     " STRING_BOLD "--no-locations" STRING_RESET "\n"
             "             Disable locations features, default enable.\n"
-            "             Relaited url: " STRING_UNDERLINE "http://host:port/map.html" STRING_RESET "\n"
+            "             Related url: " STRING_UNDERLINE "http://host:port/map.html" STRING_RESET "\n"
             "\n"
             "     " STRING_BOLD "--help\n"
             "     -h\n" STRING_RESET
