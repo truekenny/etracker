@@ -32,7 +32,6 @@ void loadGeoip(struct geoip *geoip) {
     FILE *file;
     char *line = NULL;
     size_t length = 0;
-    ssize_t readBytes;
 
     file = fopen(GEOIP_FILE, "r");
     if (file == NULL) {
@@ -50,7 +49,7 @@ void loadGeoip(struct geoip *geoip) {
     unsigned int startIp = 0;
 
     unsigned int lineNumber = 0;
-    while ((readBytes = getline(&line, &length, file)) != -1) {
+    while (getline(&line, &length, file) != -1) {
         // printf("Retrieved line of length %zu: %s\n", readBytes, line);
 
         char *cell = strtok(line, ",\"");

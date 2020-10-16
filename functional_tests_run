@@ -4,8 +4,7 @@ trap 'kill $(jobs -p)' EXIT
 
 clear
 
-# make tidy && time ./etracker
-./etracker &
+./etracker --no-locations &
 
 sleep 1
 echo Start Testing

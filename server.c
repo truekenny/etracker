@@ -92,7 +92,8 @@ int main(int argc, char *argv[]) {
                                        LIST_SEMAPHORE_ENABLE_LEAF | LIST_SEMAPHORE_ENABLE_GLOBAL, LITTLE_ENDIAN);
 
     struct geoip *geoip = initGeoip();
-    loadGeoip(geoip);
+    if (!arguments->noLocations)
+        loadGeoip(geoip);
     struct geoip *getLimitGeoip = findGeoip(geoip, 0);
     if (getLimitGeoip->startIp != 0)
         exitPrint(EXIT_CODE_GEOIP_TEST_FAILED, __FILE__, EXIT_CODE_PRINT_ERROR_NO);

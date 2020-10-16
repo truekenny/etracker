@@ -20,6 +20,7 @@ struct arguments {
     rlim_t nofile;
     long long core;
     int failed;
+    unsigned char noLocations;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);

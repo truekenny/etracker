@@ -25,6 +25,7 @@
 #define ARGUMENT_NOFILE_INDEX                14
 #define ARGUMENT_CORE_INDEX                  15
 #define ARGUMENT_FAILED_INDEX                16
+#define ARGUMENT_NO_LOCATIONS                17
 
 #define ARGUMENT_PORT_DEFAULT                3000
 #define ARGUMENT_INTERVAL_DEFAULT            1799
@@ -107,6 +108,9 @@ struct arguments *parseArguments(int argc, char *argv[]) {
             case ARGUMENT_FAILED_INDEX:
                 arguments->failed = argumentValue;
                 break;
+            case ARGUMENT_NO_LOCATIONS:
+                arguments->noLocations = 1;
+                break;
         }
     }
 
@@ -162,6 +166,8 @@ unsigned int getName(char *name) {
         return ARGUMENT_CORE_INDEX;
     } else if (!strcmp(name, "-f")) {
         return ARGUMENT_FAILED_INDEX;
+    } else if (!strcmp(name, "--no-locations")) {
+        return ARGUMENT_NO_LOCATIONS;
     }
 
     return ARGUMENT_UNKNOWN_INDEX;
@@ -191,6 +197,8 @@ void showHelp() {
             "        "
             " [" STRING_BOLD "--core" STRING_RESET " " STRING_UNDERLINE "core" STRING_RESET "]"
             " [" STRING_BOLD "--nofile" STRING_RESET " " STRING_UNDERLINE "nofile" STRING_RESET "]"
+            " [" STRING_BOLD "--no-locations" STRING_RESET "]"
+
             " [" STRING_BOLD "-h" STRING_RESET "]\n"
             "\n"
             STRING_BOLD "DESCRIPTION\n" STRING_RESET
@@ -253,6 +261,10 @@ void showHelp() {
             "             May be useful if you choose the keep-alive option.\n"
             "             MacOS default 2500, maximum 10000.\n"
             "             Debian default 1000, recommended 64000.\n"
+            "\n"
+            "     " STRING_BOLD "--no-locations" STRING_RESET "\n"
+            "             Disable locations features, default enable.\n"
+            "             Relaited url: " STRING_UNDERLINE "http://host:port/map.html" STRING_RESET "\n"
             "\n"
             "     " STRING_BOLD "--help\n"
             "     -h\n" STRING_RESET

@@ -52,7 +52,14 @@ Example use: `./run_chroot 6969`
 
     http://host:port/stats
 
-### Realtime options
+### Realtime World map
+
+    http://host:port/map.html
+    
+![map](https://raw.githubusercontent.com/truekenny/etracker/master/Pictures/map.gif)
+<br>Example part of World map. 
+
+### Options
 
     http://host:port/set?param=value
 
