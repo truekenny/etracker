@@ -10,7 +10,7 @@ clear
 sleep 1
 echo Start Testing
 
-gcc origin-udp/_client_udp.c string.c -o client-udp.o || exit
+gcc origin-udp/_client_udp.c string.c -o client-udp.o -lm || exit
 
 echo Base Tests
 

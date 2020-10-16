@@ -11,7 +11,7 @@
 
 #define PORT        3000
 #define MAXLINE     1024
-#define MSG_CONFIRM 0
+#define MSG_CONFIRM_ 0
 
 /**
  * 1 - announce event, 2 - started, 3 - stopped
@@ -118,10 +118,10 @@ int main(int argc, char *argv[]) {
 
         if (ipv6) {
             printf("sendto ipv6\n");
-            sendto(sockfd, (const char *) hello[i], helloSize[i], MSG_CONFIRM,
+            sendto(sockfd, (const char *) hello[i], helloSize[i], MSG_CONFIRM_,
                    (const struct sockaddr *) &servaddr6, sizeof(servaddr6));
         } else {
-            sendto(sockfd, (const char *) hello[i], helloSize[i], MSG_CONFIRM,
+            sendto(sockfd, (const char *) hello[i], helloSize[i], MSG_CONFIRM_,
                    (const struct sockaddr *) &servaddr, sizeof(servaddr));
         }
 
