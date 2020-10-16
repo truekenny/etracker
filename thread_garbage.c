@@ -88,8 +88,11 @@ void *garbageCollectorArgsHandler(struct garbageCollectorArgs *args) {
         addStringBlock(block, "  ", 2);
         updateInterval(block, interval);
 
-        addFormatStringBlock(block, 100, "  RPS: %.2f/%.2f\n\x00",
-                             getRps(rps, RPS_PROTOCOL_TCP), getRps(rps, RPS_PROTOCOL_UDP));
+        addFormatStringBlock(block, 100, "  RPS: %.0f/%.0f/%.0f/%.0f\n",
+                             getRps(rps, RPS_PROTOCOL_TCP, RPS_VERSION_IPV4),
+                             getRps(rps, RPS_PROTOCOL_UDP, RPS_VERSION_IPV4),
+                             getRps(rps, RPS_PROTOCOL_TCP, RPS_VERSION_IPV6),
+                             getRps(rps, RPS_PROTOCOL_UDP, RPS_VERSION_IPV6));
         printf("%s", block->data);
 
         freeBlock(block);

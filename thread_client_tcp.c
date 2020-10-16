@@ -120,7 +120,12 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         return;
     }
 
-    updateRps(rps, RPS_PROTOCOL_TCP);
+    struct sockaddr_in6 clientAddr = {};
+    socklen_t sockAddrIn6Length = sizeof(clientAddr);
+    getpeername(currentSocket, (struct sockaddr *) &clientAddr, &sockAddrIn6Length);
+    unsigned char ipVersion = getIpVersion(&clientAddr.sin6_addr);
+    updateRps(rps, RPS_PROTOCOL_TCP,
+              (ipVersion & SOCKET_VERSION_IPV4_BIT) ? RPS_VERSION_IPV4 : RPS_VERSION_IPV6);
 
     updateSocketL(socketList, currentSocket, equeue, 0);
 
@@ -179,11 +184,8 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             stats->announce++;
 
             struct query query = {};
-            struct sockaddr_in6 peer = {};
-            socklen_t socklen = sizeof(peer);
-            getpeername(currentSocket, (struct sockaddr *) &peer, &socklen); // client
-            query.ip = peer.sin6_addr;
-            query.ipVersion = getIpVersion(&query.ip);
+            query.ip = clientAddr.sin6_addr;
+            query.ipVersion = ipVersion;
             query.numwant = URI_DEFAULT_NUM_WANT;
             query.event = URI_EVENT_ID_STARTED;
             query.threadNumber = threadNumber;
@@ -225,7 +227,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             }
 
             if (query.ipVersion & SOCKET_VERSION_IPV4_BIT)
-                broadcast(websockets, geoip, peer.sin6_addr, stats, WEBSOCKET_PROTOCOL_TCP);
+                broadcast(websockets, geoip, clientAddr.sin6_addr, stats, WEBSOCKET_PROTOCOL_TCP);
         } // announce
         else if (startsWith("GET /set", readBuffer)) {
             if (authorizationHeader->size == 0)

@@ -17,6 +17,7 @@
 #include "exit_code.h"
 #include "interval.h"
 #include "geoip.h"
+#include "socket.h"
 
 // Размер заголовка пакета scrape + 74 x info_hash (по протоколу это максимальное кол-во)
 #define SOCKET_UDP_RECEIVED_UDP_MESSAGE_LENGTH 1496
@@ -132,7 +133,6 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
                                 (socklen_t *) &sockAddrSize);
 
         if (receivedSize == 0) {
-            printf("Recvfrom return 0\n");
             stats->recv_failed_udp++;
 
             continue;
@@ -146,7 +146,9 @@ void *serverUdpHandler(struct serverUdpArgs *args) {
             continue;
         }
 
-        updateRps(rps, RPS_PROTOCOL_UDP);
+
+        updateRps(rps, RPS_PROTOCOL_UDP,
+                  (getIpVersion(&clientAddr.sin6_addr) & SOCKET_VERSION_IPV4_BIT) ? RPS_VERSION_IPV4 : RPS_VERSION_IPV6);
         stats->recv_pass_udp++;
         stats->recv_bytes_udp += receivedSize;
 

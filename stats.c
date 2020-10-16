@@ -47,7 +47,8 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "interval = %'d (%'d->%'d)\n"
                          "active_sockets = %'d (rlimit %'llu/%'llu)\n\n"
 
-                         "requests_per_second = tcp: %.2f, udp: %.2f\n\n"
+                         "requests_per_second ipv4 = tcp: %.0f, udp: %.0f\n"
+                         "requests_per_second ipv6 = tcp: %.0f, udp: %.0f\n\n"
 
                          "rusage.ru_maxrss = %'12ld\n\n"
 
@@ -112,8 +113,10 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          stats->accept_pass - stats->close_pass - stats->close_failed,
                          rlimit.rlim_cur, rlimit.rlim_max,
 
-                         getRps(rps, RPS_PROTOCOL_TCP),
-                         getRps(rps, RPS_PROTOCOL_UDP),
+                         getRps(rps, RPS_PROTOCOL_TCP, RPS_VERSION_IPV4),
+                         getRps(rps, RPS_PROTOCOL_UDP, RPS_VERSION_IPV4),
+                         getRps(rps, RPS_PROTOCOL_TCP, RPS_VERSION_IPV6),
+                         getRps(rps, RPS_PROTOCOL_UDP, RPS_VERSION_IPV6),
 
                          rusage.ru_maxrss,
 
