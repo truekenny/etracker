@@ -83,15 +83,17 @@ void addFileBlock(struct block *block, unsigned int requiredSpace, char *filenam
     if (file != NULL) {
         size_t readSize = fread(&block->data[block->size], 1, requiredSpace, file);
 
-        if(readSize == requiredSpace) {
+        if (readSize == requiredSpace) {
             block->size += readSize;
         } else {
-            printf("fread failed: %d: %s\n", errno, strerror(errno));
+            printf("fread %s failed: %d: %s\n", filename, errno, strerror(errno));
+            addFormatStringBlock(block, 300, "fread failed: %d: %s", errno, strerror(errno));
         }
 
         fclose(file);
     } else {
-        printf("fopen failed: %d: %s\n", errno, strerror(errno));
+        printf("fopen %s failed: %d: %s\n", filename, errno, strerror(errno));
+        addFormatStringBlock(block, 300, "fopen failed: %d: %s", errno, strerror(errno));
     }
 
     // Для printf

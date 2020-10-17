@@ -230,25 +230,19 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             if (query.ipVersion & SOCKET_VERSION_IPV4_BIT)
                 broadcast(websockets, geoip, clientAddr.sin6_addr, stats, WEBSOCKET_PROTOCOL_TCP);
         } // announce
-        else if (startsWith("GET /set", readBuffer)) {
+        else if (startsWith("GET /api/set", readBuffer)) {
             if (authorizationHeader->size == 0)
                 getAuthorizationHeader(authorizationHeader);
 
-            if (hasBasic(readBuffer, authorizationHeader->data)) {
+            if (strstr(readBuffer, "\r\nX-Requested-With: XMLHttpRequest\r\n") == NULL) {
+                struct render render = {sendBlock, 400, "Request should be ajax", 22, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
+            } else if (hasBasic(readBuffer, authorizationHeader->data)) {
                 struct query query = {};
                 parseUri(&query, NULL, readBuffer);
 
                 dataBlock = resetBlock(dataBlock);
-                addFormatStringBlock(dataBlock, 500,
-                                     "Before request:"
-                                     "  keep_alive = %2u"
-                                     "  interval = %4u"
-                                     "  max_peers_response = %4u"
-                                     "  socket_timeout = %2u\n",
-                                     *keepAlive,
-                                     interval->interval,
-                                     *maxPeersPerResponse,
-                                     *socketTimeout);
 
                 if (query.interval)
                     forceUpdateInterval(interval, query.interval);
@@ -260,19 +254,14 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                     *keepAlive = query.keep_alive == 1;
 
                 addFormatStringBlock(dataBlock, 500,
-                                     "After  request:"
-                                     "  keep_alive = %2u"
-                                     "  interval = %4u"
-                                     "  max_peers_response = %4u"
-                                     "  socket_timeout = %2u\n",
+                                     "{\"keep_alive\":%u,\"interval\":%u,\"max_peers_response\":%u,\"socket_timeout\":%u}",
                                      *keepAlive,
                                      interval->interval,
                                      *maxPeersPerResponse,
                                      *socketTimeout);
 
-                struct render render = {sendBlock, 200,
-                                        dataBlock->data, dataBlock->size,
-                                        canKeepAlive, *socketTimeout, stats};
+                struct render render = {sendBlock, 200, dataBlock->data, dataBlock->size,
+                                        canKeepAlive, *socketTimeout, stats, NULL, "application/json"};
                 renderHttpMessage(&render);
             } else {
                 struct render render = {sendBlock, 401, "Authorization Failure", 21, canKeepAlive,
@@ -280,7 +269,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 renderHttpMessage(&render);
             }
         } // set
-        else if (startsWith("GET /websocket", readBuffer)) {
+        else if (startsWith("GET /api/websocket", readBuffer)) {
             struct block *acceptValue = websocketKey2Accept(readBuffer, readSize);
 
             if (acceptValue == NULL) {
@@ -302,7 +291,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 postSemaphoreLeaf(websockets);
             }
         } // websocket
-        else if (startsWith("GET /stats", readBuffer)) {
+        else if (startsWith("GET /stats.html", readBuffer)) {
             dataBlock = resetBlock(dataBlock);
 
             formatStats(threadNumber, dataBlock, stats, interval, rps);
@@ -352,54 +341,60 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             parseUri(&query, NULL, readBuffer);
             char absolute[PATH_MAX + 1];
 
-            // Файл существует
-            if (realpath(query.path, absolute) != NULL) {
-                // Находится в каталоге web
-                if (startsWith(webRoot, absolute)) {
-                    struct stat statFile;
-                    stat(absolute, &statFile);
-                    // Это обычный файл
-                    if (S_ISREG(statFile.st_mode)) {
-                        // Размер не больше предельного значения
-                        if (statFile.st_size < THREAD_CLIENT_TCP_MAX_FILE_SIZE) {
-                            if (endsWith(".ico", absolute))
-                                typeFile = typeIco;
-                            else if (endsWith(".png", absolute))
-                                typeFile = typePng;
-                            else if (endsWith(".html", absolute))
-                                typeFile = typeHtml;
-                            else if (endsWith(".js", absolute))
-                                typeFile = typeJs;
-                            else if (endsWith(".css", absolute))
-                                typeFile = typeCss;
-                            else if (endsWith(".jpg", absolute))
-                                typeFile = typeJpg;
-                            else
-                                typeFile = typeDefault;
+            struct stat statFile;
 
-                            addFileBlock(dataBlock, statFile.st_size, absolute);
-                            struct render render = {sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
-                                                    *socketTimeout, stats, NULL, typeFile};
-                            renderHttpMessage(&render);
-                        } else {
-                            struct render render = {sendBlock, 507, "File size exceeds the allowed limit",
-                                                    35, canKeepAlive, *socketTimeout, stats};
-                            renderHttpMessage(&render);
-                        }
-                    } else {
-                        struct render render = {sendBlock, 404, "Page not found: Not a file", 26, canKeepAlive,
-                                                *socketTimeout, stats};
-                        renderHttpMessage(&render);
-                    }
-                } else {
-                    struct render render = {sendBlock, 404, "Page not found: Secure error", 28, canKeepAlive,
-                                            *socketTimeout, stats};
-                    renderHttpMessage(&render);
-                }
-            } else {
+            // Нет файла
+            if (realpath(query.path, absolute) == NULL) {
                 addFormatStringBlock(dataBlock, 1000, "Page not found: %d: %s", errno, strerror(errno));
                 struct render render = {sendBlock, 404, dataBlock->data, dataBlock->size, canKeepAlive,
                                         *socketTimeout, stats};
+                renderHttpMessage(&render);
+            }
+                // Не находится в каталоге web
+            else if (!startsWith(webRoot, absolute)) {
+                struct render render = {sendBlock, 404, "Page not found: Secure error", 28, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
+            }
+                // Функцию stat вернула ошибку
+            else if (stat(absolute, &statFile) == -1) {
+                addFormatStringBlock(dataBlock, 1000, "Page not found: Stat failed: %d: %s", errno, strerror(errno));
+                struct render render = {sendBlock, 404, dataBlock->data, dataBlock->size, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
+            }
+                // Это не файл
+            else if (!S_ISREG(statFile.st_mode)) {
+                struct render render = {sendBlock, 404, "Page not found: Not a file", 26, canKeepAlive,
+                                        *socketTimeout, stats};
+                renderHttpMessage(&render);
+            }
+                // Размер больше допустимого
+            else if (statFile.st_size > THREAD_CLIENT_TCP_MAX_FILE_SIZE) {
+                struct render render = {sendBlock, 507, "File size exceeds the allowed limit",
+                                        35, canKeepAlive, *socketTimeout, stats};
+                renderHttpMessage(&render);
+            }
+                // Проверка пройдена
+            else {
+                if (endsWith(".ico", absolute))
+                    typeFile = typeIco;
+                else if (endsWith(".png", absolute))
+                    typeFile = typePng;
+                else if (endsWith(".html", absolute))
+                    typeFile = typeHtml;
+                else if (endsWith(".js", absolute))
+                    typeFile = typeJs;
+                else if (endsWith(".css", absolute))
+                    typeFile = typeCss;
+                else if (endsWith(".jpg", absolute))
+                    typeFile = typeJpg;
+                else
+                    typeFile = typeDefault;
+
+                addFileBlock(dataBlock, statFile.st_size, absolute);
+                struct render render = {sendBlock, 200, dataBlock->data, dataBlock->size, canKeepAlive,
+                                        *socketTimeout, stats, NULL, typeFile};
                 renderHttpMessage(&render);
             }
         } // default

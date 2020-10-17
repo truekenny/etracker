@@ -52,7 +52,7 @@ Example use: `./run_chroot 6969`
 
 ### Statictics
 
-    http://host:port/stats
+    http://host:port/stats.html
 
 ### Realtime World map
 
@@ -63,7 +63,7 @@ Example use: `./run_chroot 6969`
 
 ### Options
 
-    http://host:port/set?param=value
+    http://host:port/setings.html
 
 ### Platforms tested on
 

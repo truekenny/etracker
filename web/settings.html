@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/settings.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/settings.css">
+</head>
+<body>
+<form style="display: none">
+    <label>
+        keep_alive (set 2 for disable):<br>
+        <input name="keep_alive" placeholder="keep_alive" autocomplete="off">
+    </label><br>
+    <label>
+        interval:<br>
+        <input name="interval" placeholder="interval" autocomplete="off">
+    </label><br>
+    <label>
+        max_peers_response:<br>
+        <input name="max_peers_response" placeholder="max_peers_response" autocomplete="off">
+    </label><br>
+    <label>
+        socket_timeout:<br>
+        <input name="socket_timeout" placeholder="socket_timeout" autocomplete="off">
+    </label><br>
+
+    <input type="submit">
+</form>
+<p class="loading">
+    Loading…
+</p>
+</body>
+</html>

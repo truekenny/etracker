@@ -1,0 +1,9 @@
+label {
+    margin-bottom: 10px;
+
+    display: inline-block;
+}
+
+input[name] {
+    text-align: right;
+}

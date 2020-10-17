@@ -93,7 +93,7 @@ function ping(socket) {
     }, 1000);
 }
 
-let link = "ws://" + location.host + "/websocket";
+let link = "ws://" + location.host + "/api/websocket";
 let socket = new WebSocket(link, "chat");
 socket.binaryType = 'arraybuffer';
 
