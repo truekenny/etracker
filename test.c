@@ -51,7 +51,7 @@ int testStructure() {
 }
 
 int testGeoip() {
-    struct geoip *geoip = initGeoip();
+    struct geoip *geoip = initGeoip(0);
     loadGeoip(geoip);
 
     unsigned int ip = 1570630176;

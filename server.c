@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     struct list *websockets = initList(NULL, 0, LIST_STARTING_NEST, sizeof(int),
                                        LIST_SEMAPHORE_ENABLE_LEAF | LIST_SEMAPHORE_ENABLE_GLOBAL, LITTLE_ENDIAN);
 
-    struct geoip *geoip = initGeoip();
+    struct geoip *geoip = initGeoip(arguments->noLocations);
     if (!arguments->noLocations)
         loadGeoip(geoip);
     struct geoip *getLimitGeoip = findGeoip(geoip, 0);

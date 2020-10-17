@@ -8,7 +8,7 @@ struct geoip {
     float lon;
 };
 
-struct geoip *initGeoip();
+struct geoip *initGeoip(unsigned char noLocations);
 
 void freeGeoip(struct geoip *geoip);
 

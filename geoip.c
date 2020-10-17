@@ -15,8 +15,8 @@
 
 #define GEOIP_MAX_ITERATION 50
 
-struct geoip *initGeoip() {
-    struct geoip *geoip = c_calloc(GEOIP_FILE_LINES, sizeof(struct geoip));
+struct geoip *initGeoip(unsigned char noLocations) {
+    struct geoip *geoip = c_calloc(noLocations ? 1 : GEOIP_FILE_LINES, sizeof(struct geoip));
 
     if (geoip == NULL)
         exitPrint(EXIT_CODE_GEOIP_MEMORY, __FILE__, EXIT_CODE_PRINT_ERROR_YES);

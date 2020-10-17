@@ -1,10 +1,13 @@
 body {
     margin: 0;
+
+    background: black;
 }
 
 .holder {
-    width: 100%;
     padding-bottom: 50%;
+
+    width: 100%;
     position: relative;
 
     background: black;
@@ -17,4 +20,12 @@ body {
     height: 100%;
 
     image-rendering: crisp-edges;
+}
+
+.legend {
+    position: fixed;
+    top: 0;
+
+    font-family: monospace;
+    opacity: 0.5;
 }

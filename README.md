@@ -80,18 +80,26 @@ For best efficiency – all you need one core CPU.
 
 #### Memory usage
 
-Revision | Bytes per torrent | Bytes per peer | Bytes per torrent (compact structures) | Bytes per peer (compact structures) | Startup | **760k** peers + **520k** torrents | **760k** peers + **520k** torrents (compact)
---- | --- | --- | --- | --- | --- | --- | ---
-[HEAD](../..) | 124 | 84 | 107 | 75 | 9.2M | 138M | 120M
-[0ec61ac](../../commit/0ec61ac54407d99cc59d84df4cb00cff96309936) | 56 | 56 | 48 | 43 | 6.6M | 71M | 59M
+**Minimum require 20.9MB** and 200MB each 1M peers + 1M torrents.
 
-0ec61ac torrent = structure torrent<br>
-0ec61ac peer = structure peer<br>
+Rutracker.org (7M peers + 2M torrents) require 840.9MB.
 
-HEAD torrent = structure item + hash + structure dataTorrent + structure list<br>
-HEAD peer = structure item + hash + structure dataPeer  
-
-*Better code structure comes with a price tag.*
+Name | Value
+--- | ---
+list *structure* | 32B
+item *structure* | 40B
+dataTorrent *structure* | 24B
+dataList *structure* | 24B
+hash | 20B
+torrent *structure* | item + hash + dataTorrent + list
+peer *structure* | item + hash + dataPeer  
+torrent | 116B
+peer | 84B
+locations | 28.5MB
+Startup w/o locations | 20.9MB
+Startup with locations | 49.4MB
+1M peers + 1M torrents | 200MB
+7M peers + 2M torrents | 820MB
 
 ### Similar applications
 
