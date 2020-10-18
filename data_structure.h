@@ -12,7 +12,8 @@
 
 struct peerDataL {
     long updateTime;
-    struct in6_addr ip;
+    struct in6_addr ip6;
+    struct in6_addr ip4;
     unsigned short port;
     unsigned char event;
     unsigned char protocol;

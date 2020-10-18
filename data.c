@@ -81,18 +81,20 @@ unsigned char renderAnnouncePeersCallback(struct list *list, struct item *peer, 
 
     if (query->compact || query->protocol == URI_QUERY_PROTOCOL_UDP) {
         // todo сделать правильный разбор ip4/6
-        unsigned char *ip6 = (unsigned char *) &peerDataL->ip;
-        unsigned char *ip4 = ip6 + 12;
-
-        if (query->ipVersion & SOCKET_VERSION_IPV4_BIT)
+        if (query->ipVersion & SOCKET_VERSION_IPV4_BIT) {
+            unsigned char *ip6 = (unsigned char *) &peerDataL->ip4;
+            unsigned char *ip4 = ip6 + 12;
             addStringBlock(peerBlock, ip4, sizeof(int));
-        else
-            addStringBlock(peerBlock, ip6, sizeof(struct in6_addr));
+        } else
+            addStringBlock(peerBlock, &peerDataL->ip6, sizeof(struct in6_addr));
 
         addStringBlock(peerBlock, &peerDataL->port, sizeof(short));
     } else if (query->no_peer_id) {
         // todo сделать правильный разбор ip4/6
-        int2ip(ip, &peerDataL->ip, query->ipVersion);
+        if (query->ipVersion & SOCKET_VERSION_IPV4_BIT)
+            int2ip(ip, &peerDataL->ip4, query->ipVersion);
+        else
+            int2ip(ip, &peerDataL->ip6, query->ipVersion);
         addFormatStringBlock(peerBlock, 500,
                              "d"
                              "4:port" "i%de"
@@ -114,7 +116,10 @@ unsigned char renderAnnouncePeersCallback(struct list *list, struct item *peer, 
         addStringBlock(peerBlock, peer->hash, URI_PARAM_VALUE_LENGTH);
 
         // todo сделать правильный разбор ip4/6
-        int2ip(ip, &peerDataL->ip, query->ipVersion);
+        if (query->ipVersion & SOCKET_VERSION_IPV4_BIT)
+            int2ip(ip, &peerDataL->ip4, query->ipVersion);
+        else
+            int2ip(ip, &peerDataL->ip6, query->ipVersion);
         addFormatStringBlock(peerBlock, 500,
                              "2:ip" "%lu:%s"
                              "e",
@@ -407,11 +412,14 @@ struct item *setPeerPublic(struct list *torrentList, struct query *query, unsign
     struct peerDataL *peerData = (struct peerDataL *) peer->data;
 
     peerData->port = query->port;
-    peerData->ip = query->ip;
+    if (query->ipVersion & SOCKET_VERSION_IPV4_BIT)
+        peerData->ip4 = query->ip;
+    else
+        peerData->ip6 = query->ip;
     peerData->updateTime = time(NULL);
     peerData->event = query->event;
     peerData->protocol = peerData->protocol | protocol;
-    peerData->ipVersion = query->ipVersion;
+    peerData->ipVersion = peerData->ipVersion | query->ipVersion;
 
     return torrent;
 }
