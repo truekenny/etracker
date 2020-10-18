@@ -32,6 +32,7 @@
 #define EXIT_CODE_GEOIP_MEMORY                   227
 #define EXIT_CODE_GEOIP_WRONG_DATA               226
 #define EXIT_CODE_GEOIP_TEST_FAILED              225
+#define EXIT_CODE_ARGUMENT_UNKNOWN               224
 
 void exitPrint(int exitCode, char *file, char printError);
 

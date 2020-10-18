@@ -55,25 +55,30 @@ struct arguments *parseArguments(int argc, char *argv[]) {
     arguments->minInterval = ARGUMENT_MIN_INTERVAL_DEFAULT;
     arguments->maxInterval = ARGUMENT_MAX_INTERVAL_DEFAULT;
 
-    for (int index = 0; index < argc; index++) {
+    for (int index = 1; index < argc; index++) {
         char *argumentName = argv[index];
         int argumentValue = (index == argc - 1) ? 0 : atoi(argv[index + 1]);
 
         switch (getName(argumentName)) {
             case ARGUMENT_PORT_INDEX:
                 arguments->port = argumentValue;
+                index++; // port value
                 break;
             case ARGUMENT_INTERVAL_INDEX:
                 arguments->interval = argumentValue;
+                index++; // index value
                 break;
             case ARGUMENT_WORKERS_INDEX:
                 arguments->workers = argumentValue;
+                index++; // workers value
                 break;
             case ARGUMENT_MAX_PEERS_PER_RESPONSE_INDEX:
                 arguments->maxPeersPerResponse = argumentValue;
+                index++; // max peers value
                 break;
             case ARGUMENT_SOCKET_TIMEOUT_INDEX:
                 arguments->socketTimeout = argumentValue;
+                index++; // timeout value
                 break;
             case ARGUMENT_KEEP_ALIVE_INDEX:
                 arguments->keepAlive = 1;
@@ -83,12 +88,15 @@ struct arguments *parseArguments(int argc, char *argv[]) {
                 break;
             case ARGUMENT_CHARSET_INDEX:
                 arguments->charset = (index == argc - 1) ? NULL : argv[index + 1];
+                index++; // charset value
                 break;
             case ARGUMENT_MIN_INTERVAL_INDEX:
                 arguments->minInterval = argumentValue;
+                index++; // minInterval value
                 break;
             case ARGUMENT_MAX_INTERVAL_INDEX:
                 arguments->maxInterval = argumentValue;
+                index++; // maxInterval value
                 break;
             case ARGUMENT_NO_TCP_INDEX:
                 arguments->noTcp = 1;
@@ -98,19 +106,26 @@ struct arguments *parseArguments(int argc, char *argv[]) {
                 break;
             case ARGUMENT_LOCALE_INDEX:
                 arguments->locale = (index == argc - 1) ? NULL : argv[index + 1];
+                index++; // locate value
                 break;
             case ARGUMENT_NOFILE_INDEX:
                 arguments->nofile = argumentValue;
+                index++; // nofile value
                 break;
             case ARGUMENT_CORE_INDEX:
                 arguments->core = argumentValue;
+                index++; // core value
                 break;
             case ARGUMENT_FAILED_INDEX:
                 arguments->failed = argumentValue;
+                index++; // failed value
                 break;
             case ARGUMENT_NO_LOCATIONS:
                 arguments->noLocations = 1;
                 break;
+            default:
+                printf("Unknown argument: %s\n", argumentName);
+                exitPrint(EXIT_CODE_ARGUMENT_UNKNOWN, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
         }
     }
 
@@ -318,6 +333,7 @@ void showHelp() {
             "     %3d     geoip memory\n"
             "     %3d     geoip wrong data\n"
             "     %3d     geoip test failed\n"
+            "     %3d     argument unknown\n"
             "\n"
             STRING_BOLD "AUTHOR\n" STRING_RESET
             "     Implemented by Truekenny.\n"
@@ -354,7 +370,8 @@ void showHelp() {
             EXIT_CODE_SEMAPHORE_DESTROY,
             EXIT_CODE_GEOIP_MEMORY,
             EXIT_CODE_GEOIP_WRONG_DATA,
-            EXIT_CODE_GEOIP_TEST_FAILED
+            EXIT_CODE_GEOIP_TEST_FAILED,
+            EXIT_CODE_ARGUMENT_UNKNOWN
     );
 
     exit(EXIT_SUCCESS);
