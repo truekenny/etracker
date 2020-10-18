@@ -61,9 +61,13 @@ Example use: `./run_chroot 6969`
 ![map](https://raw.githubusercontent.com/truekenny/etracker/master/Pictures/map.gif)
 <br>Example part of World map. 
 
+For this page to work, you need to download the free database `wget http://tace.ru/IP2LOCATION-LITE-DB5.CSV`.
+
 ### Options
 
-    http://host:port/setings.html
+    http://host:port/settings.html
+
+For this page to work, you need to run the [`./initWeb`](https://github.com/truekenny/etracker/blob/master/initWeb) command once.
 
 ### Platforms tested on
 
@@ -74,9 +78,12 @@ Example use: `./run_chroot 6969`
 
 #### CPU usage
 
-**1200 RPS** on one core Xeon (cpu family 6) 2100MHz take **30%**
+All you need - one core CPU.
 
-For best efficiency – all you need one core CPU.
+Requests per seconds | Load Avg on One core Xeon (cpu family 6) 2100MHz
+--- | ---
+1200 | ~30%
+2000 | ~60%
 
 #### Memory usage
 
@@ -163,7 +170,7 @@ If this were the result of dos scrape requests, then net-out would be clearly vi
 - `LA` - Load Average;
 - `ML` - Max Allowed Load Average;
 - `I` - Interval;
-- `RPS` - Requests per second (TCP/UDP).
+- `RPS` - Requests per second (IPV4-TCP/IPV4-UDP/IPV6-TCP/IPV6-UDP).
 
 #### Stats page
 
@@ -247,7 +254,8 @@ If this were the result of dos scrape requests, then net-out would be clearly vi
 - [`aauto_tests_run`](https://github.com/truekenny/etracker/blob/master/aauto_tests_run) – auto tests;
 - [`ffunctional_tests_run`](https://github.com/truekenny/etracker/blob/master/ffunctional_tests_run) – functional tests;
 - [`run`](https://github.com/truekenny/etracker/blob/master/run) – example startup server;
-- [`run_chroot`](https://github.com/truekenny/etracker/blob/master/run_chroot) – example startup server with chroot.
+- [`run_chroot`](https://github.com/truekenny/etracker/blob/master/run_chroot) – example startup server with chroot;
+- [`initWeb`](https://github.com/truekenny/etracker/blob/master/initWeb).
 
 ### Text files
 
