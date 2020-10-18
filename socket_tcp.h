@@ -28,6 +28,7 @@ struct serverTcpArgs {
 
     struct list *websockets;
     struct geoip *geoip;
+    char *xForwardedFor;
 };
 
 void *serverTcpHandler(struct serverTcpArgs *args);

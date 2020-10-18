@@ -34,6 +34,7 @@ struct clientTcpArgs {
 
     struct list *websockets;
     struct geoip *geoip;
+    char *xForwardedFor;
 };
 
 void *clientTcpHandler(struct clientTcpArgs *);

@@ -53,7 +53,7 @@ unsigned char deleteSocketListCallback(struct list *list, struct item *item, voi
 
 void processRead(struct clientTcpArgs *args, int currentSocket, struct list *deleteSocketList,
                  struct block *sendBlock, struct block *dataBlock, struct block *announceBlock,
-                 struct block *scrapeBlock, struct block *hashesBlock) {
+                 struct block *scrapeBlock, struct block *hashesBlock, struct block *forwardedForBlock) {
     int threadNumber = args->threadNumber;
     struct list *torrentList = args->torrentList;
     struct stats *stats = args->stats;
@@ -69,6 +69,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
     char *webRoot = args->webRoot;
     struct list *websockets = args->websockets;
     struct geoip *geoip = args->geoip;
+    char *xForwardedFor = args->xForwardedFor;
 
     unsigned char *pCurrentSocket = (unsigned char *) &currentSocket;
 
@@ -190,8 +191,9 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             query.event = URI_EVENT_ID_STARTED;
             query.threadNumber = threadNumber;
             query.compact = URI_DEFAULT_COMPACT;
+            query.xForwardedFor = xForwardedFor;
 
-            parseUri(&query, NULL, readBuffer);
+            parseUri(&query, NULL, forwardedForBlock, readBuffer);
 
             if (query.numwant > *maxPeersPerResponse)
                 query.numwant = *maxPeersPerResponse;
@@ -240,7 +242,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 renderHttpMessage(&render);
             } else if (hasBasic(readBuffer, authorizationHeader->data)) {
                 struct query query = {};
-                parseUri(&query, NULL, readBuffer);
+                parseUri(&query, NULL, NULL, readBuffer);
 
                 dataBlock = resetBlock(dataBlock);
 
@@ -312,7 +314,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             struct query query = {};
             hashesBlock = resetBlock(hashesBlock);
             dataBlock = resetBlock(dataBlock);
-            parseUri(&query, hashesBlock, readBuffer);
+            parseUri(&query, hashesBlock, NULL, readBuffer);
 
             if (!hashesBlock->size && !DATA_FULL_SCRAPE_ENABLE) {
                 struct render render = {sendBlock, 403, "Forbidden (Full Scrape Disabled)", 32, canKeepAlive,
@@ -338,7 +340,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
             char *typeFile = NULL;
 
             struct query query = {};
-            parseUri(&query, NULL, readBuffer);
+            parseUri(&query, NULL, NULL, readBuffer);
             char absolute[PATH_MAX + 1];
 
             struct stat statFile;
@@ -451,6 +453,7 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
     struct block *announceBlock = initBlock();
     struct block *scrapeBlock = initBlock();
     struct block *hashesBlock = initBlock();
+    struct block *forwardedForBlock = initBlock();
 
     while (1) {
         waitSemaphoreLeaf(socketList);
@@ -472,8 +475,8 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
             } else if (isEof(&eevent, index)) {
                 setHash(deleteSocketList, pCurrentSocket);
             } else if (isRead(&eevent, index)) {
-                processRead(args, currentSocket, deleteSocketList, sendBlock, dataBlock, announceBlock, scrapeBlock,
-                            hashesBlock);
+                processRead(args, currentSocket, deleteSocketList,
+                            sendBlock, dataBlock, announceBlock, scrapeBlock, hashesBlock, forwardedForBlock);
             }
 
             postSemaphoreLeaf(socketLeaf);
@@ -507,6 +510,7 @@ void *clientTcpHandler(struct clientTcpArgs *args) {
     freeBlock(announceBlock);
     freeBlock(scrapeBlock);
     freeBlock(hashesBlock);
+    freeBlock(forwardedForBlock);
 
     if (pthread_detach(pthread_self()) != 0) {
         perror("Could not detach thread");

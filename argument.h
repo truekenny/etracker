@@ -21,6 +21,7 @@ struct arguments {
     long long core;
     int failed;
     unsigned char noLocations;
+    char *xForwardedFor;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);

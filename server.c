@@ -53,10 +53,15 @@ int main(int argc, char *argv[]) {
            "  noTcp = %u\n"
            "  noUdp = %u\n"
            "  charset = %s\n"
-           "  locale = %s\n",
+           "  locale = %s\n"
+           "  nofile = %llu\n"
+           "  core = %lld\n"
+           "  xForwardedFor = %s\n"
+           ,
            arguments->port, arguments->interval, arguments->workers, arguments->maxPeersPerResponse,
            arguments->socketTimeout, arguments->keepAlive, arguments->minInterval, arguments->maxInterval,
-           arguments->noTcp, arguments->noUdp, arguments->charset, arguments->locale);
+           arguments->noTcp, arguments->noUdp, arguments->charset, arguments->locale,
+           arguments->nofile, arguments->core, arguments->xForwardedFor);
 
     struct interval interval;
     interval.interval = arguments->interval;
@@ -124,6 +129,7 @@ int main(int argc, char *argv[]) {
         serverTcpArgs->charset = arguments->charset;
         serverTcpArgs->websockets = websockets;
         serverTcpArgs->geoip = geoip;
+        serverTcpArgs->xForwardedFor = arguments->xForwardedFor;
 
         if (pthread_create(&tcpServerThread, NULL, (void *(*)(void *)) serverTcpHandler, serverTcpArgs) != 0) {
             perror("Could not create thread");

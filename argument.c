@@ -26,6 +26,7 @@
 #define ARGUMENT_CORE_INDEX                  15
 #define ARGUMENT_FAILED_INDEX                16
 #define ARGUMENT_NO_LOCATIONS                17
+#define ARGUMENT_X_FORWARDED_FOR             18
 
 #define ARGUMENT_PORT_DEFAULT                3000
 #define ARGUMENT_INTERVAL_DEFAULT            1799
@@ -123,6 +124,11 @@ struct arguments *parseArguments(int argc, char *argv[]) {
             case ARGUMENT_NO_LOCATIONS:
                 arguments->noLocations = 1;
                 break;
+            case ARGUMENT_X_FORWARDED_FOR:
+                arguments->xForwardedFor = (index == argc - 1) ? NULL : argv[index + 1];
+                index++;
+                break;
+            case ARGUMENT_UNKNOWN_INDEX:
             default:
                 printf("Unknown argument: %s\n", argumentName);
                 exitPrint(EXIT_CODE_ARGUMENT_UNKNOWN, __FILE__, EXIT_CODE_PRINT_ERROR_NO);
@@ -183,6 +189,8 @@ unsigned int getName(char *name) {
         return ARGUMENT_FAILED_INDEX;
     } else if (!strcmp(name, "--no-locations")) {
         return ARGUMENT_NO_LOCATIONS;
+    } else if (!strcmp(name, "-x")) {
+        return ARGUMENT_X_FORWARDED_FOR;
     }
 
     return ARGUMENT_UNKNOWN_INDEX;
@@ -213,7 +221,8 @@ void showHelp() {
             " [" STRING_BOLD "--core" STRING_RESET " " STRING_UNDERLINE "core" STRING_RESET "]"
             " [" STRING_BOLD "--nofile" STRING_RESET " " STRING_UNDERLINE "nofile" STRING_RESET "]"
             " [" STRING_BOLD "--no-locations" STRING_RESET "]"
-
+            " [" STRING_BOLD "-x" STRING_RESET " " STRING_UNDERLINE "xForwardedFor" STRING_RESET "]\n"
+            "        "
             " [" STRING_BOLD "-h" STRING_RESET "]\n"
             "\n"
             STRING_BOLD "DESCRIPTION\n" STRING_RESET
@@ -281,6 +290,13 @@ void showHelp() {
             "             Disable locations features, default enable.\n"
             "             Related url: " STRING_UNDERLINE "http://host:port/map.html" STRING_RESET "\n"
             "\n"
+            "     " STRING_BOLD "-x" STRING_RESET " " STRING_UNDERLINE "xForwardedFor" STRING_RESET "\n"
+            "             Http header name xForwardedFor, default disable.\n"
+            "             If is set then activate this features.\n"
+            "             Used last IP from value of this header. Example:\n"
+            "             'X-Forwarded-For: 1.2.3.4, eeee::abcd, 8.8.8.8'\n"
+            "             etracker will use '8.8.8.8'.\n"
+            "\n"
             "     " STRING_BOLD "--help\n"
             "     -h\n" STRING_RESET
             "             This help.\n"
@@ -304,6 +320,8 @@ void showHelp() {
             "     Another examples:\n"
             "          etracker --port 80 --no-tcp --max-interval 1799\n"
             "          etracker -p 80 -i 600 -w 1 -e 400 -t 5 -k\n"
+            "          etracker -x X-Forwarded-For\n"
+            "          etracker -x X-Real-IP\n"
             "          etracker --help\n"
             "\n"
             STRING_BOLD "EXIT STATUS\n" STRING_RESET

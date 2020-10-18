@@ -44,6 +44,7 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
     char *charset = args->charset;
     struct list *websockets = args->websockets;
     struct geoip *geoip = args->geoip;
+    char *xForwardedFor = args->xForwardedFor;
 
     c_free(args);
 
@@ -112,6 +113,8 @@ void *serverTcpHandler(struct serverTcpArgs *args) {
         clientTcpArgs->webRoot = webRoot;
         clientTcpArgs->websockets = websockets;
         clientTcpArgs->geoip = geoip;
+
+        clientTcpArgs->xForwardedFor = xForwardedFor;
 
         if (pthread_create(&tcpClientThread, NULL, (void *(*)(void *)) clientTcpHandler, clientTcpArgs) != 0) {
             exitPrint(EXIT_CODE_TCP_CLIENT_THREAD, __FILE__, EXIT_CODE_PRINT_ERROR_YES);

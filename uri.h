@@ -52,8 +52,9 @@ struct query {
     unsigned char keep_alive;
 
     unsigned char ipVersion;
+    char *xForwardedFor;
 };
 
-void parseUri(struct query *query, struct block *block, char *message);
+void parseUri(struct query *query, struct block *hashesBlock, struct block *forwardedForBlock, char *message);
 
 #endif //SC6_URI_H

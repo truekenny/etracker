@@ -3,18 +3,25 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include "uri.h"
+#include "string.h"
+#include "socket.h"
 
 #define URI_STATUS_PATH  0
 #define URI_STATUS_PARAM 1
 #define URI_STATUS_VALUE 2
 
+#define URI_STATUS_RESET 0
+#define URI_STATUS_NICE  1
+
 void getParam(struct query *query, struct block *block, char *param, char *value);
+
+void parseXForwardedFor(struct query *query, char *message, struct block *forwardedForBlock);
 
 /**
  * Разбор URI строки
  * @param message
  */
-void parseUri(struct query *query, struct block *block, char *message) {
+void parseUri(struct query *query, struct block *hashesBlock, struct block *forwardedForBlock, char *message) {
     char param[URI_PARAM_VALUE_LENGTH + 1] = {0};
     char value[URI_PARAM_VALUE_LENGTH + 1] = {0};
     int status = URI_STATUS_PATH;
@@ -25,7 +32,7 @@ void parseUri(struct query *query, struct block *block, char *message) {
     for (unsigned long i = strlen("GET "); i < strlen(message); i++) {
         char current = message[i];
         if (current == ' ') {
-            getParam(query, block, &param[0], &value[0]);
+            getParam(query, hashesBlock, &param[0], &value[0]);
             break;
         }
 
@@ -36,7 +43,7 @@ void parseUri(struct query *query, struct block *block, char *message) {
                 continue;
             }
             if ((len = strlen(query->path)) < URI_PATH_LENGTH) {
-                if(len != 0 || current != '/')
+                if (len != 0 || current != '/')
                     query->path[len] = current;
             }
             continue;
@@ -48,7 +55,7 @@ void parseUri(struct query *query, struct block *block, char *message) {
             continue;
         }
         if (current == '&') {
-            getParam(query, block, &param[0], &value[0]);
+            getParam(query, hashesBlock, &param[0], &value[0]);
 
             memset(&param, 0, URI_PARAM_VALUE_LENGTH);
             status = URI_STATUS_PARAM;
@@ -80,6 +87,105 @@ void parseUri(struct query *query, struct block *block, char *message) {
             len++;
         }
     }
+
+    parseXForwardedFor(query, message, forwardedForBlock);
+}
+
+void parseXForwardedFor(struct query *query, char *message, struct block *forwardedForBlock) {
+    // Этот разбор не заинтересован в этом заголовке
+    if (forwardedForBlock == NULL)
+        return;
+
+    // Конфигурация не требует разбора заголовка
+    if (query->xForwardedFor == NULL)
+        return;
+
+    char *endOfFirstLine = strstr(message, "\r\n");
+    // Не найден конец первой линии
+    if (endOfFirstLine == NULL)
+        return;
+
+    char *xForwardedFor = strstr(message, query->xForwardedFor);
+    // Заголовок не найден
+    if (xForwardedFor == NULL)
+        return;
+
+    // Заголовок в строке запроса
+    if (xForwardedFor < endOfFirstLine)
+        return;
+
+    char *endOfHeaders = strstr(message, "\r\n\r\n");
+    // Заголовок за пределами обрасти заголовков
+    if (endOfHeaders < xForwardedFor)
+        return;
+
+    char *xForwardedForEndName = strstr(xForwardedFor, ":");
+    // Не найден разделитель имени и значения заголовка
+    if (xForwardedForEndName == NULL)
+        return;
+    xForwardedForEndName += 1; // + ':'
+
+    char *xForwardedForEndValue = strstr(xForwardedFor, "\r\n");
+    // Не найден конец заголовка
+    if (xForwardedForEndValue == NULL)
+        return;
+    // Заголовок не содержит разделителя «:»
+    if (xForwardedForEndValue < xForwardedForEndName)
+        return;
+
+
+    forwardedForBlock = resetBlock(forwardedForBlock);
+
+    int status = URI_STATUS_RESET;
+    for (long index = 0; index < xForwardedForEndValue - xForwardedForEndName; ++index) {
+        char currentChar = xForwardedForEndName[index];
+
+        if (currentChar == ' ' || currentChar == ',')
+            status = URI_STATUS_RESET;
+        else {
+            if (status == URI_STATUS_RESET)
+                forwardedForBlock = resetBlock(forwardedForBlock);
+
+            addStringBlock(forwardedForBlock, &currentChar, 1);
+
+            status = URI_STATUS_NICE;
+        }
+    }
+
+    // В структуре forwardedForBlock ip в строковом формате
+
+    unsigned char ip[17] = {};
+
+    if (strstr(forwardedForBlock->data, ":") == NULL) {
+        // ipv4
+        if (inet_pton(AF_INET, forwardedForBlock->data, ip) < 0) {
+            resetBlock(forwardedForBlock);
+
+        } else {
+            resetBlock(forwardedForBlock);
+            // inet_pton может вернуть 4 нулевых байта
+            if (*(int *) ip != 0) {
+                // Приведение заголовка к ipv6 виду
+                addStringBlock(forwardedForBlock,
+                               "\x00\x00\x00\x00" "\x00\x00\x00\x00" "\x00\x00\xff\xff", 12);
+                addStringBlock(forwardedForBlock, ip, 4);
+
+                memcpy(&query->ip, forwardedForBlock->data, 16);
+                query->ipVersion = SOCKET_VERSION_IPV4_BIT;
+            }
+        }
+    } else {
+        // ipv6
+        if (inet_pton(AF_INET6, forwardedForBlock->data, ip) < 0) {
+            resetBlock(forwardedForBlock);
+        } else {
+            resetBlock(forwardedForBlock);
+            addStringBlock(forwardedForBlock, ip, 16);
+
+            memcpy(&query->ip, forwardedForBlock->data, 16);
+            query->ipVersion = SOCKET_VERSION_IPV6_BIT;
+        }
+    };
 }
 
 /**

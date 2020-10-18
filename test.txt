@@ -109,3 +109,33 @@ Receive: index=2 size=32
 -----+-------------------------------------------------------+--------------------
    0 | 00 00 00 02   61 63 64 62   00 00 00 00   00 00 00 00 | .... acdb .... ....
   16 | 00 00 00 00   00 00 00 01   00 00 00 00   00 00 00 00 | .... .... .... ....
+
+
+GET /announce?port=12345&info_hash=1234567890124567890 HTTP/1.1
+eee: 123
+xxx: 1.2.3.4,23.23.23.23 , eeee::, 49.50.51.52
+
+GET /announce?port=12345&info_hash=1234567890124567890&compact=0 HTTP/1.1
+eee: 123
+xxx: 1.2.3.4,23.23.23.23 , eeee::, 49.50.51.52
+
+GET /announce?port=12345&info_hash=1234567890124567890 HTTP/1.1
+eee: 123
+xxx: 1.2.3.4,23.23.23.23 , eeee::, 2.3.4.5  , 6162:FFFF::63
+
+GET /announce?port=12345&info_hash=1234567890124567890&compact=0 HTTP/1.1
+eee: 123
+xxx: 1.2.3.4,23.23.23.23 , eeee::, 2.3.4.5  , 6162:FFFF::63
+
+GET /announce?port=12345&info_hash=1234567890124567890&compact=0 HTTP/1.1
+eee: 123
+xxx: 1.2.3.4,23.23.23.23 , eeee::, 2.3.4.5  , fail
+
+GET /announce?port=12345&info_hash=1234567890124567890&compact=0 HTTP/1.1
+eee: 123
+xxx: 1.2.3.4
+
+GET /announce?port=12345&info_hash=1234567890124567890&compact=0 HTTP/1.1
+eee: 123
+xxx:
+ttt: 1.2.3.4
