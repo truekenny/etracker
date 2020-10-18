@@ -9,6 +9,8 @@
 #include "data_structure.h"
 #include "socket.h"
 
+#define DATA_SEPARATE_TCP_AND_UDP_CLIENTS 0
+
 struct renderAnnouncePeersCallbackL {
     struct block *block;
     unsigned int leftPeers;
@@ -54,17 +56,19 @@ unsigned char renderAnnouncePeersCallback(struct list *list, struct item *peer, 
     struct block *peerBlock = mapPeersL->block;
     struct peerDataL *peerDataL = peer->data;
 
-    // Ищу TCP, но пир не TCP
-    if (query->protocol == URI_QUERY_PROTOCOL_TCP
-        && (peerDataL->protocol & DATA_STRUCTURE_PEER_PROTOCOL_TCP_BIT) == 0) {
+    if (DATA_SEPARATE_TCP_AND_UDP_CLIENTS) {
+        // Ищу TCP, но пир не TCP
+        if (query->protocol == URI_QUERY_PROTOCOL_TCP
+            && (peerDataL->protocol & DATA_STRUCTURE_PEER_PROTOCOL_TCP_BIT) == 0) {
 
-        return LIST_CONTINUE_RETURN;
-    }
-    // Ищу UDP, но пир не UDP
-    if (query->protocol == URI_QUERY_PROTOCOL_UDP
-        && (peerDataL->protocol & DATA_STRUCTURE_PEER_PROTOCOL_UDP_BIT) == 0) {
+            return LIST_CONTINUE_RETURN;
+        }
+        // Ищу UDP, но пир не UDP
+        if (query->protocol == URI_QUERY_PROTOCOL_UDP
+            && (peerDataL->protocol & DATA_STRUCTURE_PEER_PROTOCOL_UDP_BIT) == 0) {
 
-        return LIST_CONTINUE_RETURN;
+            return LIST_CONTINUE_RETURN;
+        }
     }
 
     // Версии протоколов разные (ipv4/ipv6)
@@ -407,7 +411,7 @@ struct item *setPeerPublic(struct list *torrentList, struct query *query, unsign
     peerData->updateTime = time(NULL);
     peerData->event = query->event;
     peerData->protocol = peerData->protocol | protocol;
-    peerData->ipVersion = peerData->ipVersion | query->ipVersion;
+    peerData->ipVersion = query->ipVersion;
 
     return torrent;
 }
