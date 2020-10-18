@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
             "bbbb" // ip
             "cccc" // key
             "\x00\x00\x00\x21" // num
-            "\x10\x10", // port = 0x1010 = 4112
+            "\x10\x11", // Формат network, port = 0x1011 = 4113
 
 
             // scrape
