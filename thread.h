@@ -3,6 +3,8 @@
 
 #define _GNU_SOURCE
 #include <pthread.h>
+#include <assert.h>
+#include <string.h>
 
 void pthreadSetName(pthread_t id, char *name);
 

@@ -47,6 +47,8 @@ void runIntervalChangerThread(struct interval *interval) {
 }
 
 void *intervalChangerHandler(struct interval *interval) {
+    pthreadSetName(pthread_self(), "Interval Change");
+
     while (1) {
         sleep(stepInterval(interval));
 
