@@ -50,3 +50,9 @@ float getRps(struct rps *rps, unsigned char protocol, unsigned char ipVersion) {
 unsigned char getRpsIndex(unsigned char protocol, unsigned char ipVersion) {
     return protocol + ipVersion;
 }
+
+void resetMaxRps(struct rps *rps) {
+    for (int index = 0; index < RPS_DIFFERENT_VALUES; ++index) {
+        rps->max[index] = 0;
+    }
+}

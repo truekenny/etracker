@@ -21,4 +21,6 @@ void updateRps(struct rps *rps, unsigned char protocol, unsigned char ipVersion)
 
 float getRps(struct rps *rps, unsigned char protocol, unsigned char ipVersion);
 
+void resetMaxRps(struct rps *rps);
+
 #endif //SC6_RPS_H
