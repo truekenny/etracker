@@ -8,10 +8,13 @@
 #define RPS_VERSION_IPV4 0
 #define RPS_VERSION_IPV6 2
 
+#define RPS_DIFFERENT_VALUES 4
+
 struct rps {
-    atomic_uint even[4]; // Четный
-    atomic_uint odd[4];  // Нечетный
-    atomic_uchar status[4];
+    atomic_uint even[RPS_DIFFERENT_VALUES]; // Четный
+    atomic_uint odd[RPS_DIFFERENT_VALUES];  // Нечетный
+    atomic_uint max[RPS_DIFFERENT_VALUES];  // Максимальные зарегистрированные значения
+    atomic_uchar status[RPS_DIFFERENT_VALUES];
 };
 
 void updateRps(struct rps *rps, unsigned char protocol, unsigned char ipVersion);

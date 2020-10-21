@@ -40,15 +40,16 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "<div style='white-space: pre-wrap; font-family: monospace'>"
 
                          "github.com/truekenny/etracker - open-source BitTorrent tracker (%s)\n\n"
-                         "start_time = %.24s (%dd) (%df)\n"
+                         "start_time = %.24s (%ldd) (%df)\n"
                          "thread_number = %d\n\n"
 
                          "load_avg = %.2f %.2f %.2f\n"
                          "interval = %'d (%'d->%'d)\n"
                          "active_sockets = %'d (rlimit %'llu/%'llu)\n\n"
 
-                         "requests_per_second ipv4 = tcp: %.0f, udp: %.0f\n"
-                         "requests_per_second ipv6 = tcp: %.0f, udp: %.0f\n\n"
+                         "          TCP  TCP_MAX      UDP  UDP_MAX\n"
+                         "IPv4: %'7.0f  %'7u  %'7.0f  %'7u\n"
+                         "IPv6: %'7.0f  %'7u  %'7.0f  %'7u\n\n"
 
                          "rusage.ru_maxrss = %'12ld\n\n"
 
@@ -114,9 +115,13 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          rlimit.rlim_cur, rlimit.rlim_max,
 
                          getRps(rps, RPS_PROTOCOL_TCP, RPS_VERSION_IPV4),
+                         rps->max[RPS_PROTOCOL_TCP + RPS_VERSION_IPV4],
                          getRps(rps, RPS_PROTOCOL_UDP, RPS_VERSION_IPV4),
+                         rps->max[RPS_PROTOCOL_UDP + RPS_VERSION_IPV4],
                          getRps(rps, RPS_PROTOCOL_TCP, RPS_VERSION_IPV6),
+                         rps->max[RPS_PROTOCOL_TCP + RPS_VERSION_IPV6],
                          getRps(rps, RPS_PROTOCOL_UDP, RPS_VERSION_IPV6),
+                         rps->max[RPS_PROTOCOL_UDP + RPS_VERSION_IPV6],
 
                          rusage.ru_maxrss,
 

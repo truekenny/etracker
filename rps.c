@@ -19,6 +19,10 @@ void updateRps(struct rps *rps, unsigned char protocol, unsigned char ipVersion)
             rps->odd[index] = 0;
         } else {
             rps->odd[index]++;
+
+            if (rps->odd[index] > rps->max[index]) {
+                rps->max[index] = rps->odd[index];
+            }
         }
     } else {
         // even minute
@@ -27,6 +31,10 @@ void updateRps(struct rps *rps, unsigned char protocol, unsigned char ipVersion)
             rps->even[index] = 0;
         } else {
             rps->even[index]++;
+
+            if (rps->even[index] > rps->max[index]) {
+                rps->max[index] = rps->even[index];
+            }
         }
     }
 }
