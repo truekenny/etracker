@@ -161,15 +161,20 @@ int main(int argc, char *argv[]) {
     /*
      * Причины паузы:
      * - Надо успеть забиндить порт, а затем уже сбрасывать права;
-     * - При перезапуске сервера происходит всплеск запросов за секунду, я не хочу это учитывать в статистике.
      */
-    sleep(2);
-    resetMaxRps(&rps);
+    sleep(1);
     setNobody();
 
     runGarbageCollectorThread(torrentList, &interval, &rps);
     runIntervalChangerThread(&interval);
     runGarbageSocketTimeoutThread(socketLists, stats, &arguments->socketTimeout, arguments->workers, websockets);
+
+    /*
+     * Причины паузы:
+     * - При перезапуске сервера происходит всплеск запросов за секунду, я не хочу это учитывать в статистике.
+     */
+    sleep(5);
+    resetMaxRps(&rps);
 
     if (!arguments->noTcp) {
         printf("Join TCP Thread\n");
