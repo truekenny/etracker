@@ -158,6 +158,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    runRpsStatusThread(&rps);
     /*
      * Причины паузы:
      * - Надо успеть забиндить порт, а затем уже сбрасывать права;

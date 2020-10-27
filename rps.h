@@ -14,7 +14,7 @@ struct rps {
     atomic_uint even[RPS_DIFFERENT_VALUES]; // Четный
     atomic_uint odd[RPS_DIFFERENT_VALUES];  // Нечетный
     atomic_uint max[RPS_DIFFERENT_VALUES];  // Максимальные зарегистрированные значения
-    atomic_uchar status[RPS_DIFFERENT_VALUES];
+    atomic_uchar status; // Единый статус для всех значений
 };
 
 void updateRps(struct rps *rps, unsigned char protocol, unsigned char ipVersion);
@@ -22,5 +22,7 @@ void updateRps(struct rps *rps, unsigned char protocol, unsigned char ipVersion)
 float getRps(struct rps *rps, unsigned char protocol, unsigned char ipVersion);
 
 void resetMaxRps(struct rps *rps);
+
+void runRpsStatusThread(struct rps *rps);
 
 #endif //SC6_RPS_H

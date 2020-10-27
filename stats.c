@@ -47,7 +47,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "interval = %'d (%'d->%'d)\n"
                          "active_sockets = %'d (rlimit %'llu/%'llu)\n\n"
 
-                         "          TCP  TCP_MAX      UDP  UDP_MAX\n"
+                         "RPS:      TCP  TCP_MAX      UDP  UDP_MAX\n"
                          "IPv4: %'7.0f  %'7u  %'7.0f  %'7u\n"
                          "IPv6: %'7.0f  %'7u  %'7.0f  %'7u\n\n"
 
