@@ -37,7 +37,7 @@ cp --parents /usr/lib/locale/locale-archive ./
 
 while true; do
   date
-  chroot ./ /etracker -p $1 -i 239 -e 300 -k --nofile 64000 --core -1 --charset utf-8 --locale en_US.UTF-8 -f $failed
+  chroot ./ /etracker -p $1 -i 300 --min-interval 300 -e 300 -k --nofile 64000 --core -1 --charset utf-8 --locale en_US.UTF-8 -f $failed
   echo Exit code: $?
   ((failed=failed+1))
   sleep 1
