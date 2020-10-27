@@ -52,7 +52,7 @@ int testStructure() {
 
 int testGeoip() {
     struct geoip *geoip = initGeoip(0);
-    loadGeoip(geoip);
+    loadGeoip(geoip, 0);
 
     unsigned int ip = 1570630176;
     printf("ip:%u\n", ip);

@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
 #include "geoip.h"
 #include "exit_code.h"
 #include "alloc.h"
+#include "thread.h"
 
 #define GEOIP_FILE_LINES 2912124
 #define GEOIP_POSITION_START_IP_GEOIP 1
@@ -13,10 +15,22 @@
 
 #define GEOIP_FILE "IP2LOCATION-LITE-DB5.CSV"
 
+#define GEOIP_NOT_LOADING 1000
+
 #define GEOIP_MAX_ITERATION 50
+
+struct loadGeoipArgs {
+    struct geoip *geoip;
+    _Bool isThread;
+};
 
 struct geoip *initGeoip(unsigned char noLocations) {
     struct geoip *geoip = c_calloc(noLocations ? 1 : GEOIP_FILE_LINES, sizeof(struct geoip));
+
+    if (!noLocations) {
+        // Последнюю запись помечаю как «структура не загружена»
+        geoip[GEOIP_FILE_LINES - 1].lat = GEOIP_NOT_LOADING;
+    }
 
     if (geoip == NULL)
         exitPrint(EXIT_CODE_GEOIP_MEMORY, __FILE__, EXIT_CODE_PRINT_ERROR_YES);
@@ -28,7 +42,9 @@ void freeGeoip(struct geoip *geoip) {
     c_free(geoip);
 }
 
-void loadGeoip(struct geoip *geoip) {
+void *loadGeoipHandler(struct loadGeoipArgs *loadGeoipArgs) {
+    struct geoip *geoip = loadGeoipArgs->geoip;
+
     FILE *file;
     char *line = NULL;
     size_t length = 0;
@@ -38,9 +54,11 @@ void loadGeoip(struct geoip *geoip) {
         file = fopen("../" GEOIP_FILE, "r");
 
         if (file == NULL) {
-
             printf(GEOIP_FILE " not found (wget http://tace.ru/IP2LOCATION-LITE-DB5.CSV)\n");
-            return;
+            if (loadGeoipArgs->isThread && pthread_detach(pthread_self()) != 0)
+                perror("geoip.c: Could not detach thread (1)");
+
+            return 0;
         }
     }
 
@@ -82,10 +100,35 @@ void loadGeoip(struct geoip *geoip) {
     if (line)
         free(line);
     printf("Loading locations finished.\n");
+
+    if (loadGeoipArgs->isThread && pthread_detach(pthread_self()) != 0)
+        perror("geoip.c: Could not detach thread (2)");
+
+    return 0;
+}
+
+void loadGeoip(struct geoip *geoip, _Bool inSeparateThread) {
+    struct loadGeoipArgs loadGeoipArgs = {};
+    loadGeoipArgs.geoip = geoip;
+    loadGeoipArgs.isThread = inSeparateThread;
+
+    if (!inSeparateThread) {
+        loadGeoipHandler(&loadGeoipArgs);
+
+        return;
+    }
+
+    pthread_t tid;
+    pthread_create(&tid, NULL, (void *(*)(void *)) loadGeoipHandler, &loadGeoipArgs);
 }
 
 struct geoip *findGeoip(struct geoip *geoip, unsigned int ip) {
+    // Структура даже не начала загрузку
     if (geoip->endIp == 0)
+        return geoip;
+
+    // Структура в процессе загрузки, значит её размер GEOIP_FILE_LINES строк, проверяю последнюю строку
+    if (geoip[GEOIP_FILE_LINES - 1].lat == GEOIP_NOT_LOADING)
         return geoip;
 
     unsigned long long delimiter = 2;
