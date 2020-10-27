@@ -21,7 +21,7 @@
 
 struct loadGeoipArgs {
     struct geoip *geoip;
-    _Bool isThread;
+    unsigned char isThread;
 };
 
 struct geoip *initGeoip(unsigned char noLocations) {
@@ -44,6 +44,8 @@ void freeGeoip(struct geoip *geoip) {
 
 void *loadGeoipHandler(struct loadGeoipArgs *loadGeoipArgs) {
     struct geoip *geoip = loadGeoipArgs->geoip;
+    unsigned char isThread = loadGeoipArgs->isThread;
+    c_free(loadGeoipArgs);
 
     FILE *file;
     char *line = NULL;
@@ -55,7 +57,7 @@ void *loadGeoipHandler(struct loadGeoipArgs *loadGeoipArgs) {
 
         if (file == NULL) {
             printf(GEOIP_FILE " not found (wget http://tace.ru/IP2LOCATION-LITE-DB5.CSV)\n");
-            if (loadGeoipArgs->isThread && pthread_detach(pthread_self()) != 0)
+            if (isThread && pthread_detach(pthread_self()) != 0)
                 perror("geoip.c: Could not detach thread (1)");
 
             return 0;
@@ -101,25 +103,25 @@ void *loadGeoipHandler(struct loadGeoipArgs *loadGeoipArgs) {
         free(line);
     printf("Loading locations finished.\n");
 
-    if (loadGeoipArgs->isThread && pthread_detach(pthread_self()) != 0)
+    if (isThread && pthread_detach(pthread_self()) != 0)
         perror("geoip.c: Could not detach thread (2)");
 
     return 0;
 }
 
-void loadGeoip(struct geoip *geoip, _Bool inSeparateThread) {
-    struct loadGeoipArgs loadGeoipArgs = {};
-    loadGeoipArgs.geoip = geoip;
-    loadGeoipArgs.isThread = inSeparateThread;
+void loadGeoip(struct geoip *geoip, unsigned char inSeparateThread) {
+    struct loadGeoipArgs *loadGeoipArgs = (struct loadGeoipArgs *) c_malloc(sizeof(struct loadGeoipArgs));
+    loadGeoipArgs->geoip = geoip;
+    loadGeoipArgs->isThread = inSeparateThread;
 
     if (!inSeparateThread) {
-        loadGeoipHandler(&loadGeoipArgs);
+        loadGeoipHandler(loadGeoipArgs);
 
         return;
     }
 
     pthread_t tid;
-    pthread_create(&tid, NULL, (void *(*)(void *)) loadGeoipHandler, &loadGeoipArgs);
+    pthread_create(&tid, NULL, (void *(*)(void *)) loadGeoipHandler, loadGeoipArgs);
 }
 
 struct geoip *findGeoip(struct geoip *geoip, unsigned int ip) {

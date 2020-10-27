@@ -12,7 +12,7 @@ struct geoip *initGeoip(unsigned char noLocations);
 
 void freeGeoip(struct geoip *geoip);
 
-void loadGeoip(struct geoip *geoip, _Bool inSeparateThread);
+void loadGeoip(struct geoip *geoip, unsigned char inSeparateThread);
 
 struct geoip *findGeoip(struct geoip *geoip, unsigned int ip);
 
