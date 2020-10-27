@@ -96,17 +96,17 @@ Name | Value
 list *structure* | 32B
 item *structure* | 40B
 dataTorrent *structure* | 24B
-dataList *structure* | 24B
+dataPeer *structure* | 48B
 hash | 20B
 torrent *structure* | item + hash + dataTorrent + list
 peer *structure* | item + hash + dataPeer  
 torrent | 116B
-peer | 84B
+peer | 108B
 locations | 28.5MB
 Startup w/o locations | 20.9MB
 Startup with locations | 49.4MB
-1M peers + 1M torrents | 200MB
-7M peers + 2M torrents | 820MB
+1M peers + 1M torrents | 224MB
+7M peers + 2M torrents | 988MB
 
 ### Similar applications
 
