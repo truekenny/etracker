@@ -123,7 +123,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     if (query.event == URI_EVENT_ID_STOPPED) {
                         torrent = deletePeerPublic(torrentList, &query);
                     } else {
-                        torrent = setPeerPublic(torrentList, &query, DATA_STRUCTURE_PEER_PROTOCOL_UDP_BIT);
+                        torrent = setPeerPublic(torrentList, &query, DATA_STRUCTURE_PEER_PROTOCOL_UDP_BIT, stats);
                     }
                     renderAnnouncePublic(sendBlock, announceBlock, torrent, &query, interval);
 

@@ -384,7 +384,7 @@ struct item *deletePeerPublic(struct list *torrentList, struct query *query) {
  * @param query
  * @return
  */
-struct item *setPeerPublic(struct list *torrentList, struct query *query, unsigned char protocol) {
+struct item *setPeerPublic(struct list *torrentList, struct query *query, unsigned char protocol, struct stats *stats) {
     struct item *torrent = setTorrentL(torrentList, query->info_hash);
     struct torrentDataL *torrentDataL = torrent->data;
 
@@ -416,7 +416,14 @@ struct item *setPeerPublic(struct list *torrentList, struct query *query, unsign
         peerData->ip4 = query->ip;
     else
         peerData->ip6 = query->ip;
-    peerData->updateTime = time(NULL);
+
+    time_t now = time(NULL);
+    unsigned int delay = 0;
+    if (peerData->updateTime != 0)
+        delay = now - peerData->updateTime;
+    updatePeerStat(stats, delay);
+
+    peerData->updateTime = now;
     peerData->event = query->event;
     peerData->protocol = peerData->protocol | protocol;
     peerData->ipVersion = peerData->ipVersion | query->ipVersion;

@@ -12,7 +12,9 @@
 #define REVISION "UNKNOWN"
 #endif
 
-void printArray(struct block *block, atomic_uint *statErrno, char *name);
+void printErrorArray(struct block *block, atomic_uint *statErrno, char *name);
+
+void printUpdateArray(struct block *block, atomic_uint *statUpdate, char *name);
 
 void
 formatStats(int threadNumber, struct block *block, struct stats *stats, struct interval *interval, struct rps *rps) {
@@ -170,13 +172,15 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          stats->connect_udp, stats->announce_udp, stats->scrape_udp
     );
 
-    printArray(block, stats->close_errno, "close_errno");
-    printArray(block, stats->send_errno, "send_errno");
-    printArray(block, stats->recv_errno, "recv_errno");
-    printArray(block, stats->accept_errno, "accept_errno");
+    printErrorArray(block, stats->close_errno, "close_errno");
+    printErrorArray(block, stats->send_errno, "send_errno");
+    printErrorArray(block, stats->recv_errno, "recv_errno");
+    printErrorArray(block, stats->accept_errno, "accept_errno");
 
-    printArray(block, stats->send_errno_udp, "send_errno_udp");
-    printArray(block, stats->recv_errno_udp, "recv_errno_udp");
+    printErrorArray(block, stats->send_errno_udp, "send_errno_udp");
+    printErrorArray(block, stats->recv_errno_udp, "recv_errno_udp");
+
+    printUpdateArray(block, stats->update_peer, "update_peer");
 
     addFormatStringBlock(block, 1000, "</div>" "</body>" "</html>");
 }
@@ -190,7 +194,7 @@ void incErrno(atomic_uint *statErrno) {
     statErrno[err_no]++;
 }
 
-void printArray(struct block *block, atomic_uint *statErrno, char *name) {
+void printErrorArray(struct block *block, atomic_uint *statErrno, char *name) {
     addFormatStringBlock(block, 1000, "%s:\n", name);
 
     for (int err_no = 0; err_no <= STATS_ERRNO_MAX_INDEX; ++err_no) {
@@ -199,4 +203,32 @@ void printArray(struct block *block, atomic_uint *statErrno, char *name) {
                                  err_no, statErrno[err_no], strerror(err_no));
         }
     }
+}
+
+void printUpdateArray(struct block *block, atomic_uint *statUpdate, char *name) {
+    addFormatStringBlock(block, 1000, "%s:\n", name);
+
+    unsigned int sum = 0;
+    for (int delay = 0; delay < STATS_MAX_DELAY_BETWEEN_UPDATE_S; ++delay) {
+        sum += statUpdate[delay];
+    }
+
+    if (!sum) sum = 1;  // Не хочу делить на 0
+
+    for (int delay = 0; delay < STATS_MAX_DELAY_BETWEEN_UPDATE_S; ++delay) {
+        if (statUpdate[delay] != 0) {
+            addFormatStringBlock(block, 1000, "  delay = %'2d:%'02d count = %'9u / %5.2f%%\n",
+                                 delay / 60,
+                                 delay - (delay / 60) * 60,
+                                 statUpdate[delay],
+                                 (float) statUpdate[delay] * 100 / (float) sum);
+        }
+    }
+}
+
+void updatePeerStat(struct stats *stats, unsigned int delay) {
+    if (delay >= STATS_MAX_DELAY_BETWEEN_UPDATE_S)
+        delay = 0;
+
+    stats->update_peer[delay]++;
 }

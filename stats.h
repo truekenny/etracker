@@ -8,6 +8,8 @@
 #include "interval.h"
 
 #define STATS_ERRNO_MAX_INDEX 256
+// Считать, что обновление пира, которое произошло позднее 3667 секунд, считается новым пиром
+#define STATS_MAX_DELAY_BETWEEN_UPDATE_S 3667
 
 struct stats {
     time_t time;
@@ -58,18 +60,22 @@ struct stats {
     atomic_uint announce_udp;
     atomic_uint scrape_udp;
 
-    atomic_uint close_errno[257];
-    atomic_uint send_errno[257];
-    atomic_uint recv_errno[257];
-    atomic_uint accept_errno[257];
+    atomic_uint close_errno[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_uint send_errno[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_uint recv_errno[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_uint accept_errno[STATS_ERRNO_MAX_INDEX + 1];
 
-    atomic_uint send_errno_udp[257];
-    atomic_uint recv_errno_udp[257];
+    atomic_uint send_errno_udp[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_uint recv_errno_udp[STATS_ERRNO_MAX_INDEX + 1];
+
+    atomic_uint update_peer[STATS_MAX_DELAY_BETWEEN_UPDATE_S + 1];
 };
 
 void
 formatStats(int threadNumber, struct block *block, struct stats *stats, struct interval *interval, struct rps *rps);
 
 void incErrno(atomic_uint *statErrno);
+
+void updatePeerStat(struct stats *stats, unsigned int delay);
 
 #endif //SC6_STATS_H

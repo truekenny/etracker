@@ -217,7 +217,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
                 if (query.event == URI_EVENT_ID_STOPPED) {
                     torrent = deletePeerPublic(torrentList, &query);
                 } else {
-                    torrent = setPeerPublic(torrentList, &query, DATA_STRUCTURE_PEER_PROTOCOL_TCP_BIT);
+                    torrent = setPeerPublic(torrentList, &query, DATA_STRUCTURE_PEER_PROTOCOL_TCP_BIT, stats);
                 }
 
                 renderAnnouncePublic(dataBlock, announceBlock, torrent, &query, interval);

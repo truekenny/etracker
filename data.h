@@ -4,6 +4,7 @@
 #include "list.h"
 #include "uri.h"
 #include "interval.h"
+#include "stats.h"
 
 #define DATA_FULL_SCRAPE_ENABLE 0
 
@@ -13,6 +14,6 @@ void renderScrapeTorrentsPublic(struct block *block, struct block *scrapeBlock, 
 
 struct item *deletePeerPublic(struct list *torrentList, struct query *query);
 
-struct item *setPeerPublic(struct list *torrentList, struct query *query, unsigned char protocol);
+struct item *setPeerPublic(struct list *torrentList, struct query *query, unsigned char protocol, struct stats *stats);
 
 #endif //SC6_DATA_H
