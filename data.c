@@ -10,6 +10,11 @@
 #include "socket.h"
 
 #define DATA_SEPARATE_TCP_AND_UDP_CLIENTS 0
+/*
+ * Приблизительно максимальный размер сообщения анонса и скрапа
+ * Максимально допустимые размер UDP данных 65 527 байт
+ */
+#define DATA_MAX_PACKET_SIZE 64000
 
 struct renderAnnouncePeersCallbackL {
     struct block *block;
@@ -55,6 +60,11 @@ unsigned char renderAnnouncePeersCallback(struct list *list, struct item *peer, 
     struct query *query = mapPeersL->query;
     struct block *peerBlock = mapPeersL->block;
     struct peerDataL *peerDataL = peer->data;
+
+    if (peerBlock->size >= DATA_MAX_PACKET_SIZE) {
+
+        return LIST_BREAK_RETURN;
+    }
 
     if (DATA_SEPARATE_TCP_AND_UDP_CLIENTS) {
         // Ищу TCP, но пир не TCP
@@ -340,6 +350,10 @@ renderScrapeTorrentsPublic(struct block *block, struct block *scrapeBlock, struc
             renderScrapeTorrentL(scrapeBlock, torrent, hash, protocol);
 
             postSemaphoreLeaf(leaf);
+
+            if (scrapeBlock->size >= DATA_MAX_PACKET_SIZE) {
+                break;
+            }
         }
     }
 

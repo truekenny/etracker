@@ -136,7 +136,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     if (sendto(serverSocket, sendBlock->data, sendBlock->size,
                                THREAD_CLIENT_UDP__MSG_CONFIRM, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
-                        perror("Sendto failed");
+                        incErrno(stats->send_errno_udp);
                         stats->send_failed_udp++;
                     } else {
                         stats->send_pass_udp++;
@@ -170,7 +170,7 @@ void *clientUdpHandler(struct clientUdpArgs *args) {
                     if (sendto(serverSocket, sendBlock->data, sendBlock->size,
                                THREAD_CLIENT_UDP__MSG_CONFIRM, (const struct sockaddr *) &clientAddr,
                                sockAddrSize) == -1) {
-                        perror("Sendto failed");
+                        incErrno(stats->send_errno_udp);
                         stats->send_failed_udp++;
                     } else {
                         stats->send_pass_udp++;
