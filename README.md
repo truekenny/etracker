@@ -87,9 +87,9 @@ Requests per seconds | Load Avg on One core Xeon (cpu family 6) 2100MHz
 
 #### Memory usage
 
-**Minimum require 20.9MB** and 200MB each 1M peers + 1M torrents.
+**Minimum require 20.9MB** and 224MB each 1M peers + 1M torrents.
 
-Rutracker.org (7M peers + 2M torrents) require 840.9MB.
+Rutracker.org (7M peers + 2M torrents) require 988MB.
 
 Name | Value
 --- | ---
