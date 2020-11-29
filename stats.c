@@ -180,7 +180,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
     printErrorArray(block, stats->send_errno_udp, "send_errno_udp");
     printErrorArray(block, stats->recv_errno_udp, "recv_errno_udp");
 
-    printUpdateArray(block, stats->update_peer, "update_peer");
+    // printUpdateArray(block, stats->update_peer, "update_peer");
 
     addFormatStringBlock(block, 1000, "</div>" "</body>" "</html>");
 }
