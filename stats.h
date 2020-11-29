@@ -14,38 +14,38 @@
 struct stats {
     time_t time;
     int failed;
-    atomic_uint http_101;
-    atomic_uint http_200;
-    atomic_uint http_400;
-    atomic_uint http_401;
-    atomic_uint http_403;
-    atomic_uint http_404;
-    atomic_uint http_405;
-    atomic_uint http_408;
-    atomic_uint http_413;
-    atomic_uint http_507;
+    atomic_ullong http_101;
+    atomic_ullong http_200;
+    atomic_ullong http_400;
+    atomic_ullong http_401;
+    atomic_ullong http_403;
+    atomic_ullong http_404;
+    atomic_ullong http_405;
+    atomic_ullong http_408;
+    atomic_ullong http_413;
+    atomic_ullong http_507;
 
-    atomic_uint close_failed;
-    atomic_uint send_failed;
-    atomic_uint recv_failed;
-    atomic_uint recv_failed_read_0;
-    atomic_uint recv_failed_read_sub_0;
-    atomic_uint recv_failed_read_not_equal;
-    atomic_uint accept_failed;
+    atomic_ullong close_failed;
+    atomic_ullong send_failed;
+    atomic_ullong recv_failed;
+    atomic_ullong recv_failed_read_0;
+    atomic_ullong recv_failed_read_sub_0;
+    atomic_ullong recv_failed_read_not_equal;
+    atomic_ullong accept_failed;
 
-    atomic_uint close_pass;
-    atomic_uint send_pass;
-    atomic_uint recv_pass;
-    atomic_uint accept_pass;
+    atomic_ullong close_pass;
+    atomic_ullong send_pass;
+    atomic_ullong recv_pass;
+    atomic_ullong accept_pass;
 
-    atomic_uint send_failed_udp;
-    atomic_uint recv_failed_udp;
+    atomic_ullong send_failed_udp;
+    atomic_ullong recv_failed_udp;
 
-    atomic_uint send_pass_udp;
-    atomic_uint recv_pass_udp;
+    atomic_ullong send_pass_udp;
+    atomic_ullong recv_pass_udp;
 
-    atomic_uint keep_alive;
-    atomic_uint no_keep_alive;
+    atomic_ullong keep_alive;
+    atomic_ullong no_keep_alive;
 
     atomic_ullong recv_bytes;
     atomic_ullong sent_bytes;
@@ -53,28 +53,28 @@ struct stats {
     atomic_ullong recv_bytes_udp;
     atomic_ullong sent_bytes_udp;
 
-    atomic_uint announce;
-    atomic_uint scrape;
+    atomic_ullong announce;
+    atomic_ullong scrape;
 
-    atomic_uint connect_udp;
-    atomic_uint announce_udp;
-    atomic_uint scrape_udp;
+    atomic_ullong connect_udp;
+    atomic_ullong announce_udp;
+    atomic_ullong scrape_udp;
 
-    atomic_uint close_errno[STATS_ERRNO_MAX_INDEX + 1];
-    atomic_uint send_errno[STATS_ERRNO_MAX_INDEX + 1];
-    atomic_uint recv_errno[STATS_ERRNO_MAX_INDEX + 1];
-    atomic_uint accept_errno[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_ullong close_errno[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_ullong send_errno[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_ullong recv_errno[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_ullong accept_errno[STATS_ERRNO_MAX_INDEX + 1];
 
-    atomic_uint send_errno_udp[STATS_ERRNO_MAX_INDEX + 1];
-    atomic_uint recv_errno_udp[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_ullong send_errno_udp[STATS_ERRNO_MAX_INDEX + 1];
+    atomic_ullong recv_errno_udp[STATS_ERRNO_MAX_INDEX + 1];
 
-    atomic_uint update_peer[STATS_MAX_DELAY_BETWEEN_UPDATE_S + 1];
+    atomic_ullong update_peer[STATS_MAX_DELAY_BETWEEN_UPDATE_S + 1];
 };
 
 void
 formatStats(int threadNumber, struct block *block, struct stats *stats, struct interval *interval, struct rps *rps);
 
-void incErrno(atomic_uint *statErrno);
+void incErrno(atomic_ullong *statErrno);
 
 void updatePeerStat(struct stats *stats, unsigned int delay);
 

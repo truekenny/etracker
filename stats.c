@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+// #include <stdio.h>
 #include "stats.h"
 #include "alloc.h"
 #include "interval.h"
@@ -12,9 +13,9 @@
 #define REVISION "UNKNOWN"
 #endif
 
-void printErrorArray(struct block *block, atomic_uint *statErrno, char *name);
+void printErrorArray(struct block *block, atomic_ullong *statErrno, char *name);
 
-void printUpdateArray(struct block *block, atomic_uint *statUpdate, char *name);
+// void printUpdateArray(struct block *block, atomic_uint *statUpdate, char *name);
 
 void
 formatStats(int threadNumber, struct block *block, struct stats *stats, struct interval *interval, struct rps *rps) {
@@ -32,6 +33,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
     char *background = stats->failed ? "#fee" : "white";
 
     addFormatStringBlock(block, 4500,
+    // printf(
                          "<!DOCTYPE html>\n"
                          "<html lang='en'>"
                          "<head>"
@@ -47,7 +49,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
 
                          "load_avg = %.2f %.2f %.2f\n"
                          "interval = %'d (%'d->%'d)\n"
-                         "active_sockets = %'d (rlimit %'llu/%'llu)\n\n"
+                         "active_sockets = %'llu (rlimit %'llu/%'llu)\n\n"
 
                          "RPS:      TCP  TCP_MAX      UDP  UDP_MAX\n"
                          "IPv4: %'7.0f  %'7u  %'7.0f  %'7u\n"
@@ -61,38 +63,38 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "free          = %'15llu\n"
                          "*alloc - free = %'15llu\n\n"
 
-                         "stats.http_101 = %'12d\n"
-                         "stats.http_200 = %'12d\n"
-                         "stats.http_400 = %'12d\n"
-                         "stats.http_401 = %'12d\n"
-                         "stats.http_403 = %'12d (Full Scrape)\n"
-                         "stats.http_404 = %'12d\n"
-                         "stats.http_405 = %'12d (Not GET)\n"
-                         "stats.http_408 = %'12d (Timeout)\n"
-                         "stats.http_413 = %'12d (Oversize)\n\n"
+                         "stats.http_101 = %'12llu\n"
+                         "stats.http_200 = %'12llu\n"
+                         "stats.http_400 = %'12llu\n"
+                         "stats.http_401 = %'12llu\n"
+                         "stats.http_403 = %'12llu (Full Scrape)\n"
+                         "stats.http_404 = %'12llu\n"
+                         "stats.http_405 = %'12llu (Not GET)\n"
+                         "stats.http_408 = %'12llu (Timeout)\n"
+                         "stats.http_413 = %'12llu (Oversize)\n\n"
 
-                         "stats.close_pass  = %'12d\n"
-                         "stats.send_pass   = %'12d\n"
-                         "stats.recv_pass   = %'12d\n"
-                         "stats.accept_pass = %'12d\n\n"
+                         "stats.close_pass  = %'12llu\n"
+                         "stats.send_pass   = %'12llu\n"
+                         "stats.recv_pass   = %'12llu\n"
+                         "stats.accept_pass = %'12llu\n\n"
 
-                         "stats.close_failed  = %'12d\n"
-                         "stats.send_failed   = %'12d\n"
-                         "stats.recv_failed   = %'12d\n"
-                         "stats.accept_failed = %'12d\n\n"
+                         "stats.close_failed  = %'12llu\n"
+                         "stats.send_failed   = %'12llu\n"
+                         "stats.recv_failed   = %'12llu\n"
+                         "stats.accept_failed = %'12llu\n\n"
 
-                         "stats.recv_failed_read_0         = %'12d\n"
-                         "stats.recv_failed_read_sub_0     = %'12d\n"
-                         "stats.recv_failed_read_not_equal = %'12d\n\n"
+                         "stats.recv_failed_read_0         = %'12llu\n"
+                         "stats.recv_failed_read_sub_0     = %'12llu\n"
+                         "stats.recv_failed_read_not_equal = %'12llu\n\n"
 
-                         "stats.send_pass_udp = %'12d\n"
-                         "stats.recv_pass_udp = %'12d\n\n"
+                         "stats.send_pass_udp = %'12llu\n"
+                         "stats.recv_pass_udp = %'12llu\n\n"
 
-                         "stats.send_failed_udp = %'12d\n"
-                         "stats.recv_failed_udp = %'12d\n\n"
+                         "stats.send_failed_udp = %'12llu\n"
+                         "stats.recv_failed_udp = %'12llu\n\n"
 
-                         "stats.keep_alive    = %'12d\n"
-                         "stats.no_keep_alive = %'12d\n\n"
+                         "stats.keep_alive    = %'12llu\n"
+                         "stats.no_keep_alive = %'12llu\n\n"
 
                          "stats.sent_bytes = %'15llu\n"
                          "stats.recv_bytes = %'15llu\n\n"
@@ -100,12 +102,12 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "stats.sent_bytes_udp = %'15llu\n"
                          "stats.recv_bytes_udp = %'15llu\n\n"
 
-                         "stats.announce = %'12d\n"
-                         "stats.scrape   = %'12d\n\n"
+                         "stats.announce = %'12llu\n"
+                         "stats.scrape   = %'12llu\n\n"
 
-                         "stats.connect_udp  = %'12d\n"
-                         "stats.announce_udp = %'12d\n"
-                         "stats.scrape_udp   = %'12d\n\n",
+                         "stats.connect_udp  = %'12llu\n"
+                         "stats.announce_udp = %'12llu\n"
+                         "stats.scrape_udp   = %'12llu\n\n",
                          background,
                          REVISION,
                          ctime(&stats->time), (time(NULL) - stats->time) / 86400, stats->failed,
@@ -185,7 +187,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
     addFormatStringBlock(block, 1000, "</div>" "</body>" "</html>");
 }
 
-void incErrno(atomic_uint *statErrno) {
+void incErrno(atomic_ullong *statErrno) {
     int err_no = errno;
 
     if (err_no > STATS_ERRNO_MAX_INDEX)
@@ -194,17 +196,20 @@ void incErrno(atomic_uint *statErrno) {
     statErrno[err_no]++;
 }
 
-void printErrorArray(struct block *block, atomic_uint *statErrno, char *name) {
+void printErrorArray(struct block *block, atomic_ullong *statErrno, char *name) {
     addFormatStringBlock(block, 1000, "%s:\n", name);
 
     for (int err_no = 0; err_no <= STATS_ERRNO_MAX_INDEX; ++err_no) {
         if (statErrno[err_no] != 0) {
-            addFormatStringBlock(block, 1000, "  errno = %'3d count = %'9u name = '%s'\n",
+            addFormatStringBlock(block, 1000,
+            // printf(
+                                 "  errno = %'3d count = %9llu name = '%s'\n",
                                  err_no, statErrno[err_no], strerror(err_no));
         }
     }
 }
 
+/*
 void printUpdateArray(struct block *block, atomic_uint *statUpdate, char *name) {
     addFormatStringBlock(block, 1000, "%s:\n", name);
 
@@ -225,6 +230,7 @@ void printUpdateArray(struct block *block, atomic_uint *statUpdate, char *name) 
         }
     }
 }
+*/
 
 void updatePeerStat(struct stats *stats, unsigned int delay) {
     if (delay >= STATS_MAX_DELAY_BETWEEN_UPDATE_S)
