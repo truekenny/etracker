@@ -38,7 +38,8 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "<html lang='en'>"
                          "<head>"
                          "<title>etracker stats</title>"
-                         "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+                         "<meta name='viewport' content='width=450, initial-scale=1'>"
+                         "<style>tr:nth-child(odd) {background-color: #eee}</style>"
                          "</head>"
                          "<body style='background: %s'>"
                          "<div style='white-space: pre-wrap; font-family: monospace'>"
@@ -55,59 +56,89 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "IPv4: %'7.0f  %'7u  %'7.0f  %'7u\n"
                          "IPv6: %'7.0f  %'7u  %'7.0f  %'7u\n\n"
 
-                         "rusage.ru_maxrss = %'20ld\n\n"
+                         "<table>"
+                         
+                         "<tr><td>rusage.ru_maxrss <td>%'20ld"
 
-                         "malloc        = %'20llu\n"
-                         "calloc        = %'20llu\n"
-                         "*alloc        = %'20llu\n"
-                         "free          = %'20llu\n"
-                         "*alloc - free = %'20llu\n\n"
+                         "<tr><td colspan=2>&nbsp;"
 
-                         "stats.http_101 = %'20llu\n"
-                         "stats.http_200 = %'20llu\n"
-                         "stats.http_400 = %'20llu\n"
-                         "stats.http_401 = %'20llu\n"
-                         "stats.http_403 = %'20llu (Full Scrape)\n"
-                         "stats.http_404 = %'20llu\n"
-                         "stats.http_405 = %'20llu (Not GET)\n"
-                         "stats.http_408 = %'20llu (Timeout)\n"
-                         "stats.http_413 = %'20llu (Oversize)\n\n"
+                         "<tr><td>malloc <td>%'20llu"
+                         "<tr><td>calloc <td>%'20llu"
+                         "<tr><td>*alloc <td>%'20llu"
+                         "<tr><td>free <td>%'20llu"
+                         "<tr><td>*alloc - free <td>%'20llu"
 
-                         "stats.close_pass  = %'20llu\n"
-                         "stats.send_pass   = %'20llu\n"
-                         "stats.recv_pass   = %'20llu\n"
-                         "stats.accept_pass = %'20llu\n\n"
+                         "<tr><td colspan=2>&nbsp;"
 
-                         "stats.close_failed  = %'20llu\n"
-                         "stats.send_failed   = %'20llu\n"
-                         "stats.recv_failed   = %'20llu\n"
-                         "stats.accept_failed = %'20llu\n\n"
+                         "<tr><td>stats.http_101 <td>%'20llu"
+                         "<tr><td>stats.http_200 <td>%'20llu"
+                         "<tr><td>stats.http_400 <td>%'20llu"
+                         "<tr><td>stats.http_401 <td>%'20llu"
+                         "<tr><td>stats.http_403 (Full Scrape)<td>%'20llu"
+                         "<tr><td>stats.http_404 <td>%'20llu"
+                         "<tr><td>stats.http_405 (Not GET)<td>%'20llu"
+                         "<tr><td>stats.http_408 (Timeout)<td>%'20llu"
+                         "<tr><td>stats.http_413 (Oversize)<td>%'20llu"
 
-                         "stats.recv_failed_read_0         = %'20llu\n"
-                         "stats.recv_failed_read_sub_0     = %'20llu\n"
-                         "stats.recv_failed_read_not_equal = %'20llu\n\n"
+                         "<tr><td colspan=2>&nbsp;"
 
-                         "stats.send_pass_udp = %'20llu\n"
-                         "stats.recv_pass_udp = %'20llu\n\n"
+                         "<tr><td>stats.close_pass <td>%'20llu"
+                         "<tr><td>stats.send_pass <td>%'20llu"
+                         "<tr><td>stats.recv_pass <td>%'20llu"
+                         "<tr><td>stats.accept_pass <td>%'20llu"
 
-                         "stats.send_failed_udp = %'20llu\n"
-                         "stats.recv_failed_udp = %'20llu\n\n"
+                         "<tr><td colspan=2>&nbsp;"
 
-                         "stats.keep_alive    = %'20llu\n"
-                         "stats.no_keep_alive = %'20llu\n\n"
+                         "<tr><td>stats.close_failed <td>%'20llu"
+                         "<tr><td>stats.send_failed <td>%'20llu"
+                         "<tr><td>stats.recv_failed <td>%'20llu"
+                         "<tr><td>stats.accept_failed <td>%'20llu"
 
-                         "stats.sent_bytes = %'20llu\n"
-                         "stats.recv_bytes = %'20llu\n\n"
+                         "<tr><td colspan=2>&nbsp;"
 
-                         "stats.sent_bytes_udp = %'20llu\n"
-                         "stats.recv_bytes_udp = %'20llu\n\n"
+                         "<tr><td>stats.recv_failed_read_0 <td>%'20llu"
+                         "<tr><td>stats.recv_failed_read_sub_0 <td>%'20llu"
+                         "<tr><td>stats.recv_failed_read_not_equal <td>%'20llu"
 
-                         "stats.announce = %'20llu\n"
-                         "stats.scrape   = %'20llu\n\n"
+                         "<tr><td colspan=2>&nbsp;"
 
-                         "stats.connect_udp  = %'20llu\n"
-                         "stats.announce_udp = %'20llu\n"
-                         "stats.scrape_udp   = %'20llu\n\n",
+                         "<tr><td>stats.send_pass_udp <td>%'20llu"
+                         "<tr><td>stats.recv_pass_udp <td>%'20llu"
+
+                         "<tr><td colspan=2>&nbsp;"
+
+                         "<tr><td>stats.send_failed_udp <td>%'20llu"
+                         "<tr><td>stats.recv_failed_udp <td>%'20llu"
+
+                         "<tr><td colspan=2>&nbsp;"
+
+                         "<tr><td>stats.keep_alive <td>%'20llu"
+                         "<tr><td>stats.no_keep_alive <td>%'20llu"
+
+                         "<tr><td colspan=2>&nbsp;"
+
+                         "<tr><td>stats.sent_bytes <td>%'20llu"
+                         "<tr><td>stats.recv_bytes <td>%'20llu"
+
+                         "<tr><td colspan=2>&nbsp;"
+
+                         "<tr><td>stats.sent_bytes_udp <td>%'20llu"
+                         "<tr><td>stats.recv_bytes_udp <td>%'20llu"
+
+                         "<tr><td colspan=2>&nbsp;"
+
+                         "<tr><td>stats.announce <td>%'20llu"
+                         "<tr><td>stats.scrape <td>%'20llu"
+
+                         "<tr><td colspan=2>&nbsp;"
+
+                         "<tr><td>stats.connect_udp <td>%'20llu"
+                         "<tr><td>stats.announce_udp <td>%'20llu"
+                         "<tr><td>stats.scrape_udp <td>%'20llu"
+
+                         "<tr><td colspan=2>&nbsp;"
+
+                         "</table>",
                          background,
                          REVISION,
                          ctime(&stats->time), (time(NULL) - stats->time) / 86400, stats->failed,
@@ -174,6 +205,8 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          stats->connect_udp, stats->announce_udp, stats->scrape_udp
     );
 
+    addFormatStringBlock(block, 1000, "<table>");
+
     printErrorArray(block, stats->close_errno, "close_errno");
     printErrorArray(block, stats->send_errno, "send_errno");
     printErrorArray(block, stats->recv_errno, "recv_errno");
@@ -181,6 +214,8 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
 
     printErrorArray(block, stats->send_errno_udp, "send_errno_udp");
     printErrorArray(block, stats->recv_errno_udp, "recv_errno_udp");
+
+    addFormatStringBlock(block, 1000, "</table>");
 
     // printUpdateArray(block, stats->update_peer, "update_peer");
 
@@ -197,13 +232,13 @@ void incErrno(atomic_ullong *statErrno) {
 }
 
 void printErrorArray(struct block *block, atomic_ullong *statErrno, char *name) {
-    addFormatStringBlock(block, 1000, "%s:\n", name);
+    addFormatStringBlock(block, 1000, "<tr><td>%s <td>errno <td>count <td>name", name);
 
     for (int err_no = 0; err_no <= STATS_ERRNO_MAX_INDEX; ++err_no) {
         if (statErrno[err_no] != 0) {
             addFormatStringBlock(block, 1000,
             // printf(
-                                 "  errno = %'3d count = %'20llu name = '%s'\n",
+                                 "<tr><td>&nbsp; <td>%'3d <td>%'20llu <td>'%s'\n",
                                  err_no, statErrno[err_no], strerror(err_no));
         }
     }
