@@ -84,7 +84,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         dataBlock = resetBlock(dataBlock);
         struct render render = {dataBlock, 413, "Request Entity Too Large", 24, 0, *socketTimeout, stats};
         renderHttpMessage(&render);
-        send_(currentSocket, dataBlock->data, dataBlock->size, stats);
+        send_(currentSocket, dataBlock->data, dataBlock->size, stats, 0);
 
         setHash(deleteSocketList, pCurrentSocket);
         stats->recv_failed++;
@@ -413,7 +413,7 @@ void processRead(struct clientTcpArgs *args, int currentSocket, struct list *del
         renderHttpMessage(&render);
     }
 
-    send_(currentSocket, sendBlock->data, sendBlock->size, stats);
+    send_(currentSocket, sendBlock->data, sendBlock->size, stats, 0);
 
     if (!canKeepAlive && !isWebsocket) {
         setHash(deleteSocketList, pCurrentSocket);

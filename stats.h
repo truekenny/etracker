@@ -26,6 +26,7 @@ struct stats {
     atomic_ullong http_507;
 
     atomic_ullong close_failed;
+    atomic_ullong send_skips;
     atomic_ullong send_failed;
     atomic_ullong recv_failed;
     atomic_ullong recv_failed_read_0;

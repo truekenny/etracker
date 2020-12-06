@@ -95,6 +95,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "<tr><td colspan=2>&nbsp;"
 
                          "<tr><td>stats.close_failed <td>%'llu"
+                         "<tr><td>stats.send_skips <td>%'llu"
                          "<tr><td>stats.send_failed <td>%'llu"
                          "<tr><td>stats.recv_failed <td>%'llu"
                          "<tr><td>stats.accept_failed <td>%'llu"
@@ -187,6 +188,7 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          stats->accept_pass,
 
                          stats->close_failed,
+                         stats->send_skips,
                          stats->send_failed,
                          stats->recv_failed,
                          stats->accept_failed,

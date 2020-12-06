@@ -89,7 +89,7 @@ unsigned char broadcastCallback(struct list *list, struct item *item, void *args
     }
 
     int socket = *(int *) item->hash;
-    send_(socket, broadcastArgs->data, WEBSOCKET_SIZE_FRAME, broadcastArgs->stats);
+    send_(socket, broadcastArgs->data, WEBSOCKET_SIZE_FRAME, broadcastArgs->stats, 0);
 
     return LIST_CONTINUE_RETURN;
 }

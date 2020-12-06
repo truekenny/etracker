@@ -142,7 +142,7 @@ unsigned char garbageSocketTimeoutCallback(struct list *list, struct item *item,
         struct block *block = initBlock();
         struct render render = {block, 408, "Request Timeout", 15, 0, 0, stats};
         renderHttpMessage(&render);
-        send_(socketData->socket, block->data, block->size, stats);
+        send_(socketData->socket, block->data, block->size, stats, 1);
         freeBlock(block);
 
         // printf("garbage delete socket %d\n", socketData->socket);

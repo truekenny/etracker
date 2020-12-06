@@ -125,9 +125,12 @@ void renderHttpMessage(struct render *render) {
     }
 }
 
-ssize_t send_(int socket, void *message, size_t size, struct stats *stats) {
+ssize_t send_(int socket, void *message, size_t size, struct stats *stats, _Bool sentOnce) {
     // send может принять не всё сразу и за раз доставить только часть данных
     ssize_t result;
+
+    // Сколько раз пытаться отправить сообщение, перед тем как проигнорировать его
+    int errorLimitCount = 1000000;
 
     do {
         result = send(socket, message, size, MSG_DONTWAIT | MSG_NOSIGNAL);
@@ -141,6 +144,18 @@ ssize_t send_(int socket, void *message, size_t size, struct stats *stats) {
             // Если ошибка не errno:35 message:Resource temporarily unavailable
             // то повторять не стоит
             if (errno != EAGAIN) break;
+
+            // Некоторые сообщения пробую отправить лишь 1 раз, например сообщения TimeOut
+            if (sentOnce) break;
+
+            errorLimitCount--;
+
+            // Не удаётся отправить сообщение слишком много раз, игнорирую такой клиент
+            if (errorLimitCount <= 0) {
+                stats->send_skips++;
+
+                break;
+            }
         } else
             stats->send_pass++;
 

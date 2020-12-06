@@ -40,6 +40,6 @@ void setTimeout(int socket);
 
 void renderHttpMessage(struct render *render);
 
-ssize_t send_(int socket, void *message, size_t size, struct stats *stats);
+ssize_t send_(int socket, void *message, size_t size, struct stats *stats, _Bool sentOnce);
 
 #endif //SC6_SOCKET_H
