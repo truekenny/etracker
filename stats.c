@@ -55,59 +55,59 @@ formatStats(int threadNumber, struct block *block, struct stats *stats, struct i
                          "IPv4: %'7.0f  %'7u  %'7.0f  %'7u\n"
                          "IPv6: %'7.0f  %'7u  %'7.0f  %'7u\n\n"
 
-                         "rusage.ru_maxrss = %'12ld\n\n"
+                         "rusage.ru_maxrss = %'20ld\n\n"
 
-                         "malloc        = %'15llu\n"
-                         "calloc        = %'15llu\n"
-                         "*alloc        = %'15llu\n"
-                         "free          = %'15llu\n"
-                         "*alloc - free = %'15llu\n\n"
+                         "malloc        = %'20llu\n"
+                         "calloc        = %'20llu\n"
+                         "*alloc        = %'20llu\n"
+                         "free          = %'20llu\n"
+                         "*alloc - free = %'20llu\n\n"
 
-                         "stats.http_101 = %'12llu\n"
-                         "stats.http_200 = %'12llu\n"
-                         "stats.http_400 = %'12llu\n"
-                         "stats.http_401 = %'12llu\n"
-                         "stats.http_403 = %'12llu (Full Scrape)\n"
-                         "stats.http_404 = %'12llu\n"
-                         "stats.http_405 = %'12llu (Not GET)\n"
-                         "stats.http_408 = %'12llu (Timeout)\n"
-                         "stats.http_413 = %'12llu (Oversize)\n\n"
+                         "stats.http_101 = %'20llu\n"
+                         "stats.http_200 = %'20llu\n"
+                         "stats.http_400 = %'20llu\n"
+                         "stats.http_401 = %'20llu\n"
+                         "stats.http_403 = %'20llu (Full Scrape)\n"
+                         "stats.http_404 = %'20llu\n"
+                         "stats.http_405 = %'20llu (Not GET)\n"
+                         "stats.http_408 = %'20llu (Timeout)\n"
+                         "stats.http_413 = %'20llu (Oversize)\n\n"
 
-                         "stats.close_pass  = %'12llu\n"
-                         "stats.send_pass   = %'12llu\n"
-                         "stats.recv_pass   = %'12llu\n"
-                         "stats.accept_pass = %'12llu\n\n"
+                         "stats.close_pass  = %'20llu\n"
+                         "stats.send_pass   = %'20llu\n"
+                         "stats.recv_pass   = %'20llu\n"
+                         "stats.accept_pass = %'20llu\n\n"
 
-                         "stats.close_failed  = %'12llu\n"
-                         "stats.send_failed   = %'12llu\n"
-                         "stats.recv_failed   = %'12llu\n"
-                         "stats.accept_failed = %'12llu\n\n"
+                         "stats.close_failed  = %'20llu\n"
+                         "stats.send_failed   = %'20llu\n"
+                         "stats.recv_failed   = %'20llu\n"
+                         "stats.accept_failed = %'20llu\n\n"
 
-                         "stats.recv_failed_read_0         = %'12llu\n"
-                         "stats.recv_failed_read_sub_0     = %'12llu\n"
-                         "stats.recv_failed_read_not_equal = %'12llu\n\n"
+                         "stats.recv_failed_read_0         = %'20llu\n"
+                         "stats.recv_failed_read_sub_0     = %'20llu\n"
+                         "stats.recv_failed_read_not_equal = %'20llu\n\n"
 
-                         "stats.send_pass_udp = %'12llu\n"
-                         "stats.recv_pass_udp = %'12llu\n\n"
+                         "stats.send_pass_udp = %'20llu\n"
+                         "stats.recv_pass_udp = %'20llu\n\n"
 
-                         "stats.send_failed_udp = %'12llu\n"
-                         "stats.recv_failed_udp = %'12llu\n\n"
+                         "stats.send_failed_udp = %'20llu\n"
+                         "stats.recv_failed_udp = %'20llu\n\n"
 
-                         "stats.keep_alive    = %'12llu\n"
-                         "stats.no_keep_alive = %'12llu\n\n"
+                         "stats.keep_alive    = %'20llu\n"
+                         "stats.no_keep_alive = %'20llu\n\n"
 
-                         "stats.sent_bytes = %'15llu\n"
-                         "stats.recv_bytes = %'15llu\n\n"
+                         "stats.sent_bytes = %'20llu\n"
+                         "stats.recv_bytes = %'20llu\n\n"
 
-                         "stats.sent_bytes_udp = %'15llu\n"
-                         "stats.recv_bytes_udp = %'15llu\n\n"
+                         "stats.sent_bytes_udp = %'20llu\n"
+                         "stats.recv_bytes_udp = %'20llu\n\n"
 
-                         "stats.announce = %'12llu\n"
-                         "stats.scrape   = %'12llu\n\n"
+                         "stats.announce = %'20llu\n"
+                         "stats.scrape   = %'20llu\n\n"
 
-                         "stats.connect_udp  = %'12llu\n"
-                         "stats.announce_udp = %'12llu\n"
-                         "stats.scrape_udp   = %'12llu\n\n",
+                         "stats.connect_udp  = %'20llu\n"
+                         "stats.announce_udp = %'20llu\n"
+                         "stats.scrape_udp   = %'20llu\n\n",
                          background,
                          REVISION,
                          ctime(&stats->time), (time(NULL) - stats->time) / 86400, stats->failed,
@@ -203,7 +203,7 @@ void printErrorArray(struct block *block, atomic_ullong *statErrno, char *name) 
         if (statErrno[err_no] != 0) {
             addFormatStringBlock(block, 1000,
             // printf(
-                                 "  errno = %'3d count = %9llu name = '%s'\n",
+                                 "  errno = %'3d count = %'20llu name = '%s'\n",
                                  err_no, statErrno[err_no], strerror(err_no));
         }
     }
