@@ -10,7 +10,7 @@
 
 unsigned int niceInterval(struct interval *interval, unsigned int value);
 
-void updateInterval(struct block *block, struct interval *interval) {
+void updateInterval(struct block *block, struct interval *interval, double maxLoadAvg) {
     double load[3];
 
     if (getloadavg(load, 3) == -1) {
@@ -19,7 +19,9 @@ void updateInterval(struct block *block, struct interval *interval) {
         return;
     }
 
-    double maxAllowLoadAverage = ((double) sysconf(_SC_NPROCESSORS_ONLN)) - 0.5;
+    double maxAllowLoadAverage = (maxLoadAvg == 0)
+            ? (((double) sysconf(_SC_NPROCESSORS_ONLN)) - 0.5)
+            : maxLoadAvg;
 
     unsigned int localInterval = interval->requireInterval;
 

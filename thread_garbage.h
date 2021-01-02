@@ -8,7 +8,7 @@
 
 void runIntervalChangerThread(struct interval *interval);
 
-void runGarbageCollectorThread(struct list *torrentList, struct interval *interval, struct rps *rps);
+void runGarbageCollectorThread(struct list *torrentList, struct interval *interval, struct rps *rps, double maxLoadAvg);
 
 void runGarbageSocketTimeoutThread(struct list **socketLists, struct stats *stats, unsigned short *socketTimeout,
         long workers, struct list *websockets);

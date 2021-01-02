@@ -57,11 +57,12 @@ int main(int argc, char *argv[]) {
            "  nofile = %llu\n"
            "  core = %lld\n"
            "  xForwardedFor = %s\n"
+           "  maxLoadAvg = %.2f\n"
            ,
            arguments->port, arguments->interval, arguments->workers, arguments->maxPeersPerResponse,
            arguments->socketTimeout, arguments->keepAlive, arguments->minInterval, arguments->maxInterval,
            arguments->noTcp, arguments->noUdp, arguments->charset, arguments->locale,
-           arguments->nofile, arguments->core, arguments->xForwardedFor);
+           arguments->nofile, arguments->core, arguments->xForwardedFor, arguments->maxLoadAvg);
 
     struct interval interval;
     interval.interval = arguments->interval;
@@ -166,7 +167,7 @@ int main(int argc, char *argv[]) {
     sleep(1);
     setNobody();
 
-    runGarbageCollectorThread(torrentList, &interval, &rps);
+    runGarbageCollectorThread(torrentList, &interval, &rps, arguments->maxLoadAvg);
     runIntervalChangerThread(&interval);
     runGarbageSocketTimeoutThread(socketLists, stats, &arguments->socketTimeout, arguments->workers, websockets);
 

@@ -22,6 +22,7 @@ struct arguments {
     int failed;
     unsigned char noLocations;
     char *xForwardedFor;
+    double maxLoadAvg;
 };
 
 struct arguments *parseArguments(int argc, char *argv[]);

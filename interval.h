@@ -14,7 +14,7 @@ struct interval {
     unsigned int minInterval;
 };
 
-void updateInterval(struct block *block, struct interval*interval);
+void updateInterval(struct block *block, struct interval*interval, double maxLoadAvg);
 
 void forceUpdateInterval(struct interval *interval, unsigned int value);
 

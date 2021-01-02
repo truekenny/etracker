@@ -24,6 +24,7 @@ struct garbageCollectorArgs {
     struct list *torrentList;
     struct interval *interval;
     struct rps *rps;
+    double maxLoadAvg;
 };
 
 struct garbageSocketTimeoutArgs {
@@ -59,11 +60,12 @@ void *intervalChangerHandler(struct interval *interval) {
     return 0;
 }
 
-void runGarbageCollectorThread(struct list *torrentList, struct interval *interval, struct rps *rps) {
+void runGarbageCollectorThread(struct list *torrentList, struct interval *interval, struct rps *rps, double maxLoadAvg) {
     struct garbageCollectorArgs *garbageCollectorArgs = c_calloc(1, sizeof(struct garbageCollectorArgs));
     garbageCollectorArgs->torrentList = torrentList;
     garbageCollectorArgs->interval = interval;
     garbageCollectorArgs->rps = rps;
+    garbageCollectorArgs->maxLoadAvg = maxLoadAvg;
 
     pthread_t tid;
     pthread_create(&tid, NULL, (void *(*)(void *)) garbageCollectorArgsHandler, garbageCollectorArgs);
@@ -75,6 +77,7 @@ void *garbageCollectorArgsHandler(struct garbageCollectorArgs *args) {
     struct list *torrentList = args->torrentList;
     struct rps *rps = args->rps;
     struct interval *interval = args->interval;
+    double maxLoadAvg = args->maxLoadAvg;
     c_free(args);
 
     while (1) {
@@ -88,7 +91,7 @@ void *garbageCollectorArgsHandler(struct garbageCollectorArgs *args) {
 
         runGarbageCollectorL(block, torrentList);
         addStringBlock(block, "  ", 2);
-        updateInterval(block, interval);
+        updateInterval(block, interval, maxLoadAvg);
 
         addFormatStringBlock(block, 100, "  RPS: %.0f/%.0f/%.0f/%.0f\n",
                              getRps(rps, RPS_PROTOCOL_TCP, RPS_VERSION_IPV4),

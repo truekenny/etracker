@@ -5,7 +5,7 @@ failed=0
 
 while true; do
   date
-  ./etracker -p $1 -i 300 --min-interval 300 -e 300 -k --nofile 64000 --core -1 --charset utf-8 --locale en_US.UTF-8 -f $failed
+  ./etracker -p $1 -i 300 --min-interval 300 -e 300 -k --nofile 64000 --core -1 --charset utf-8 --locale en_US.UTF-8 -f $failed -a 0.5
   echo Exit code: $?
   ((failed=failed+1))
   sleep 1
