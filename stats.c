@@ -239,13 +239,14 @@ void incErrno(atomic_ullong *statErrno) {
 }
 
 void printErrorArray(struct block *block, atomic_ullong *statErrno, char *name) {
-    addFormatStringBlock(block, 1000, "<tr><th>%s <th>errno <th>count <th>name", name);
+    addFormatStringBlock(block, 1000, "<tr><th colspan=3>%s "
+                                      "<tr><th>errno <th>count <th>name", name);
 
     for (int err_no = 0; err_no <= STATS_ERRNO_MAX_INDEX; ++err_no) {
         if (statErrno[err_no] != 0) {
             addFormatStringBlock(block, 1000,
             // printf(
-                                 "<tr><td>&nbsp; <td>%'d <td>%'llu <td>'%s'\n",
+                                 "<tr><td>%'d <td>%'llu <td>'%s'\n",
                                  err_no, statErrno[err_no], strerror(err_no));
         }
     }
